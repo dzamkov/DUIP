@@ -38,7 +38,6 @@
             this.Name = "MainForm";
             this.Text = "DUIP";
             this.ResumeLayout(false);
-
         }
 
         #endregion

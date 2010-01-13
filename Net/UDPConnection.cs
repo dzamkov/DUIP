@@ -69,6 +69,5 @@ namespace DUIP.Net
         }
 
         private UdpClient _Conn;
-        private Queue<Message> _MessageQueue;
     }
 }

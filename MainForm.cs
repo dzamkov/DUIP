@@ -15,16 +15,10 @@ namespace DUIP
         {
             InitializeComponent();
 
-            Net.UDPConnection A = new Net.UDPConnection(11000);
-            Net.UDPConnection B = new Net.UDPConnection(System.Net.IPAddress.Loopback, 11000);
+            Visual.View view = new Visual.View();
+            view.Location = new Core.GeneralSector().Center;
+            view.ZoomLevel = 0.7;
 
-            B.Send(Encoding.ASCII.GetBytes("Hello"));
-
-            A.ReceiveMessage += new Net.ReceiveMessageHandler(delegate(Net.Message Message)
-                {
-                    MessageBox.Show("Received \"" + Encoding.ASCII.GetString(Message.Data) +
-                        "\" from " + Message.Sender.ToString());
-                });
         }
     }
 }
