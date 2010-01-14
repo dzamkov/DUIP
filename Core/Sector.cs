@@ -6,6 +6,70 @@ using System.Text;
 namespace DUIP.Core
 {
     /// <summary>
+    /// Represents a long distance across sectors. The units, given in integers
+    /// are the amount of sectors to the right and down the grid.
+    /// </summary>
+    public struct LVector
+    {
+        public int Right;
+        public int Down;
+
+        public static LVector operator +(LVector A, LVector B)
+        {
+            return new LVector { Down = A.Down + B.Down, Right = A.Right + B.Right };
+        }
+
+        public static LVector operator -(LVector A, LVector B)
+        {
+            return new LVector { Down = A.Down - B.Down, Right = A.Right - B.Right };
+        }
+    }
+
+    /// <summary>
+    /// Represents a precise distance across sectors. The units are the amount of
+    /// sectors to the right and down the grid. Units may be fractional and cover
+    /// a part of a sector. When used within a sector, (0,0) points to the top-left
+    /// corner of the sector and (1,1) points to the bottom-left corner.
+    /// </summary>
+    public struct SVector
+    {
+        public double Right;
+        public double Down;
+
+        /// <summary>
+        /// Converts the SVector to an LVector by removing units within a sector.
+        /// </summary>
+        /// <returns>A less-precise LVector representation of this vector.</returns>
+        public LVector ToLVector()
+        {
+            LVector lv = new LVector();
+            lv.Down = (int)(this.Down);
+            lv.Right = (int)(this.Right);
+            return lv;
+        }
+
+        public static SVector operator +(SVector A, SVector B)
+        {
+            return new SVector { Down = A.Down + B.Down, Right = A.Right + B.Right };
+        }
+
+        public static SVector operator -(SVector A, SVector B)
+        {
+            return new SVector { Down = A.Down - B.Down, Right = A.Right - B.Right };
+        }
+
+        public static SVector operator +(SVector A, LVector B)
+        {
+            return new SVector { Down = A.Down + (double)B.Down, Right = A.Right + (double)B.Right };
+        }
+
+        public static SVector operator -(SVector A, LVector B)
+        {
+            return new SVector { Down = A.Down - (double)B.Down, Right = A.Right - (double)B.Right };
+        }
+    }
+
+    /// <summary>
     /// Represents a location within a world in terms of sectors.
     /// </summary>
     public struct Location
@@ -16,144 +80,127 @@ namespace DUIP.Core
         public Sector Sector;
 
         /// <summary>
-        /// X offset from the top-left corner of the sector from
-        /// 0.0 to 1.0.
+        /// Offset from the sector.
         /// </summary>
-        public double OffsetX;
+        public SVector Offset;
 
         /// <summary>
-        /// Y offset from the top-left corner of the sector from
-        /// 0.0 to 1.0.
+        /// Brings the sector down to one of its children without changing the point.
         /// </summary>
-        public double OffsetY;
-
-        /// <summary>
-        /// Brings the location up to the parent sector without changing
-        /// the point.
-        /// </summary>
-        public void UpSector()
+        public void Down()
         {
-            int sc = this.Sector.ChildSector;
-            this.OffsetX /= 2.0;
-            this.OffsetY /= 2.0;
-            if (sc % 2 >= 1) this.OffsetX += 0.5;
-            if (sc % 4 >= 2) this.OffsetY += 0.5;
-            this.Sector = this.Sector.Parent;
+            LVector size = this.Sector.Size;
+            this.Offset.Down *= (double)size.Down;
+            this.Offset.Right *= (double)size.Right;
+            LVector child = this.Offset.ToLVector();
+            this.Sector = this.Sector.GetChild(child);
+            this.Offset -= child;
         }
 
         /// <summary>
-        /// Brings the location down to a child sector without changing
-        /// the point.
+        /// Brings the sector up to its parent without changing the point.
         /// </summary>
-        public void DownSector()
+        public void Up()
         {
-            int sc = 0;
-            if (this.OffsetX >= 0.5) { sc += 1; this.OffsetX -= 0.5; }
-            if (this.OffsetY >= 0.5) { sc += 2; this.OffsetY -= 0.5; }
-            this.Sector = this.Sector.Children[sc];
+            LVector size = this.Sector.Size;
+            LVector child = this.Sector.ChildRelation;
+            this.Offset += child;
+            this.Sector = this.Sector.Parent;
+            this.Offset.Down /= (double)size.Down;
+            this.Offset.Right /= (double)size.Right;
         }
 
         /// <summary>
         /// Brings to the correct same-level sector that can contain this
         /// location.
         /// </summary>
-        /// <returns>If the parent sector was changed.</returns>
-        public bool Normalize()
+        public void Normalize()
         {
-            Sector[] borders = this.Sector.Borders;
-            if (this.OffsetY <= 0.0)
+            LVector m = this.Offset.ToLVector();
+            if (m.Down != 0 && m.Right != 0)
             {
-                this.OffsetY += 1.0;
-                this.Sector = borders[0];
-                return true;
+                SVector r = this.Offset - m;
+                this.Sector = this.Sector.GetRelation(m);
+                this.Offset = r;
             }
-            if (this.OffsetX > 1.0)
-            {
-                this.OffsetX -= 1.0;
-                this.Sector = borders[1];
-                return true;
-            }
-            if (this.OffsetY > 1.0)
-            {
-                this.OffsetY -= 1.0;
-                this.Sector = borders[2];
-                return true;
-            }
-            if (this.OffsetX <= 0.0)
-            {
-                this.OffsetX += 1.0;
-                this.Sector = borders[3];
-                return true;
-            }
-            return false;
         }
     }
 
     /// <summary>
-    /// A square block of spsace that can be subdivided into more sectors.
+    /// A square block of space that can be subdivided into more sectors.
     /// </summary>
     public abstract class Sector
     {
         /// <summary>
-        /// Gets the set of child sectors for this sector. Child sectors have
-        /// half the width and length of their parents and are arranged with
-        /// child 0 in the top left corner, child 1 in the top right, child
-        /// 2 in the bottom left and child 3 in the bottom right.
+        /// Gets a child sector of this sector.
         /// </summary>
-        public abstract Sector[] Children { get; }
+        /// <param name="Child">The vector that specifies the child to
+        /// get. This vector is in relation to the child at the top-left corner
+        /// of this sector.</param>
+        /// <returns>The specified child sector. Cannot be null.</returns>
+        public abstract Sector GetChild(LVector Child);
 
         /// <summary>
-        /// Gets the parent sector that has this as a child.
+        /// Gets a sector in relation to this sector.
         /// </summary>
-        public abstract Sector Parent { get; }
-
-        /// <summary>
-        /// Gets the index where this sector can be found in its parent such that
-        /// Parent.Children[ChildSector] == this.
-        /// </summary>
-        public virtual int ChildSector
+        /// <param name="Vector">The vector from this sector to search.</param>
+        /// <returns>The sector at the specified relation from this sector. Cannot be null.</returns>
+        public virtual Sector GetRelation(LVector Vector)
         {
-            get
+            LVector size = this.Size;
+            Sector parent = this.GetParent(new LVector
             {
-                Sector[] children = this.Parent.Children;
-                for (int t = 0; t < 4; t++)
-                {
-                    if (children[t] == this)
-                    {
-                        return t;
-                    }
-                }
-                throw new Exception("Shouldn't Happen");
+                Down = Math.Max(Math.Min(-Vector.Down, size.Down - 1), 0),
+                Right = Math.Max(Math.Min(-Vector.Right, size.Right - 1), 0)
+            });
+            LVector cr = this.ChildRelation;
+            LVector diff = cr + Vector;
+
+            if (diff.Down >= 0 && diff.Down < size.Down &&
+                diff.Right >= 0 && diff.Right < size.Right)
+            {
+                // Relation is within the parent sector
+                return parent.GetChild(diff);
+            }
+            else
+            {
+                LVector ldiff = new LVector { Right = diff.Right % size.Right, Down = diff.Down % size.Down };
+                LVector sdiff = diff - ldiff; sdiff.Down /= size.Down; sdiff.Right /= size.Right;
+                return parent.GetRelation(sdiff).GetChild(ldiff);
             }
         }
 
         /// <summary>
-        /// Gets the borders for this sector. The borders are arranged clockwise with
-        /// border 0 at the top.
+        /// Gets the parent of this sector. If the parent is not yet created, this will
+        /// suggest where to create the parent.
         /// </summary>
-        public virtual Sector[] Borders
+        /// <param name="ChildRelation">The relation this will have to its parent if the parent
+        /// is not yet created. This is only a suggestion.</param>
+        /// <returns>The parent of this sector. Cannot be null.</returns>
+        public abstract Sector GetParent(LVector ChildRelation);
+
+        /// <summary>
+        /// Gets the parent sector that has this as a child. Cannot be null.
+        /// </summary>
+        public virtual Sector Parent
         {
             get
             {
-                Sector par = this.Parent;
-                Sector[] bords = new Sector[4];
-                int sc = this.ChildSector;
-                for (int t = 0; t < 4; t++)
-                {
-                    int m = ((t % 2) * 2) + 2;
-                    if ((sc % m >= (m / 2)) ^ (t == 1 || t == 2))
-                    {
-                        Sector ot = par.Borders[t];
-                        bords[t] = ot.Children[(sc + 2) % 4];
-                    }
-                    else
-                    {
-                        bords[t] = par.Children[(sc + 1) % 4];
-                    }
-                }
-                return bords;
+                return this.GetParent(new LVector());
             }
         }
+
+        /// <summary>
+        /// Gets the amount of deminsions of the child sectors in this sector. Down specifies the amount
+        /// of rows of sectors and Up specifies the amount of coloumns of sectors. All sectors in the grid
+        /// must have the same size.
+        /// </summary>
+        public abstract LVector Size { get; }
+
+        /// <summary>
+        /// Gets a vector such that this.Parent.GetChild(this.ChildRelation) == this.
+        /// </summary>
+        public abstract LVector ChildRelation { get; }
 
         /// <summary>
         /// Gets the location at the center of this sector.
@@ -162,7 +209,7 @@ namespace DUIP.Core
         {
             get
             {
-                return new Location() { Sector = this, OffsetX = 0.5, OffsetY = 0.5 };
+                return new Location() { Sector = this, Offset = { Right = 0.5, Down = 0.5 } };
             }
         }
     }

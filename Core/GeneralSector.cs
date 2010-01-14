@@ -14,65 +14,58 @@ namespace DUIP.Core
         /// <summary>
         /// Creates a blank unfilled general sector.
         /// </summary>
-        public GeneralSector()
+        /// <param name="Size">The size of all units in the grid.</param>
+        public GeneralSector(LVector Size)
         {
-            this._ChildSector = 0;
+            this._Size = Size;
+            this._Children = new GeneralSector[this._Size.Right, this._Size.Down];
         }
 
-        public override Sector[] Children
+        public override Sector GetChild(LVector Child)
         {
-            get
+            GeneralSector child = this._Children[Child.Right, Child.Down];
+            if (child == null)
             {
-                if (this._Children == null)
-                {
-                    this._Children = new GeneralSector[4];
-                    for (int t = 0; t < 4; t++)
-                    {
-                        this._Children[t] = new GeneralSector();
-                        this._Children[t]._ChildSector = t;
-                        this._Children[t]._Parent = this;
-                    }
-                }
-                return this._Children;
+                child = this._Children[Child.Right, Child.Down] = new GeneralSector(this._Size);
+                child._ChildRelation = Child;
             }
+            return child;
         }
 
-        public override Sector Parent
+        public override Sector GetParent(LVector ChildRelation)
+        {
+            if (this._Parent == null)
+            {
+                this._Parent = new GeneralSector(this._Size);
+                this._ChildRelation = ChildRelation;
+                this._Parent._Children[ChildRelation.Right, ChildRelation.Down] = this;
+            }
+            return this._Parent;
+        }
+
+        public override LVector ChildRelation
         {
             get
             {
                 if (this._Parent == null)
                 {
-                    this._Parent = new GeneralSector();
-                    this._Parent._ChildSector = this._ChildSector + 1;
+                    this.GetParent(new LVector());
                 }
-                return this._Parent;
+                return this._ChildRelation;
             }
         }
 
-        public override Sector[] Borders
+        public override LVector Size
         {
             get
             {
-                if (this._BorderCache == null)
-                {
-                    this._BorderCache = (GeneralSector[])base.Borders;
-                }
-                return this._BorderCache;
+                return this._Size;
             }
         }
 
-        public override int ChildSector
-        {
-            get
-            {
-                return this._ChildSector;
-            }
-        }
-
-        private GeneralSector[] _Children;
-        private GeneralSector[] _BorderCache;
+        private LVector _Size;
+        private GeneralSector[,] _Children;
         private GeneralSector _Parent;
-        private int _ChildSector;
+        private LVector _ChildRelation;
     }
 }

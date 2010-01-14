@@ -12,9 +12,9 @@ namespace DUIP.Net
     public class Message
     {
         /// <summary>
-        /// IP that sent this message.
+        /// IP and port that sent this message.
         /// </summary>
-        public IPAddress Sender;
+        public IPEndPoint From;
 
         /// <summary>
         /// Connection that received this message.
@@ -42,7 +42,8 @@ namespace DUIP.Net
         /// Sends data over this connection.
         /// </summary>
         /// <param name="Data">The data to send.</param>
-        void Send(byte[] Data);
+        /// <param name="Target">The target ip and port to send to.</param>
+        void Send(byte[] Data,IPEndPoint Target);
     }
 
     /// <summary>

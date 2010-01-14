@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
+using OpenTK;
+
 namespace DUIP
 {
     static class Program
@@ -15,7 +17,9 @@ namespace DUIP
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+
+            new Visual.Window(DisplayDevice.Default).Run(60.0);
+
         }
     }
 }

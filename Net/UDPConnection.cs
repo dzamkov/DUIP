@@ -22,21 +22,9 @@ namespace DUIP.Net
             this._BeginListen();
         }
 
-        /// <summary>
-        /// Connects to the specified port of the machine at the specified address.
-        /// </summary>
-        /// <param name="Other">The ip address to connect to.</param>
-        /// <param name="Port">The port of the target machine to connect to.</param>
-        public UDPConnection(IPAddress Other, int Port)
+        public void Send(byte[] Data, IPEndPoint To)
         {
-            this._Conn = new UdpClient();
-            this._Conn.Connect(Other, Port);
-            this._BeginListen();
-        }
-
-        public void Send(byte[] Data)
-        {
-            this._Conn.Send(Data, Data.Length);
+            this._Conn.Send(Data, Data.Length, To);
         }
 
         public event ReceiveMessageHandler ReceiveMessage;
@@ -51,7 +39,7 @@ namespace DUIP.Net
             byte[] data = this._Conn.EndReceive(AR, ref end);
             Message me = new Message();
             me.Connection = this;
-            me.Sender = end.Address;
+            me.From = end;
             me.Data = data;
             this._BeginListen();
             if (this.ReceiveMessage != null)

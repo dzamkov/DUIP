@@ -40,8 +40,8 @@ namespace DUIP.Visual
         /// <param name="Y">The y amount to pan.</param>
         public void Pan(double X, double Y)
         {
-            this.Location.OffsetX += X / this.ZoomLevel;
-            this.Location.OffsetY += Y / this.ZoomLevel;
+            this.Location.Offset.Right += X / this.ZoomLevel;
+            this.Location.Offset.Down += Y / this.ZoomLevel;
             this.Normalize();
         }
 
@@ -50,17 +50,15 @@ namespace DUIP.Visual
         /// </summary>
         public void Normalize()
         {
-            while (this.Location.Normalize())
-            {
-            }
+            this.Location.Normalize();
             while (this.ZoomLevel <= 0.5)
             {
-                this.Location.UpSector();
+                this.Location.Up();
                 this.ZoomLevel *= 2.0;
             }
             while (this.ZoomLevel > 2.0)
             {
-                this.Location.DownSector();
+                this.Location.Down();
                 this.ZoomLevel /= 2.0;
             }
         }
