@@ -76,12 +76,12 @@ namespace DUIP.Visual
             Sector center = View.Location.Sector;
             LVector ltl = initb.TopLeft.ToLVector();
             LVector lbr = initb.BottomRight.ToLVector();
-            for (int x = ltl.Right - 1; x <= lbr.Right + 1; x++)
+            for (int x = ltl.Right; x <= lbr.Right; x++)
             {
-                for (int y = ltl.Down - 1; y <= lbr.Down + 1; y++)
+                for (int y = ltl.Down; y <= lbr.Down; y++)
                 {
                     LVector rel = new LVector(x, y);
-                    SectorTransform trans = SectorTransform.Relation(new SVector((double)rel.Down, (double)rel.Right));
+                    SectorTransform trans = SectorTransform.Relation(new SVector((double)rel.Right, (double)rel.Down));
                     Sector sec = center.GetRelation(rel);
                     this._DrawSector(sec, trans, initb);
                 }
@@ -103,7 +103,7 @@ namespace DUIP.Visual
         public Matrix4d GetProjectionMatrix(View View, double AspectRatio)
         {
             Matrix4d mat = Matrix4d.Identity;
-            mat *= Matrix4d.CreateTranslation(-View.Location.Offset.Down, -View.Location.Offset.Right, 0.0);
+            mat *= Matrix4d.CreateTranslation(-View.Location.Offset.Right, -View.Location.Offset.Down, 0.0);
             mat *= Matrix4d.Scale(View.ZoomLevel, View.ZoomLevel, 1.0);
             mat *= Matrix4d.Scale(0.5, -0.5, 1.0);
             if (AspectRatio > 1.0)
@@ -127,11 +127,8 @@ namespace DUIP.Visual
         {
             SVector tl = new SVector(0.0, 0.0); Transform.Transform(ref tl);
             SVector br = new SVector(1.0, 1.0); Transform.Transform(ref br);
-            double area = (br.Down - tl.Down) * (br.Right - tl.Right);
-            double boundsarea = (Bounds.BottomRight.Down - Bounds.TopLeft.Down) * (Bounds.BottomRight.Right - Bounds.TopLeft.Right);
 
-            // Randomish
-            if (area < boundsarea / 100)
+            if (true)
             {
                 // Draw
                 GL.Begin(BeginMode.Quads);

@@ -5,6 +5,7 @@ using System.Text;
 
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Input;
 using GraphicsMode = OpenTK.Graphics.GraphicsMode;
 
 namespace DUIP.Visual
@@ -28,11 +29,7 @@ namespace DUIP.Visual
 
         protected override void OnKeyPress(KeyPressEventArgs e)
         {
-            // Exit on q
-            if (e.KeyChar == 'q')
-            {
-                this.Close();
-            }
+
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -43,8 +40,18 @@ namespace DUIP.Visual
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            this._View.Pan(0.01, 0.01);
-            this._View.Zoom(0.99);
+            //Input
+            if (this.Keyboard[Key.Escape])
+            {
+                this.Close();
+            }
+            if (this.Keyboard[Key.Q]) this._View.Zoom(0.99);
+            if (this.Keyboard[Key.E]) this._View.Zoom(1.01);
+            if (this.Keyboard[Key.A]) this._View.Pan(-0.01, 0.0);
+            if (this.Keyboard[Key.D]) this._View.Pan(0.01, 0.0);
+            if (this.Keyboard[Key.W]) this._View.Pan(0.0, -0.01);
+            if (this.Keyboard[Key.S]) this._View.Pan(0.0, 0.01);
+            this._View.Normalize();
         }
 
         private View _View;

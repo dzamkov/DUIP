@@ -202,7 +202,7 @@ namespace DUIP.Core
         public void Normalize()
         {
             LVector m = this.Offset.ToLVector();
-            if (m.Down != 0 && m.Right != 0)
+            if (m.Down != 0 || m.Right != 0)
             {
                 SVector r = this.Offset - m;
                 this.Sector = this.Sector.GetRelation(m);
