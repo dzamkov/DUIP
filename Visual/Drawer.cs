@@ -6,8 +6,33 @@ using System.Text;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 
+using DUIP.Core;
+
 namespace DUIP.Visual
 {
+
+    /// <summary>
+    /// A constrained rectangular area.
+    /// </summary>
+    public struct Bounds
+    {
+        public Bounds(SVector TopLeft, SVector BottomRight)
+        {
+            this.TopLeft = TopLeft;
+            this.BottomRight = BottomRight;
+        }
+
+        /// <summary>
+        /// Top left point of this bounds.
+        /// </summary>
+        public SVector TopLeft;
+
+        /// <summary>
+        /// Bottom right point of this bounds.
+        /// </summary>
+        public SVector BottomRight;
+    }
+
     /// <summary>
     /// Class used to draw a world with the view specified.
     /// </summary>
@@ -33,25 +58,34 @@ namespace DUIP.Visual
             GL.MatrixMode(MatrixMode.Projection);
             GL.PushMatrix();
             Matrix4d proj = this.GetProjectionMatrix(View, AspectRatio);
+            Matrix4d iproj = Matrix4d.Invert(proj);
             GL.LoadMatrix(ref proj);
             
 
-            // Set view projection
+            // Set model transform
             GL.MatrixMode(MatrixMode.Modelview);
             GL.PushMatrix();
             GL.LoadIdentity();
 
-            // Draw
-            GL.Begin(BeginMode.Quads);
-            GL.Color4(255.0, 255.0, 255.0, 255.0);
-            GL.Vertex3(0.0, 0.0, -1.0);
-            GL.Color4(255.0, 255.0, 255.0, 255.0);
-            GL.Vertex3(1.0, 0.0, -1.0);
-            GL.Color4(255.0, 0.0, 255.0, 255.0);
-            GL.Vertex3(1.0, 1.0, -1.0);
-            GL.Color4(255.0, 255.0, 255.0, 255.0);
-            GL.Vertex3(0.0, 1.0, -1.0);
-            GL.End();
+            // Initial bounds
+            Vector3d tl = new Vector3d(-1.0, 1.0, 0.0); Vector3d.Transform(ref tl, ref iproj, out tl);
+            Vector3d br = new Vector3d(1.0, -1.0, 0.0); Vector3d.Transform(ref br, ref iproj, out br);
+            Bounds initb = new Bounds(new SVector(tl.X, tl.Y), new SVector(br.X, br.Y));
+
+            // Sectors
+            Sector center = View.Location.Sector;
+            LVector ltl = initb.TopLeft.ToLVector();
+            LVector lbr = initb.BottomRight.ToLVector();
+            for (int x = ltl.Right - 1; x <= lbr.Right + 1; x++)
+            {
+                for (int y = ltl.Down - 1; y <= lbr.Down + 1; y++)
+                {
+                    LVector rel = new LVector(x, y);
+                    SectorTransform trans = SectorTransform.Relation(new SVector((double)rel.Down, (double)rel.Right));
+                    Sector sec = center.GetRelation(rel);
+                    this._DrawSector(sec, trans, initb);
+                }
+            }
 
             // Restore
             GL.PopMatrix();
@@ -81,6 +115,52 @@ namespace DUIP.Visual
                 mat *= Matrix4d.CreateOrthographic(1.0 * AspectRatio, 1.0, -1.0, 1.0);
             }
             return mat;
+        }
+
+        /// <summary>
+        /// Draws the specified sector with the transform specified and the screen bounds for clipping.
+        /// </summary>
+        /// <param name="Sector">The sector to draw.</param>
+        /// <param name="Transform">The transform from the view sector and bounds to the sector.</param>
+        /// <param name="Bounds"></param>
+        public void _DrawSector(Sector Sector, SectorTransform Transform, Bounds Bounds)
+        {
+            SVector tl = new SVector(0.0, 0.0); Transform.Transform(ref tl);
+            SVector br = new SVector(1.0, 1.0); Transform.Transform(ref br);
+            double area = (br.Down - tl.Down) * (br.Right - tl.Right);
+            double boundsarea = (Bounds.BottomRight.Down - Bounds.TopLeft.Down) * (Bounds.BottomRight.Right - Bounds.TopLeft.Right);
+
+            // Randomish
+            if (area < boundsarea / 100)
+            {
+                // Draw
+                GL.Begin(BeginMode.Quads);
+                GL.Color4(255.0, 255.0, 255.0, 255.0);
+                GL.Vertex3(tl.Right, tl.Down, -1.0);
+                GL.Color4(255.0, 255.0, 255.0, 255.0);
+                GL.Vertex3(br.Right, tl.Down, -1.0);
+                GL.Color4(255.0, 0.0, 255.0, 255.0);
+                GL.Vertex3(br.Right, br.Down, -1.0);
+                GL.Color4(255.0, 255.0, 255.0, 255.0);
+                GL.Vertex3(tl.Right, br.Down, -1.0);
+                GL.End();
+            }
+            else
+            {
+                // Subdivide
+                for (int x = 0; x < Sector.Size.Right; x++)
+                {
+                    for (int y = 0; y < Sector.Size.Down; y++)
+                    {
+                        LVector rel = new LVector(x, y);
+                        SectorTransform trans = SectorTransform.Child(Sector.Size, rel);
+                        this._DrawSector(
+                            Sector.GetChild(rel),
+                            Transform.Append(ref trans),
+                            Bounds);
+                    }
+                }
+            }
         }
     }
 }

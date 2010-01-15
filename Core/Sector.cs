@@ -11,6 +11,12 @@ namespace DUIP.Core
     /// </summary>
     public struct LVector
     {
+        public LVector(int Right, int Down)
+        {
+            this.Right = Right;
+            this.Down = Down;
+        }
+
         public int Right;
         public int Down;
 
@@ -33,6 +39,12 @@ namespace DUIP.Core
     /// </summary>
     public struct SVector
     {
+        public SVector(double Right, double Down)
+        {
+            this.Right = Right;
+            this.Down = Down;
+        }
+
         public double Right;
         public double Down;
 
@@ -43,8 +55,8 @@ namespace DUIP.Core
         public LVector ToLVector()
         {
             LVector lv = new LVector();
-            lv.Down = (int)(this.Down);
-            lv.Right = (int)(this.Right);
+            lv.Down = (int)(Math.Floor(this.Down));
+            lv.Right = (int)(Math.Floor(this.Right));
             return lv;
         }
 
@@ -66,6 +78,79 @@ namespace DUIP.Core
         public static SVector operator -(SVector A, LVector B)
         {
             return new SVector { Down = A.Down - (double)B.Down, Right = A.Right - (double)B.Right };
+        }
+    }
+
+    /// <summary>
+    /// Represents the transform between a set of sector.
+    /// </summary>
+    public struct SectorTransform
+    {
+        public SectorTransform(SVector Offset, SVector Scale)
+        {
+            this.Offset = Offset;
+            this.Scale = Scale;
+        }
+
+        /// <summary>
+        /// The offset in terms of location of the transform.
+        /// </summary>
+        public SVector Offset;
+
+        /// <summary>
+        /// The difference in scale of the transform.
+        /// </summary>
+        public SVector Scale;
+
+        /// <summary>
+        /// Appends the specified transform to this transform. For example if A
+        /// specifies the transform from sector X to sector Y, and B specifies the
+        /// transform from Y to Z, A.Append(B) specifies the transform from X to Z.
+        /// </summary>
+        /// <param name="Transform">The transform to append.</param>
+        /// <returns>A sector transform that describes a combination of the specified transforms.</returns>
+        public SectorTransform Append(ref SectorTransform Transform)
+        {
+            SectorTransform st = new SectorTransform();
+            st.Offset = this.Offset + new SVector(this.Scale.Right * Transform.Offset.Right, this.Scale.Down * Transform.Offset.Down);
+            st.Scale = new SVector(this.Scale.Right * Transform.Scale.Right, this.Scale.Down * Transform.Scale.Down);
+            return st;
+        }
+
+        /// <summary>
+        /// Creates a sector transform that specifies a relation between sectors like the
+        /// one created by GetRelation.
+        /// </summary>
+        /// <param name="Offset">Offset in sector units.</param>
+        public static SectorTransform Relation(SVector Offset)
+        {
+            return new SectorTransform(Offset, new SVector(1, 1));
+        }
+
+        /// <summary>
+        /// Creates a sector transform to get to a child sector.
+        /// </summary>
+        /// <param name="Size">The size of the sectors in the grid.</param>
+        /// <param name="Child">The location of the child.</param>
+        public static SectorTransform Child(LVector Size, LVector Child)
+        {
+            return new SectorTransform(
+                new SVector(
+                    (double)Child.Right / (double)Size.Right,
+                    (double)Child.Down / (double)Size.Down
+                ), new SVector(
+                    1.0 / (double)Size.Right,
+                    1.0 / (double)Size.Down));
+
+        }
+
+        /// <summary>
+        /// Transforms a vector with this transform.
+        /// </summary>
+        /// <param name="Vector">The vector to transform.</param>
+        public void Transform(ref SVector Vector)
+        {
+            Vector = this.Offset + new SVector(Vector.Right * this.Scale.Right, Vector.Down * this.Scale.Down);
         }
     }
 
@@ -164,7 +249,9 @@ namespace DUIP.Core
             }
             else
             {
-                LVector ldiff = new LVector { Right = diff.Right % size.Right, Down = diff.Down % size.Down };
+                int rm = diff.Right % size.Right; rm = rm < 0 ? rm + size.Right : rm;
+                int dm = diff.Down % size.Down; dm = dm < 0 ? dm + size.Down : dm;
+                LVector ldiff = new LVector(rm, dm);
                 LVector sdiff = diff - ldiff; sdiff.Down /= size.Down; sdiff.Right /= size.Right;
                 return parent.GetRelation(sdiff).GetChild(ldiff);
             }

@@ -15,10 +15,11 @@ namespace DUIP.Visual
     public class Window : GameWindow
     {
         public Window(DisplayDevice Device)
-            : base(1440, 900, GraphicsMode.Default, "DUIP",
-                GameWindowFlags.Fullscreen, Device)
+            : base(640, 480, GraphicsMode.Default, "DUIP",
+                GameWindowFlags.Default, Device)
         {
             this._Drawer = new Drawer();
+            this.WindowBorder = WindowBorder.Fixed;
 
             this._View = new View();
             this._View.Location = new Core.GeneralSector(new Core.LVector { Down = 2, Right = 2 }).Center;
@@ -42,6 +43,7 @@ namespace DUIP.Visual
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
+            this._View.Pan(0.01, 0.01);
             this._View.Zoom(0.99);
         }
 
