@@ -128,36 +128,22 @@ namespace DUIP.Visual
             SVector tl = new SVector(0.0, 0.0); Transform.Transform(ref tl);
             SVector br = new SVector(1.0, 1.0); Transform.Transform(ref br);
 
-            if (true)
-            {
-                // Draw
-                GL.Begin(BeginMode.Quads);
-                GL.Color4(255.0, 255.0, 255.0, 255.0);
-                GL.Vertex3(tl.Right, tl.Down, -1.0);
-                GL.Color4(255.0, 255.0, 255.0, 255.0);
-                GL.Vertex3(br.Right, tl.Down, -1.0);
-                GL.Color4(255.0, 0.0, 255.0, 255.0);
-                GL.Vertex3(br.Right, br.Down, -1.0);
-                GL.Color4(255.0, 255.0, 255.0, 255.0);
-                GL.Vertex3(tl.Right, br.Down, -1.0);
-                GL.End();
-            }
-            else
-            {
-                // Subdivide
-                for (int x = 0; x < Sector.Size.Right; x++)
-                {
-                    for (int y = 0; y < Sector.Size.Down; y++)
-                    {
-                        LVector rel = new LVector(x, y);
-                        SectorTransform trans = SectorTransform.Child(Sector.Size, rel);
-                        this._DrawSector(
-                            Sector.GetChild(rel),
-                            Transform.Append(ref trans),
-                            Bounds);
-                    }
-                }
-            }
+            Context ct = new Context(Transform, new Bounds(new SVector(0.0, 0.0), new SVector(1.0, 1.0)));
+            Brush brush = ct.CreateSolidBrush(new Color(255, 255, 255, 255));
+            ComplexPolygon poly = new ComplexPolygon();
+            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.2, 0.1) }));
+            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.5, 0.4) }));
+            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.8, 0.1) }));
+            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.9, 0.2) }));
+            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.6, 0.5) }));
+            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.9, 0.8) }));
+            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.8, 0.9) }));
+            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.5, 0.6) }));
+            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.2, 0.9) }));
+            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.1, 0.8) }));
+            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.4, 0.5) }));
+            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.1, 0.2) }));
+            ct.Draw(poly, null, brush);
         }
     }
 }
