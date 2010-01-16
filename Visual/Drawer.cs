@@ -14,7 +14,7 @@ namespace DUIP.Visual
     /// <summary>
     /// A constrained rectangular area.
     /// </summary>
-    public struct Bounds
+    internal struct Bounds
     {
         public Bounds(SVector TopLeft, SVector BottomRight)
         {
@@ -36,7 +36,7 @@ namespace DUIP.Visual
     /// <summary>
     /// Class used to draw a world with the view specified.
     /// </summary>
-    public class Drawer
+    internal class Drawer
     {
         public Drawer()
         {
@@ -52,7 +52,7 @@ namespace DUIP.Visual
         {
             // Clear
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            GL.ClearColor(0, 0, 0, 255);
+            GL.ClearColor(255, 255, 255, 255);
 
             // Set ortho projection.
             GL.MatrixMode(MatrixMode.Projection);
@@ -118,6 +118,19 @@ namespace DUIP.Visual
         }
 
         /// <summary>
+        /// Creates a matrix for a sector transform.
+        /// </summary>
+        /// <param name="SecTrans">The sector transform to use.</param>
+        /// <returns>The transformation matrix for the sector transform.</returns>
+        public Matrix4d GetSectorTransform(SectorTransform Transform)
+        {
+            Matrix4d mat = Matrix4d.Identity;
+            mat *= Matrix4d.CreateTranslation(Transform.Offset.Right, Transform.Offset.Down, 0.0);
+            mat *= Matrix4d.Scale(Transform.Scale.Right, Transform.Scale.Down, 0.0);
+            return mat;
+        }
+
+        /// <summary>
         /// Draws the specified sector with the transform specified and the screen bounds for clipping.
         /// </summary>
         /// <param name="Sector">The sector to draw.</param>
@@ -128,21 +141,24 @@ namespace DUIP.Visual
             SVector tl = new SVector(0.0, 0.0); Transform.Transform(ref tl);
             SVector br = new SVector(1.0, 1.0); Transform.Transform(ref br);
 
-            Context ct = new Context(Transform, new Bounds(new SVector(0.0, 0.0), new SVector(1.0, 1.0)));
-            Brush brush = ct.CreateSolidBrush(new Color(255, 255, 255, 255));
+            Matrix4d trans = this.GetSectorTransform(Transform);
+
+            Context ct = new Context(new Grid(0.0, 0.0, 1.0, 1.0), trans);
+            Brush brush = ct.CreateSolidBrush(new Color(0, 0, 0, 255));
             ComplexPolygon poly = new ComplexPolygon();
-            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.2, 0.1) }));
-            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.5, 0.4) }));
-            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.8, 0.1) }));
-            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.9, 0.2) }));
-            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.6, 0.5) }));
-            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.9, 0.8) }));
-            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.8, 0.9) }));
-            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.5, 0.6) }));
-            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.2, 0.9) }));
-            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.1, 0.8) }));
-            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.4, 0.5) }));
-            poly.PushPoint(new PolygonPoint(new Point { _Pos = new SVector(0.1, 0.2) }));
+            Grid maingrid = ct.Grid;
+            poly.PushPoint(maingrid.GetRelativePoint(0.2, 0.1));
+            poly.PushPoint(maingrid.GetRelativePoint(0.5, 0.4));
+            poly.PushPoint(maingrid.GetRelativePoint(0.8, 0.1));
+            poly.PushPoint(maingrid.GetRelativePoint(0.9, 0.2));
+            poly.PushPoint(maingrid.GetRelativePoint(0.6, 0.5));
+            poly.PushPoint(maingrid.GetRelativePoint(0.9, 0.8));
+            poly.PushPoint(maingrid.GetRelativePoint(0.8, 0.9));
+            poly.PushPoint(maingrid.GetRelativePoint(0.5, 0.6));
+            poly.PushPoint(maingrid.GetRelativePoint(0.2, 0.9));
+            poly.PushPoint(maingrid.GetRelativePoint(0.1, 0.8));
+            poly.PushPoint(maingrid.GetRelativePoint(0.4, 0.5));
+            poly.PushPoint(maingrid.GetRelativePoint(0.1, 0.2));
             ct.Draw(poly, null, brush);
         }
     }

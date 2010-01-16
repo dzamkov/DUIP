@@ -253,9 +253,9 @@ namespace DUIP.Visual
         {
             get
             {
-                SVector a = this._Points[0].Vector;
-                SVector b = this._Points[1].Vector;
-                SVector c = this._Points[2].Vector;
+                SVector a = this._Points[0]._Vector;
+                SVector b = this._Points[1]._Vector;
+                SVector c = this._Points[2]._Vector;
                 SVector ba = b - a;
                 SVector ca = c - a;
                 if (ba.Right * ca.Down > ba.Down * ca.Right)
@@ -307,6 +307,15 @@ namespace DUIP.Visual
         public void PushPoint(PolygonPoint Point)
         {
             this._Points.AddLast(Point);
+        }
+
+        /// <summary>
+        /// Appends a point as a line segment.
+        /// </summary>
+        /// <param name="Point">The point to add.</param>
+        public void PushPoint(Point Point)
+        {
+            this.PushPoint(new PolygonPoint(Point));
         }
 
         LinkedList<PolygonPoint> _Points;

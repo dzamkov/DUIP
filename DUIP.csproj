@@ -14,7 +14,6 @@
     <FileAlignment>512</FileAlignment>
     <TargetZone>LocalIntranet</TargetZone>
     <GenerateManifests>false</GenerateManifests>
-    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -93,7 +92,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <None Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -106,6 +104,7 @@
     <Compile Include="Visual\Context.cs" />
     <Compile Include="Visual\Drawer.cs" />
     <Compile Include="Visual\Polygon.cs" />
+    <Compile Include="Visual\Section.cs" />
     <Compile Include="Visual\View.cs" />
     <Compile Include="Visual\Window.cs" />
   </ItemGroup>

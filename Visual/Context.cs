@@ -7,6 +7,7 @@ using DUIP.Core;
 
 using OpenTK.Graphics.OpenGL;
 using Color4 = OpenTK.Graphics.Color4;
+using Matrix4d = OpenTK.Matrix4d;
 
 namespace DUIP.Visual
 {
@@ -67,19 +68,114 @@ namespace DUIP.Visual
     /// </summary>
     public class Point
     {
+        internal Point(double Right, double Down)
+        {
+            this._Right = Right;
+            this._Down = Down;
+        }
+
         /// <summary>
-        /// Gets a vector representation of the point with the only requirement being that
-        /// the vector must be related to the vectors of other points in the context.
+        /// Gets the distance to the right this point is. This is given without
+        /// a context and is only useful relative to other points in the same context.
         /// </summary>
-        public SVector Vector
+        public double Right
         {
             get
             {
-                return this._Pos;
+                return this._Right;
             }
         }
 
-        internal SVector _Pos;
+        /// <summary>
+        /// Gets the distance down this point is. This is given without
+        /// a context and is only useful relative to other points in the same context.
+        /// </summary>
+        public double Down
+        {
+            get
+            {
+                return this._Down;
+            }
+        }
+
+        /// <summary>
+        /// Gets this point as an SVector.
+        /// </summary>
+        internal SVector _Vector
+        {
+            get
+            {
+                return new SVector(this._Right, this._Down);
+            }
+        }
+
+        private double _Right;
+        private double _Down;
+    }
+
+    /// <summary>
+    /// Grid for organizing points.
+    /// </summary>
+    public class Grid
+    {
+        internal Grid(double Left, double Up, double Right, double Down)
+        {
+            this._Left = Left;
+            this._Up = Up;
+            this._Right = Right;
+            this._Down = Down;
+        }
+
+        /// <summary>
+        /// Gets a point relative to this grid.
+        /// </summary>
+        /// <param name="Right">The amount to the right of the left edge of the grid to make
+        /// the point at. 0.0 will make the point on the left edge. 1.0 will make the
+        /// point at the right edge.</param>
+        /// <param name="Down">The amount down from the top edge of the grid to make the point.
+        /// 0.0 will make the point at the top edge while 1.0 will make the point at the
+        /// bottom edge.</param>
+        /// <returns>The point relative to this grid.</returns>
+        public Point GetRelativePoint(double Right, double Down)
+        {
+            double width = this._Right - this._Left;
+            double height = this._Down - this._Up;
+            return new Point(Right * width + this._Left, Down * height + this._Up);
+        }
+
+        /// <summary>
+        /// Creates a subsection grid of this grid.
+        /// </summary>
+        /// <param name="Left">The relative location of the left edge of the new grid.</param>
+        /// <param name="Up">The relative location of the top edge of the new grid.</param>
+        /// <param name="Right">The relative location of the right edge of the new grid.</param>
+        /// <param name="Down">The relative location of the bottom edge of the new grid.</param>
+        /// <returns>The specified subsection grid.</returns>
+        public Grid SubGrid(double Left, double Up, double Right, double Down)
+        {
+            double width = this._Right - this._Left;
+            double height = this._Down - this._Up;
+            return new Grid(
+                Left * width + this._Left,
+                Up * height + this._Up,
+                Right * width + this._Left,
+                Down * height + this._Up);
+        }
+
+        /// <summary>
+        /// Gets if the specified point is in this grid.
+        /// </summary>
+        /// <param name="Point">The point to check.</param>
+        /// <returns>True if the point is in this grid, false otherwise.</returns>
+        public bool InGrid(Point Point)
+        {
+            return Point.Down >= this._Up && Point.Down <= this._Down && Point.Right >= this._Left && Point.Right <= this._Right;
+        }
+
+        private double _Left;
+        private double _Up;
+        private double _Right;
+        private double _Down;
     }
 
     /// <summary>
@@ -87,10 +183,10 @@ namespace DUIP.Visual
     /// </summary>
     public class Context
     {
-        internal Context(SectorTransform Trans, Bounds PointBounds)
+        internal Context(Grid Bounds, Matrix4d Transform)
         {
-            this._Trans = Trans;
-            this._PointBounds = PointBounds;
+            this._Transform = Transform;
+            this._Bounds = Bounds;
         }
 
         /// <summary>
@@ -106,6 +202,7 @@ namespace DUIP.Visual
             Polygon simple = Polygon.Simplify(100.0);
             IEnumerable<Point> points = Polygon.PointList;
             IEnumerable<Triangle> tris = Polygon.TriangularDecomposition();
+            this._ApplyTransform();
             if (Pen != null) Pen.Draw(points, Polygon.Closed, this);
             if (Brush != null) Brush.Draw(tris, this);
         }
@@ -121,6 +218,18 @@ namespace DUIP.Visual
         }
 
         /// <summary>
+        /// Gets the grid for this context that represents the area where drawing can
+        /// be done.
+        /// </summary>
+        public Grid Grid
+        {
+            get
+            {
+                return this._Bounds;
+            }
+        }
+
+        /// <summary>
         /// Insure the point is within this context's bounds. If a points is not in the bounds,
         /// it can not be rendered.
         /// </summary>
@@ -128,40 +237,27 @@ namespace DUIP.Visual
         /// <returns>True if the point is within bounds.</returns>
         internal bool _CheckBounds(Point Point)
         {
-            if (Point._Pos.Right >= this._PointBounds.TopLeft.Right &&
-                Point._Pos.Right <= this._PointBounds.BottomRight.Right &&
-                Point._Pos.Down >= this._PointBounds.TopLeft.Down &&
-                Point._Pos.Down <= this._PointBounds.BottomRight.Down)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return this._Bounds.InGrid(Point);
         }
 
         /// <summary>
-        /// Transforms the point to a space that can be transfered to opengl.
+        /// Applies the transform of this context to opengl.
         /// </summary>
-        /// <param name="Point">The point to transform.</param>
-        /// <returns>The point in screenspace.</returns>
-        internal SVector _Transform(Point Point)
+        internal void _ApplyTransform()
         {
-            SVector vec = Point._Pos;
-            this._Trans.Transform(ref vec);
-            return vec;
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadMatrix(ref this._Transform);
         }
 
         /// <summary>
-        /// The relative bounds where points and drawings can be placed in this context.
+        /// The point bounds of this grid and the
         /// </summary>
-        private Bounds _PointBounds;
+        private Grid _Bounds;
 
         /// <summary>
-        /// Transform to use before sending the points to opengl.
+        /// The transformation the context should use.
         /// </summary>
-        private SectorTransform _Trans;
+        private Matrix4d _Transform;
     }
 
     /// <summary>
@@ -181,9 +277,8 @@ namespace DUIP.Visual
             {
                 foreach (Point p in t.PointList)
                 {
-                    SVector vec = Context._Transform(p);
                     GL.Color4(this._Color._ToColor4());
-                    GL.Vertex3(vec.Right, vec.Down, -0.1);
+                    GL.Vertex3(p.Right, p.Down, -0.1);
                 }
             }
             GL.End();
