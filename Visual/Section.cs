@@ -89,7 +89,7 @@ namespace DUIP.Visual
         {
             foreach (RelativeSector rs in this._Bounds._GetIntersectedSectors(this._Sector))
             {
-                rs.Sector._VisData.AddSection(this);
+                rs.Sector._VisData.AddSection(new SectorVisData.SectionInfo(this, rs.Reverse(this._Sector)));
             }
         }
 
@@ -100,7 +100,7 @@ namespace DUIP.Visual
         {
             foreach (RelativeSector rs in this._Bounds._GetIntersectedSectors(this._Sector))
             {
-                rs.Sector._VisData.RemoveSection(this);
+                rs.Sector._VisData.RemoveSection(new SectorVisData.SectionInfo(this, rs.Reverse(this._Sector)));
             }
         }
 
@@ -115,6 +115,15 @@ namespace DUIP.Visual
             this._Bounds = Bounds;
             this._Normalize();
             this._AddVisData();
+        }
+
+        /// <summary>
+        /// Adds this section to a sector with the full sector as its bounds.
+        /// </summary>
+        /// <param name="Sector">The sector to add the section to.</param>
+        internal void _Add(Sector Sector)
+        {
+            this._Add(Sector, new Grid(0.0, 0.0, 1.0, 1.0));
         }
 
         /// <summary>
@@ -179,7 +188,7 @@ namespace DUIP.Visual
     {
         public SectorVisData(Sector Sector)
         {
-            this._UniqueSections = new LinkedList<Section>();
+            this._UniqueSections = new LinkedList<SectionInfo>();
             this._Sector = Sector;
             this._SubSections = 0;
             foreach (Sector c in Sector.Children)
@@ -192,8 +201,8 @@ namespace DUIP.Visual
         /// Adds a unique section to this visdata. The section should have
         /// this as its owner.
         /// </summary>
-        /// <param name="Section">The section to add.</param>
-        public void AddSection(Section Section)
+        /// <param name="Section">The section to add, along with its information relative to this.</param>
+        public void AddSection(SectionInfo Section)
         {
             this._UniqueSections.AddFirst(Section);
             Sector s = this._Sector;
@@ -214,8 +223,8 @@ namespace DUIP.Visual
         /// <summary>
         /// Removes a section that was previously added to this.
         /// </summary>
-        /// <param name="Section">The section to remove.</param>
-        public void RemoveSection(Section Section)
+        /// <param name="Section">The section info to remove.</param>
+        public void RemoveSection(SectionInfo Section)
         {
             this._UniqueSections.Remove(Section);
             Sector s = this._Sector;
@@ -248,25 +257,60 @@ namespace DUIP.Visual
         /// Gets a list of all sections(front to back order) in sectors this size or bigger that
         /// affect this sector.
         /// </summary>
-        public IEnumerable<Section> Sections
+        public IEnumerable<SectionInfo> Sections
         {
             get
             {
                 if (this._Sector.BlankParent)
                 {
-                    return this._UniqueSections;
+                    return this.UniqueSections;
                 }
                 else
                 {
-                    return this._UniqueSections.Concat(this._Sector.Parent._VisData.Sections);
+                    return this.UniqueSections.Concat(this._Sector.Parent._VisData.Sections);
                 }
             }
         }
 
         /// <summary>
+        /// Gets a list of all sections(fron to back order) with a sector the same size as
+        /// this that affects this.
+        /// </summary>
+        public IEnumerable<SectionInfo> UniqueSections
+        {
+            get
+            {
+                return this._UniqueSections;
+            }
+        }
+
+        /// <summary>
+        /// Information about a section.
+        /// </summary>
+        public struct SectionInfo
+        {
+            public SectionInfo(Section Section, RelativeSector Sector)
+            {
+                this.Section = Section;
+                this.Sector = Sector;
+            }
+
+            /// <summary>
+            /// The section this information is for.
+            /// </summary>
+            public Section Section;
+
+            /// <summary>
+            /// The sector this section is owned by and its offset from where this
+            /// information is stored.
+            /// </summary>
+            public RelativeSector Sector;
+        }
+
+        /// <summary>
         /// List of sections that affect this sector but not any parents or children in front to back order.
         /// </summary>
-        private LinkedList<Section> _UniqueSections;
+        private LinkedList<SectionInfo> _UniqueSections;
 
         /// <summary>
         /// Total amount of sections between this and all its children.

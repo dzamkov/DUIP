@@ -148,6 +148,16 @@ namespace DUIP.Visual
         {
             return new RelativeSector(new LVector(-this.Offset.Right, -this.Offset.Down), Reference);
         }
+
+        /// <summary>
+        /// Gets the sector transform that represents the transform from the 
+        /// reference sector to this relative sector.
+        /// </summary>
+        /// <returns>The sector transform representation of this.</returns>
+        public SectorTransform ToSectorTransform()
+        {
+            return SectorTransform.Relation(new SVector((double)this.Offset.Right, (double)this.Offset.Down));
+        }
     }
 
     /// <summary>

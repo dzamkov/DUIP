@@ -25,25 +25,29 @@ namespace DUIP.Visual
             : base(640, 480, GraphicsMode.Default, "DUIP",
                 GameWindowFlags.Default, Device)
         {
-            this._Drawer = new Drawer();
             this.WindowBorder = WindowBorder.Fixed;
 
-            this._View = new View();
-            this._View.Location = GeneralSector.Create(new LVector(2, 2)).Center;
-            this._View.ZoomLevel = 0.7;
+            View v = new View();
+            v.Location = GeneralSector.Create(new LVector(2, 2)).Center;
+            v.ZoomLevel = 0.7;
+            TestSection.CreateIntrestingEnvironment(v.Location.Sector, 0);
 
-            new TestSection()._Add(this._View.Location.Sector, new Grid(0.0, 0.0, 1.0, 1.0));
-        }
-
-        protected override void OnKeyPress(KeyPressEventArgs e)
-        {
-
+            this._Drawer = new Drawer();
+            this._Drawer.View = v;
+            this._Drawer.UpdateView();
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            this._Drawer.Render(this._View, (double)this.Width / (double)this.Height);
+            this._Drawer.Draw();
             this.SwapBuffers();
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            this._Drawer.Width = (double)this.Width;
+            this._Drawer.Height = (double)this.Height;
+            this._Drawer.UpdateView();
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -53,16 +57,18 @@ namespace DUIP.Visual
             {
                 this.Close();
             }
-            if (this.Keyboard[Key.Q]) this._View.Zoom(0.99);
-            if (this.Keyboard[Key.E]) this._View.Zoom(1.01);
-            if (this.Keyboard[Key.A]) this._View.Pan(-0.01, 0.0);
-            if (this.Keyboard[Key.D]) this._View.Pan(0.01, 0.0);
-            if (this.Keyboard[Key.W]) this._View.Pan(0.0, -0.01);
-            if (this.Keyboard[Key.S]) this._View.Pan(0.0, 0.01);
-            this._View.Normalize();
+            View v = this._Drawer.View;
+            if (this.Keyboard[Key.Q]) v.Zoom(0.99);
+            if (this.Keyboard[Key.E]) v.Zoom(1.01);
+            if (this.Keyboard[Key.A]) v.Pan(-0.01, 0.0);
+            if (this.Keyboard[Key.D]) v.Pan(0.01, 0.0);
+            if (this.Keyboard[Key.W]) v.Pan(0.0, -0.01);
+            if (this.Keyboard[Key.S]) v.Pan(0.0, 0.01);
+            v.Normalize();
+            this._Drawer.View = v;
+            this._Drawer.UpdateView();
         }
 
-        private View _View;
         private Drawer _Drawer;
     }
 }

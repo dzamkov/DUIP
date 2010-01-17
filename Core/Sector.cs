@@ -113,7 +113,7 @@ namespace DUIP.Core
         /// </summary>
         /// <param name="Transform">The transform to append.</param>
         /// <returns>A sector transform that describes a combination of the specified transforms.</returns>
-        public SectorTransform Append(ref SectorTransform Transform)
+        public SectorTransform Append(SectorTransform Transform)
         {
             SectorTransform st = new SectorTransform();
             st.Offset = this.Offset + new SVector(this.Scale.Right * Transform.Offset.Right, this.Scale.Down * Transform.Offset.Down);
@@ -149,12 +149,42 @@ namespace DUIP.Core
         }
 
         /// <summary>
+        /// Creates a sector transform to get a parent sector.
+        /// </summary>
+        /// <param name="Size">The size of the sectors in the grid.</param>
+        /// <param name="ChildRelation">The location of this relative to the parent.</param>
+        public static SectorTransform Parent(LVector Size, LVector ChildRelation)
+        {
+            return new SectorTransform(
+                new SVector(
+                    (double)-ChildRelation.Right,
+                    (double)-ChildRelation.Down
+                ), new SVector(
+                    (double)Size.Right,
+                    (double)Size.Down));
+        }
+
+        /// <summary>
         /// Transforms a vector with this transform.
         /// </summary>
         /// <param name="Vector">The vector to transform.</param>
         public void Transform(ref SVector Vector)
         {
             Vector = this.Offset + new SVector(Vector.Right * this.Scale.Right, Vector.Down * this.Scale.Down);
+        }
+
+        /// <summary>
+        /// Gets the matrix for this transform.
+        /// </summary>
+        internal OpenTK.Matrix4d _Matrix
+        {
+            get
+            {
+                OpenTK.Matrix4d mat = OpenTK.Matrix4d.Identity;
+                mat *= OpenTK.Matrix4d.Scale(this.Scale.Right, this.Scale.Down, 0.0);
+                mat *= OpenTK.Matrix4d.CreateTranslation(this.Offset.Right, this.Offset.Down, 0.0);
+                return mat;
+            }
         }
     }
 
