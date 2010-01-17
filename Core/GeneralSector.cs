@@ -11,14 +11,23 @@ namespace DUIP.Core
     /// </summary>
     public class GeneralSector : Sector
     {
+        
+        private GeneralSector(LVector Size)
+        {
+            this._Size = Size;
+            this._Children = new GeneralSector[this._Size.Right, this._Size.Down];
+        }
+
         /// <summary>
         /// Creates a blank unfilled general sector.
         /// </summary>
         /// <param name="Size">The size of all units in the grid.</param>
-        public GeneralSector(LVector Size)
+        /// <returns>A new general sector.</returns>
+        public static GeneralSector Create(LVector Size)
         {
-            this._Size = Size;
-            this._Children = new GeneralSector[this._Size.Right, this._Size.Down];
+            GeneralSector gs = new GeneralSector(Size);
+            gs._Init();
+            return gs;
         }
 
         public override Sector GetChild(LVector Child)
@@ -27,7 +36,9 @@ namespace DUIP.Core
             if (child == null)
             {
                 child = this._Children[Child.Right, Child.Down] = new GeneralSector(this._Size);
+                child._Parent = this;
                 child._ChildRelation = Child;
+                child._Init();
             }
             return child;
         }
@@ -39,6 +50,7 @@ namespace DUIP.Core
                 this._Parent = new GeneralSector(this._Size);
                 this._ChildRelation = ChildRelation;
                 this._Parent._Children[ChildRelation.Right, ChildRelation.Down] = this;
+                this._Parent._Init();
             }
             return this._Parent;
         }
@@ -61,6 +73,40 @@ namespace DUIP.Core
             {
                 return this._Size;
             }
+        }
+
+        public override bool BlankParent
+        {
+            get
+            {
+                return this._Parent == null;
+            }
+        }
+
+        public override IEnumerable<Sector> Children
+        {
+            get
+            {
+                for (int x = 0; x < this._Size.Right; x++)
+                {
+                    for (int y = 0; y < this._Size.Down; y++)
+                    {
+                        GeneralSector gs = this._Children[x, y];
+                        if (gs != null)
+                        {
+                            yield return gs;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Initializes the sector after its relations are set up.
+        /// </summary>
+        private void _Init()
+        {
+            this._VisData = new Visual.SectorVisData(this);
         }
 
         private LVector _Size;

@@ -114,6 +114,39 @@ namespace DUIP.Visual
     }
 
     /// <summary>
+    /// Represents a sector relative to another.
+    /// </summary>
+    public struct RelativeSector
+    {
+        public RelativeSector(LVector Offset, Sector Sector)
+        {
+            this.Offset = Offset;
+            this.Sector = Sector;
+        }
+
+        /// <summary>
+        /// The offset the specified sector has.
+        /// </summary>
+        public LVector Offset;
+
+        /// <summary>
+        /// The sector being pointed to.
+        /// </summary>
+        public Sector Sector;
+
+        /// <summary>
+        /// Reverses the relative sector, giving a relative sector from the target to the
+        /// reference.
+        /// </summary>
+        /// <param name="Reference">The reference sector.</param>
+        /// <returns>A RelativeSector from the target to the reference.</returns>
+        public RelativeSector Reverse(Sector Reference)
+        {
+            return new RelativeSector(new LVector(-this.Offset.Right, -this.Offset.Down), Reference);
+        }
+    }
+
+    /// <summary>
     /// Grid for organizing points.
     /// </summary>
     public class Grid
@@ -170,6 +203,77 @@ namespace DUIP.Visual
         public bool InGrid(Point Point)
         {
             return Point.Down >= this._Up && Point.Down <= this._Down && Point.Right >= this._Left && Point.Right <= this._Right;
+        }
+
+        /// <summary>
+        /// Gets if the specified grid is fully contained in this grid.
+        /// </summary>
+        /// <param name="Grid">The grid to check against.</param>
+        /// <returns>True if the grid is contained in this, false otherwise.</returns>
+        public bool Contains(Grid Grid)
+        {
+            return Grid._Left >= this._Left && Grid._Right <= this._Right && Grid._Up >= this._Up && Grid._Down <= this._Down;
+        }
+
+        internal SVector _TopLeft
+        {
+            get
+            {
+                return new SVector(this._Left, this._Up);
+            }
+            set
+            {
+                this._Left = value.Right;
+                this._Up = value.Down;
+            }
+        }
+
+        internal SVector _BottomRight
+        {
+            get
+            {
+                return new SVector(this._Right, this._Down);
+            }
+            set
+            {
+                this._Right = value.Right;
+                this._Down = value.Down;
+            }
+        }
+
+        /// <summary>
+        /// Gets the sectors this grid intersects if the topleft corner of reference was
+        /// (0.0, 0.0).
+        /// </summary>
+        /// <param name="Reference">The sector to use for a reference.</param>
+        /// <returns>An enumeration of sectors this grid intersects paired with the offset of the
+        /// sectors from the reference.</returns>
+        internal IEnumerable<RelativeSector> _GetIntersectedSectors(Sector Reference)
+        {
+            LVector ltl = this._TopLeft.ToLVector();
+            LVector lbr = this._BottomRight.ToLVector();
+            for (int x = ltl.Right; x <= lbr.Right; x++)
+            {
+                for (int y = ltl.Down; y <= lbr.Down; y++)
+                {
+                    LVector rel = new LVector(x, y);
+                    Sector sec = Reference.GetRelation(rel);
+                    yield return new RelativeSector(rel, sec);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets if this grid intersects would intersect a sector with the specified
+        /// offset.
+        /// </summary>
+        /// <param name="Other">The offset of the sector to test against.</param>
+        /// <returns>True if this intersects, false otherwise.</returns>
+        internal bool _Intersects(LVector Offset)
+        {
+            LVector ltl = this._TopLeft.ToLVector();
+            LVector lbr = this._BottomRight.ToLVector();
+            return Offset.Right >= ltl.Right && Offset.Right <= lbr.Right && Offset.Down >= ltl.Down && Offset.Down <= lbr.Down;
         }
 
         private double _Left;
@@ -247,6 +351,15 @@ namespace DUIP.Visual
         {
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadMatrix(ref this._Transform);
+        }
+
+        /// <summary>
+        /// Updates the transform of this context.
+        /// </summary>
+        /// <param name="Transform">The new transform to use.</param>
+        internal void _ChangeTransform(Matrix4d Transform)
+        {
+            this._Transform = Transform;
         }
 
         /// <summary>

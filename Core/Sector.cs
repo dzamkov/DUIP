@@ -216,6 +216,7 @@ namespace DUIP.Core
     /// </summary>
     public abstract class Sector
     {
+
         /// <summary>
         /// Gets a child sector of this sector.
         /// </summary>
@@ -267,6 +268,11 @@ namespace DUIP.Core
         public abstract Sector GetParent(LVector ChildRelation);
 
         /// <summary>
+        /// Returns true if the parent is blank or unassigned.
+        /// </summary>
+        public abstract bool BlankParent { get; }
+
+        /// <summary>
         /// Gets the parent sector that has this as a child. Cannot be null.
         /// </summary>
         public virtual Sector Parent
@@ -274,6 +280,25 @@ namespace DUIP.Core
             get
             {
                 return this.GetParent(new LVector());
+            }
+        }
+
+        /// <summary>
+        /// Gets an enumeration of all children of this sector. May or may
+        /// not include unassigned children.
+        /// </summary>
+        public virtual IEnumerable<Sector> Children
+        {
+            get
+            {
+                LVector size = this.Size;
+                for (int x = 0; x < size.Right; x++)
+                {
+                    for (int y = 0; y < size.Down; y++)
+                    {
+                        yield return this.GetChild(new LVector(x, y));
+                    }
+                }
             }
         }
 
@@ -299,5 +324,10 @@ namespace DUIP.Core
                 return new Location() { Sector = this, Offset = { Right = 0.5, Down = 0.5 } };
             }
         }
+
+        /// <summary>
+        /// Visual aspects in this sector.
+        /// </summary>
+        internal Visual.SectorVisData _VisData;
     }
 }

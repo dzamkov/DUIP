@@ -12,28 +12,6 @@ namespace DUIP.Visual
 {
 
     /// <summary>
-    /// A constrained rectangular area.
-    /// </summary>
-    internal struct Bounds
-    {
-        public Bounds(SVector TopLeft, SVector BottomRight)
-        {
-            this.TopLeft = TopLeft;
-            this.BottomRight = BottomRight;
-        }
-
-        /// <summary>
-        /// Top left point of this bounds.
-        /// </summary>
-        public SVector TopLeft;
-
-        /// <summary>
-        /// Bottom right point of this bounds.
-        /// </summary>
-        public SVector BottomRight;
-    }
-
-    /// <summary>
     /// Class used to draw a world with the view specified.
     /// </summary>
     internal class Drawer
@@ -70,21 +48,36 @@ namespace DUIP.Visual
             // Initial bounds
             Vector3d tl = new Vector3d(-1.0, 1.0, 0.0); Vector3d.Transform(ref tl, ref iproj, out tl);
             Vector3d br = new Vector3d(1.0, -1.0, 0.0); Vector3d.Transform(ref br, ref iproj, out br);
-            Bounds initb = new Bounds(new SVector(tl.X, tl.Y), new SVector(br.X, br.Y));
+            Grid initb = new Grid(tl.X, tl.Y, br.X, br.Y);
 
             // Sectors
             Sector center = View.Location.Sector;
-            LVector ltl = initb.TopLeft.ToLVector();
-            LVector lbr = initb.BottomRight.ToLVector();
-            for (int x = ltl.Right; x <= lbr.Right; x++)
+            IEnumerable<Section> sections = null;
+            foreach (RelativeSector i in initb._GetIntersectedSectors(center))
             {
-                for (int y = ltl.Down; y <= lbr.Down; y++)
+                LVector rel = i.Offset;
+                SectorTransform trans = SectorTransform.Relation(new SVector((double)rel.Right, (double)rel.Down));
+                IEnumerable<Section> nsections = this._SectionsInSector(i.Sector, trans);
+                if (sections == null)
                 {
-                    LVector rel = new LVector(x, y);
-                    SectorTransform trans = SectorTransform.Relation(new SVector((double)rel.Right, (double)rel.Down));
-                    Sector sec = center.GetRelation(rel);
-                    this._DrawSector(sec, trans, initb);
+                    sections = nsections;
                 }
+                else
+                {
+                    sections = sections.Concat(nsections);
+                }
+            }
+
+            // Prepare
+            foreach (Section s in sections)
+            {
+                s._Prepare();
+            }
+
+            // Draw
+            foreach (Section s in sections)
+            {
+                s._Draw();
             }
 
             // Restore
@@ -125,41 +118,47 @@ namespace DUIP.Visual
         public Matrix4d GetSectorTransform(SectorTransform Transform)
         {
             Matrix4d mat = Matrix4d.Identity;
-            mat *= Matrix4d.CreateTranslation(Transform.Offset.Right, Transform.Offset.Down, 0.0);
             mat *= Matrix4d.Scale(Transform.Scale.Right, Transform.Scale.Down, 0.0);
+            mat *= Matrix4d.CreateTranslation(Transform.Offset.Right, Transform.Offset.Down, 0.0);
             return mat;
         }
 
         /// <summary>
-        /// Draws the specified sector with the transform specified and the screen bounds for clipping.
+        /// Gets all the sections in the specified sector.
         /// </summary>
-        /// <param name="Sector">The sector to draw.</param>
+        /// <param name="Sector">The sector to get sections for.</param>
         /// <param name="Transform">The transform from the view sector and bounds to the sector.</param>
-        /// <param name="Bounds"></param>
-        public void _DrawSector(Sector Sector, SectorTransform Transform, Bounds Bounds)
+        /// <returns>The set of sections in this sector. May contain duplicates.</returns>
+        public IEnumerable<Section> _SectionsInSector(Sector Sector, SectorTransform Transform)
         {
-            SVector tl = new SVector(0.0, 0.0); Transform.Transform(ref tl);
-            SVector br = new SVector(1.0, 1.0); Transform.Transform(ref br);
+            if (Sector._VisData.SubSections > 0)
+            {
+                SVector tl = new SVector(0.0, 0.0); Transform.Transform(ref tl);
+                SVector br = new SVector(1.0, 1.0); Transform.Transform(ref br);
+                Matrix4d trans = this.GetSectorTransform(Transform);
 
-            Matrix4d trans = this.GetSectorTransform(Transform);
+                IEnumerable<Section> secs = Sector._VisData.Sections;
+                foreach (Section s in secs)
+                {
+                    s._SetTransform(trans);
+                    yield return s;
+                }
 
-            Context ct = new Context(new Grid(0.0, 0.0, 1.0, 1.0), trans);
-            Brush brush = ct.CreateSolidBrush(new Color(0, 0, 0, 255));
-            ComplexPolygon poly = new ComplexPolygon();
-            Grid maingrid = ct.Grid;
-            poly.PushPoint(maingrid.GetRelativePoint(0.2, 0.1));
-            poly.PushPoint(maingrid.GetRelativePoint(0.5, 0.4));
-            poly.PushPoint(maingrid.GetRelativePoint(0.8, 0.1));
-            poly.PushPoint(maingrid.GetRelativePoint(0.9, 0.2));
-            poly.PushPoint(maingrid.GetRelativePoint(0.6, 0.5));
-            poly.PushPoint(maingrid.GetRelativePoint(0.9, 0.8));
-            poly.PushPoint(maingrid.GetRelativePoint(0.8, 0.9));
-            poly.PushPoint(maingrid.GetRelativePoint(0.5, 0.6));
-            poly.PushPoint(maingrid.GetRelativePoint(0.2, 0.9));
-            poly.PushPoint(maingrid.GetRelativePoint(0.1, 0.8));
-            poly.PushPoint(maingrid.GetRelativePoint(0.4, 0.5));
-            poly.PushPoint(maingrid.GetRelativePoint(0.1, 0.2));
-            ct.Draw(poly, null, brush);
+                //Child sectors
+                LVector size = Sector.Size;
+                for (int x = 0; x < size.Right; x++)
+                {
+                    for (int y = 0; y < size.Down; y++)
+                    {
+                        LVector rel = new LVector(x, y);
+                        SectorTransform ctrans = SectorTransform.Child(size, rel);
+                        foreach (Section s in this._SectionsInSector(Sector.GetChild(rel), Transform.Append(ref ctrans)))
+                        {
+                            yield return s;
+                        }
+                    }
+                }
+            }
         }
     }
 }

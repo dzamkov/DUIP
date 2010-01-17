@@ -100,24 +100,11 @@ namespace DUIP.Visual
         {
             get
             {
-                return new PointEnumerable { _Polygon = this };
+                foreach(PolygonPoint pp in this.Points)
+                {
+                    yield return pp.Point;
+                }
             }
-        }
-
-        private class PointEnumerable : IEnumerable<Point>
-        {
-            public Polygon _Polygon;
-            private class PointEnumerator : IEnumerator<Point>
-            {
-                public IEnumerator<PolygonPoint> _Enum;
-                public Point Current { get { return this._Enum.Current.Point; } }
-                public void Dispose() { this._Enum.Dispose(); }
-                object IEnumerator.Current { get { return this.Current; } }
-                public bool MoveNext() { return this._Enum.MoveNext(); }
-                public void Reset() { this._Enum.Reset(); }
-            }
-            public IEnumerator<Point> GetEnumerator() { return new PointEnumerator { _Enum = this._Polygon.Points.GetEnumerator() }; }
-            IEnumerator IEnumerable.GetEnumerator() { return this.GetEnumerator(); }
         }
 
         /// <summary>
@@ -147,7 +134,6 @@ namespace DUIP.Visual
         {
             // Initialize point list
             LinkedList<PolygonPoint> points = new LinkedList<PolygonPoint>();
-            List<Triangle> tris = new List<Triangle>();
             foreach (PolygonPoint pp in this.Points)
             {
                 points.AddLast(pp);
@@ -184,7 +170,7 @@ namespace DUIP.Visual
                     // Add only if filled
                     if ((next.Value.Type & prev.Value.Type & current.Value.Type & PolygonPointFlags.NoFill) == 0)
                     {
-                        tris.Add(tri);
+                        yield return tri;
                     }
 
                     // Remove point and continue
@@ -205,8 +191,6 @@ namespace DUIP.Visual
                     }
                 }
             }
-
-            return tris;
         }
     }
 

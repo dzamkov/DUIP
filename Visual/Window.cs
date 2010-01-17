@@ -8,6 +8,8 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using GraphicsMode = OpenTK.Graphics.GraphicsMode;
 
+using DUIP.Core;
+
 namespace DUIP.Visual
 {
     /// <summary>
@@ -23,8 +25,10 @@ namespace DUIP.Visual
             this.WindowBorder = WindowBorder.Fixed;
 
             this._View = new View();
-            this._View.Location = new Core.GeneralSector(new Core.LVector { Down = 2, Right = 2 }).Center;
+            this._View.Location = GeneralSector.Create(new LVector(2, 2)).Center;
             this._View.ZoomLevel = 0.7;
+
+            new TestSection()._Add(this._View.Location.Sector, new Grid(0.0, 0.0, 1.0, 1.0));
         }
 
         protected override void OnKeyPress(KeyPressEventArgs e)

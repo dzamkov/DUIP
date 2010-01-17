@@ -105,6 +105,7 @@
     <Compile Include="Visual\Drawer.cs" />
     <Compile Include="Visual\Polygon.cs" />
     <Compile Include="Visual\Section.cs" />
+    <Compile Include="Visual\TestSection.cs" />
     <Compile Include="Visual\View.cs" />
     <Compile Include="Visual\Window.cs" />
   </ItemGroup>
