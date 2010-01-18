@@ -77,8 +77,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\BinaryStream.cs" />
     <Compile Include="Core\GeneralSector.cs" />
+    <Compile Include="Core\ID.cs" />
     <Compile Include="Core\Relation.cs" />
+    <Compile Include="Core\Serialize.cs" />
     <Compile Include="Core\Sector.cs" />
     <Compile Include="Core\World.cs" />
     <Compile Include="Net\Connection.cs" />
