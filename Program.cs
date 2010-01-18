@@ -19,11 +19,17 @@ namespace DUIP
         [STAThread]
         static void Main()
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
+            try
+            {
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
 
-            new Visual.Window(DisplayDevice.Default).Run(60.0);
-
+                new Visual.Window(DisplayDevice.Default).Run(60.0);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.ToString());
+            }
         }
     }
 }

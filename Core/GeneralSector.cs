@@ -16,20 +16,22 @@ namespace DUIP.Core
     public class GeneralSector : Sector
     {
         
-        private GeneralSector(LVector Size)
+        private GeneralSector(World World)
         {
-            this._Size = Size;
-            this._Children = new GeneralSector[this._Size.Right, this._Size.Down];
+            this._World = World;
+            int rc = this._World.ClientWorld.RelationCacheSize;
+            this._Children = new GeneralSector[this.Size.Right, this.Size.Down];
+            this._RelationCache = new GeneralSector[rc * 2 + 1, rc * 2 + 1];
         }
 
         /// <summary>
         /// Creates a blank unfilled general sector.
         /// </summary>
-        /// <param name="Size">The size of all units in the grid.</param>
+        /// <param name="World">The world this unit is for.</param>
         /// <returns>A new general sector.</returns>
-        public static GeneralSector Create(LVector Size)
+        public static GeneralSector Create(World World)
         {
-            GeneralSector gs = new GeneralSector(Size);
+            GeneralSector gs = new GeneralSector(World);
             gs._Init();
             return gs;
         }
@@ -39,7 +41,7 @@ namespace DUIP.Core
             GeneralSector child = this._Children[Child.Right, Child.Down];
             if (child == null)
             {
-                child = this._Children[Child.Right, Child.Down] = new GeneralSector(this._Size);
+                child = this._Children[Child.Right, Child.Down] = new GeneralSector(this._World);
                 child._Parent = this;
                 child._ChildRelation = Child;
                 child._Init();
@@ -51,7 +53,7 @@ namespace DUIP.Core
         {
             if (this._Parent == null)
             {
-                this._Parent = new GeneralSector(this._Size);
+                this._Parent = new GeneralSector(this._World);
                 this._ChildRelation = ChildRelation;
                 this._Parent._Children[ChildRelation.Right, ChildRelation.Down] = this;
                 this._Parent._Init();
@@ -75,7 +77,7 @@ namespace DUIP.Core
         {
             get
             {
-                return this._Size;
+                return this._World.SectorSize;
             }
         }
 
@@ -91,9 +93,9 @@ namespace DUIP.Core
         {
             get
             {
-                for (int x = 0; x < this._Size.Right; x++)
+                for (int x = 0; x < this.Size.Right; x++)
                 {
-                    for (int y = 0; y < this._Size.Down; y++)
+                    for (int y = 0; y < this.Size.Down; y++)
                     {
                         GeneralSector gs = this._Children[x, y];
                         if (gs != null)
@@ -105,6 +107,25 @@ namespace DUIP.Core
             }
         }
 
+        public override Sector GetRelation(LVector Vector)
+        {
+            int rc = this._World.ClientWorld.RelationCacheSize;
+            if (Vector.Down >= -rc && Vector.Down <= rc &&
+                Vector.Right >= -rc && Vector.Right <= rc)
+            {
+                LVector diff = Vector + new LVector(rc, rc);
+                if (this._RelationCache[diff.Right, diff.Down] != null)
+                {
+                    return this._RelationCache[diff.Right, diff.Down];
+                }
+                else
+                {
+                    return this._RelationCache[diff.Right, diff.Down] = (GeneralSector)base.GetRelation(Vector);
+                }
+            }
+            return base.GetRelation(Vector);
+        }
+
         /// <summary>
         /// Initializes the sector after its relations are set up.
         /// </summary>
@@ -113,8 +134,9 @@ namespace DUIP.Core
             this._VisData = new Visual.SectorVisData(this);
         }
 
-        private LVector _Size;
+        private World _World;
         private GeneralSector[,] _Children;
+        private GeneralSector[,] _RelationCache;
         private GeneralSector _Parent;
         private LVector _ChildRelation;
     }

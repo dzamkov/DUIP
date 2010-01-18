@@ -118,49 +118,6 @@ namespace DUIP.Visual
     }
 
     /// <summary>
-    /// Represents a sector relative to another.
-    /// </summary>
-    public struct RelativeSector
-    {
-        public RelativeSector(LVector Offset, Sector Sector)
-        {
-            this.Offset = Offset;
-            this.Sector = Sector;
-        }
-
-        /// <summary>
-        /// The offset the specified sector has.
-        /// </summary>
-        public LVector Offset;
-
-        /// <summary>
-        /// The sector being pointed to.
-        /// </summary>
-        public Sector Sector;
-
-        /// <summary>
-        /// Reverses the relative sector, giving a relative sector from the target to the
-        /// reference.
-        /// </summary>
-        /// <param name="Reference">The reference sector.</param>
-        /// <returns>A RelativeSector from the target to the reference.</returns>
-        public RelativeSector Reverse(Sector Reference)
-        {
-            return new RelativeSector(new LVector(-this.Offset.Right, -this.Offset.Down), Reference);
-        }
-
-        /// <summary>
-        /// Gets the sector transform that represents the transform from the 
-        /// reference sector to this relative sector.
-        /// </summary>
-        /// <returns>The sector transform representation of this.</returns>
-        public SectorTransform ToSectorTransform()
-        {
-            return SectorTransform.Relation(new SVector((double)this.Offset.Right, (double)this.Offset.Down));
-        }
-    }
-
-    /// <summary>
     /// Grid for organizing points.
     /// </summary>
     public class Grid

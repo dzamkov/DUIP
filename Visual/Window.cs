@@ -27,8 +27,9 @@ namespace DUIP.Visual
         {
             this.WindowBorder = WindowBorder.Fixed;
 
+            World w = new World();
             View v = new View();
-            v.Location = GeneralSector.Create(new LVector(2, 2)).Center;
+            v.Location = GeneralSector.Create(w).Center;
             v.ZoomLevel = 0.7;
             TestSection.CreateIntrestingEnvironment(v.Location.Sector, 0);
 
