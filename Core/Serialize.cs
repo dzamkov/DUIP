@@ -6,12 +6,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 
 namespace DUIP.Core
 {
     /// <summary>
-    /// A class or data that can be stored and represented in binary form. Note that
-    /// the object should alway
+    /// A class or data that can be stored and represented in binary form.
     /// </summary>
     public interface Serializable
     {
@@ -20,11 +20,6 @@ namespace DUIP.Core
         /// </summary>
         /// <param name="Target">The stream to serialize to.</param>
         void Serialize(BinaryWriteStream Target);
-
-        /// <summary>
-        /// Gets the unique type identifier of this object.
-        /// </summary>
-        ID TypeID { get; }
     }
 
     /// <summary>
@@ -32,37 +27,6 @@ namespace DUIP.Core
     /// </summary>
     public static class Serialize
     {
-        static Serialize()
-        {
-            Deserializers = new Dictionary<ID, DeserializeHandler>();
-        }
-
-        /// <summary>
-        /// Registers a deserializer for an id.
-        /// </summary>
-        /// <param name="Identifier">The type ID of objects to be deserialized.</param>
-        /// <param name="Deserializer">The deserializer used to deserialize those objects.</param>
-        public static void RegisterDeserializer(ID Identifier, DeserializeHandler Deserializer)
-        {
-            if (Deserializers.ContainsKey(Identifier))
-            {
-                throw new Exception("Type ID already exists");
-            }
-            else
-            {
-                Deserializers.Add(Identifier, Deserializer);
-            }
-        }
-
-        /// <summary>
-        /// Creates a type identifier for a type.
-        /// </summary>
-        /// <param name="TypeName">The name of the type.</param>
-        /// <returns>A possible ID for the type.</returns>
-        public static ID CreateTypeID(string TypeName)
-        {
-            return ID.Hash("TYPE: " + TypeName);
-        }
 
         /// <summary>
         /// Serializes a short object. This type of serialization assumes that the
@@ -76,21 +40,31 @@ namespace DUIP.Core
         }
 
         /// <summary>
-        /// Deserializes an object.
+        /// Deserializes an object. This is accomplished by looking for a public constructor
+        /// with a single BinaryReadStream parameter and calling or by looking for a "Deserialize"
+        /// method that takes a BinaryReadStream and returns an object.
         /// </summary>
         /// <param name="Stream">The stream to deserialize the object from.</param>
         /// <param name="Type">The type of the object.</param>
         /// <returns>The deserialized object.</returns>
-        public static Serializable DeserializeShort(BinaryReadStream Stream, ID Type)
+        public static Serializable DeserializeShort(BinaryReadStream Stream, Type Type)
         {
-            DeserializeHandler dh;
-            if (Deserializers.TryGetValue(Type, out dh))
+            ConstructorInfo ci = Type.GetConstructor(new Type[] { typeof(BinaryReadStream) });
+            if (ci != null && ci.IsPublic && !Type.IsAbstract)
             {
-                return dh(Stream);
+                return (Serializable)ci.Invoke(new object[] { Stream }); 
             }
             else
             {
-                throw new Exception("No deserializer");
+                MethodInfo mi = Type.GetMethod("Deserialize", new Type[] { typeof(BinaryReadStream) });
+                if (mi != null && mi.ReturnType == Type)
+                {
+                    return (Serializable)mi.Invoke(null, new object[] { Stream });
+                }
+                else
+                {
+                    throw new Exception("No deserializer");
+                }
             }
         }
 
@@ -102,7 +76,7 @@ namespace DUIP.Core
         /// <param name="Stream">The stream to serialize to.</param>
         public static void SerializeLong(Serializable Object, BinaryWriteStream Stream)
         {
-            ((Serializable)Object.TypeID).Serialize(Stream);
+            TypeDirectory.GetIDForType(Object.GetType()).Serialize(Stream);
             SerializeShort(Object, Stream);
         }
 
@@ -114,20 +88,8 @@ namespace DUIP.Core
         /// <returns>The deserialized object.</returns>
         public static Serializable DeserializeLong(BinaryReadStream Stream)
         {
-            ID Type = (ID)(ID.Deserialize(Stream));
+            Type Type = TypeDirectory.GetTypeByID(new ID(Stream));
             return DeserializeShort(Stream, Type);
         }
-
-        /// <summary>
-        /// Deserialize handlers for various id's.
-        /// </summary>
-        private static Dictionary<ID, DeserializeHandler> Deserializers;
     }
-
-    /// <summary>
-    /// Handler for deserializing from a byte stream.
-    /// </summary>
-    /// <param name="Stream">The binary stream source to deserialize from.</param>
-    /// <returns>The original serializable object.</returns>
-    public delegate Serializable DeserializeHandler(BinaryReadStream Stream);
 }

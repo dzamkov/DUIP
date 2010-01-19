@@ -23,39 +23,36 @@ namespace DUIP.Core
             this.D = D;
         }
 
-        public ID(byte[] Seed)
+        public ID(BinaryReadStream Stream)
         {
-            this.A = BitConverter.ToInt32(Seed, 0);
-            this.B = BitConverter.ToInt32(Seed, 4);
-            this.C = BitConverter.ToInt32(Seed, 8);
-            this.D = BitConverter.ToInt32(Seed, 12);
+            this.A = Stream.ReadInt();
+            this.B = Stream.ReadInt();
+            this.C = Stream.ReadInt();
+            this.D = Stream.ReadInt();
         }
 
-        static ID()
+        public ID(byte[] Seed) : this(new ByteArrayReader(Seed))
         {
-            TypeID = Serialize.CreateTypeID("Core/ID");
-            Serialize.RegisterDeserializer(TypeID, new DeserializeHandler(Deserialize));
+            
         }
 
-        void Serializable.Serialize(BinaryWriteStream Target)
+        /// <summary>
+        /// Converts this id to a byte array.
+        /// </summary>
+        /// <returns>A 16 byte array representing this ID.</returns>
+        public byte[] ToByteArray()
+        {
+            ByteArrayWriter baw = new ByteArrayWriter();
+            this.Serialize(baw);
+            return baw.Data;
+        }
+
+        public void Serialize(BinaryWriteStream Target)
         {
             Target.WriteInt(this.A);
             Target.WriteInt(this.B);
             Target.WriteInt(this.C);
             Target.WriteInt(this.D);
-        }
-
-        ID Serializable.TypeID
-        {
-            get
-            {
-                return TypeID;
-            }
-        }
-
-        public static Serializable Deserialize(BinaryReadStream Stream)
-        {
-            return new ID(Stream.ReadInt(), Stream.ReadInt(), Stream.ReadInt(), Stream.ReadInt());
         }
 
         /// <summary>
@@ -82,10 +79,44 @@ namespace DUIP.Core
         /// <returns>An id based on the hash of the specified string.</returns>
         public static ID Hash(string String)
         {
+            return Hash(Encoding.ASCII.GetBytes(String));
+        }
+
+        /// <summary>
+        /// Creates an id that is the hash of the specified data.
+        /// </summary>
+        /// <param name="Data">The input data.</param>
+        /// <returns>An id based on the hash of the input data.</returns>
+        public static ID Hash(byte[] Data)
+        {
             MD5 al = MD5.Create();
-            byte[] input = Encoding.ASCII.GetBytes(String);
-            byte[] hash = al.ComputeHash(input);
-            return new ID(hash);
+            return new ID(al.ComputeHash(Data));
+        }
+
+        /// <summary>
+        /// Creates an iterative id that is based on another id.
+        /// </summary>
+        /// <param name="ID">The id to use to create the next id.</param>
+        /// <returns>The next id.</returns>
+        public static ID Hash(ID ID)
+        {
+            return Hash(ID.ToByteArray());
+        }
+
+        /// <summary>
+        /// Hashes an array of id's. The resulting hash will be based
+        /// on the permutation of input id's.
+        /// </summary>
+        /// <param name="IDs">The array of input id's.</param>
+        /// <returns>The hashed value of the input id's.</returns>
+        public static ID Hash(IEnumerable<ID> IDs)
+        {
+            ByteArrayWriter baw = new ByteArrayWriter();
+            foreach (ID i in IDs)
+            {
+                i.Serialize(baw);
+            }
+            return Hash(baw.Data);
         }
 
         public override string ToString()
@@ -97,11 +128,10 @@ namespace DUIP.Core
                 String.Format("{0:X2}", this.D);
         }
 
-        public Int32 A;
-        public Int32 B;
-        public Int32 C;
-        public Int32 D;
+        public int A; // Do not use these values directly,
+        public int B; // they may have strange endians.
+        public int C;
+        public int D;
         private static Random PNGR;
-        public static readonly ID TypeID;
     }
 }

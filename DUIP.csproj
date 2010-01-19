@@ -77,12 +77,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\App.cs" />
     <Compile Include="Core\BinaryStream.cs" />
+    <Compile Include="Core\Entity.cs" />
     <Compile Include="Core\GeneralSector.cs" />
     <Compile Include="Core\ID.cs" />
     <Compile Include="Core\Relation.cs" />
+    <Compile Include="Core\Resource.cs" />
     <Compile Include="Core\Serialize.cs" />
     <Compile Include="Core\Sector.cs" />
+    <Compile Include="Core\TypeDirectory.cs" />
     <Compile Include="Core\World.cs" />
     <Compile Include="Net\Connection.cs" />
     <Compile Include="Net\UDPConnection.cs" />
