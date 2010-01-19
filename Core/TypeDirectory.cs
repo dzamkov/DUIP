@@ -107,6 +107,7 @@ namespace DUIP.Core
             {
                 this.Assembly = Assembly;
                 this.AssemblyID = ID;
+                this.FowardTypeLookup = new Dictionary<Type, ID>();
             }
 
             /// <summary>
