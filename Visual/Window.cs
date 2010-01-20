@@ -37,12 +37,7 @@ namespace DUIP.Visual
             this._Drawer.View = v;
             this._Drawer.UpdateView();
 
-            TypeDirectory.LoadAssembly(System.Reflection.Assembly.GetAssembly(typeof(Window)));
-            ID obj = ID.Random();
-            ByteArrayWriter baw = new ByteArrayWriter();
-            Serialize.SerializeLong(obj, baw);
-            ByteArrayReader bar = new ByteArrayReader(baw.Data);
-            Serializable dat = Serialize.DeserializeLong(bar);
+            
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)

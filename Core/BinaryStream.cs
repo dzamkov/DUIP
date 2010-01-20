@@ -30,11 +30,6 @@ namespace DUIP.Core
     /// </summary>
     public static class BinaryStreamExtensions
     {
-        static BinaryStreamExtensions()
-        {
-            LittleEndian = BitConverter.IsLittleEndian;
-        }
-
         /// <summary>
         /// Reads byte data from a binary stream and raises an exception if the specified
         /// amount of data is not available.
@@ -60,22 +55,12 @@ namespace DUIP.Core
         /// </summary>
         /// <param name="Stream">The stream to write the int to.</param>
         /// <param name="Int">The value to write.</param>
-        public static void WriteInt(this BinaryWriteStream Stream, int Int)
+        public static void WriteInt(this BinaryWriteStream Stream, int Value)
         {
-            byte[] data = new byte[4];
-            if (LittleEndian)
+            byte[] data = BitConverter.GetBytes(Value);
+            if (!BitConverter.IsLittleEndian)
             {
-                data[0] = (byte)((Int & 0x000000FF) >> 0);
-                data[1] = (byte)((Int & 0x0000FF00) >> 8);
-                data[2] = (byte)((Int & 0x00FF0000) >> 16);
-                data[3] = (byte)((Int & 0xFF000000) >> 24);
-            }
-            else
-            {
-                data[0] = (byte)((Int & 0xFF000000) >> 24);
-                data[1] = (byte)((Int & 0x00FF0000) >> 16);
-                data[2] = (byte)((Int & 0x0000FF00) >> 8);
-                data[3] = (byte)((Int & 0x000000FF) >> 0);
+                data = _ByteReverse(data);
             }
             Stream.Write(data);
         }
@@ -87,26 +72,62 @@ namespace DUIP.Core
         /// <returns>The value of the next bytes as an int.</returns>
         public static int ReadInt(this BinaryReadStream Stream)
         {
-            byte[] data = Stream.AssertRead(4);
-            if (LittleEndian)
+            byte[] data = Stream.AssertRead(sizeof(int));
+            if (BitConverter.IsLittleEndian)
             {
-                return
-                    (((int)data[0] << 0) +
-                    ((int)data[1] << 8) +
-                    ((int)data[2] << 16) +
-                    ((int)data[3] << 24));
+                return BitConverter.ToInt32(data, 0);
             }
             else
             {
-                return
-                    (((int)data[0] << 24) +
-                    ((int)data[1] << 16) +
-                    ((int)data[2] << 8) +
-                    ((int)data[3] << 0));
+                return BitConverter.ToInt32(_ByteReverse(data), 0);
             }
         }
 
-        private static bool LittleEndian;
+        /// <summary>
+        /// Writes the double to the specified stream.
+        /// </summary>
+        /// <param name="Stream">The stream to write the double to.</param>
+        /// <param name="Int">The value to write.</param>
+        public static void WriteDouble(this BinaryWriteStream Stream, double Value)
+        {
+            byte[] data = BitConverter.GetBytes(Value);
+            if (!BitConverter.IsLittleEndian)
+            {
+                data = _ByteReverse(data);
+            }
+            Stream.Write(data);
+        }
+
+        /// <summary>
+        /// Reads a double from the specified stream.
+        /// </summary>
+        /// <param name="Stream">The stream to read from.</param>
+        /// <returns>The value of the next bytes as an double.</returns>
+        public static double ReadDouble(this BinaryReadStream Stream)
+        {
+            byte[] data = Stream.AssertRead(sizeof(double));
+            if (BitConverter.IsLittleEndian)
+            {
+                return BitConverter.ToDouble(data, 0);
+            }
+            else
+            {
+                return BitConverter.ToDouble(_ByteReverse(data), 0);
+            }
+        }
+
+        /// <summary>
+        /// Reverses the order of bytes in a byte array.
+        /// </summary>
+        private static byte[] _ByteReverse(byte[] Data)
+        {
+            byte[] ot = new byte[Data.Length];
+            for (int t = 0; t < ot.Length; t++)
+            {
+                ot[t] = Data[ot.Length - t];
+            }
+            return ot;
+        }
     }
 
     /// <summary>

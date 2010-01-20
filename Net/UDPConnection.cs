@@ -31,7 +31,7 @@ namespace DUIP.Net
             this._Conn.Send(Data, Data.Length, To);
         }
 
-        public event ReceiveMessageHandler ReceiveMessage;
+        public event ReceiveNetDataHandler ReceiveMessage;
 
         /// <summary>
         /// Receive callback for use with BeginReceive.
@@ -41,7 +41,7 @@ namespace DUIP.Net
         {
             IPEndPoint end = new IPEndPoint(IPAddress.Any, 0);
             byte[] data = this._Conn.EndReceive(AR, ref end);
-            Message me = new Message();
+            NetData me = new NetData();
             me.Connection = this;
             me.From = end;
             me.Data = data;

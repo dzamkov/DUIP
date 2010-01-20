@@ -119,6 +119,24 @@ namespace DUIP.Core
             return Hash(baw.Data);
         }
 
+        /// <summary>
+        /// Creates a blank id.
+        /// </summary>
+        public static ID Blank()
+        {
+            return new ID(0, 0, 0, 0);
+        }
+
+        public static bool operator ==(ID A, ID B)
+        {
+            return (A.A == B.A) && (A.B == B.B) && (A.C == B.C) && (A.D == B.D);
+        }
+
+        public static bool operator !=(ID A, ID B)
+        {
+            return !(A == B);
+        }
+
         public override string ToString()
         {
             return
@@ -126,6 +144,16 @@ namespace DUIP.Core
                 String.Format("{0:X2}", this.B) + "-" +
                 String.Format("{0:X2}", this.C) + "-" +
                 String.Format("{0:X2}", this.D);
+        }
+
+        public override int GetHashCode()
+        {
+            return A + B + C + D;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return (ID)obj == this;
         }
 
         public int A; // Do not use these values directly,

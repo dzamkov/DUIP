@@ -87,8 +87,13 @@
     <Compile Include="Core\Serialize.cs" />
     <Compile Include="Core\Sector.cs" />
     <Compile Include="Core\TypeDirectory.cs" />
+    <Compile Include="Core\Vector.cs" />
     <Compile Include="Core\World.cs" />
     <Compile Include="Net\Connection.cs" />
+    <Compile Include="Net\Message.cs" />
+    <Compile Include="Net\NetManager.cs" />
+    <Compile Include="Net\Peer.cs" />
+    <Compile Include="Net\TestMessage.cs" />
     <Compile Include="Net\UDPConnection.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

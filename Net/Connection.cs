@@ -11,9 +11,9 @@ using System.Net;
 namespace DUIP.Net
 {
     /// <summary>
-    /// A message sent over the network.
+    /// A raw data message sent over the network.
     /// </summary>
-    public class Message
+    public class NetData
     {
         /// <summary>
         /// IP and port that sent this message.
@@ -32,10 +32,10 @@ namespace DUIP.Net
     }
 
     /// <summary>
-    /// Callback for when a message is received.
+    /// Callback for when netdata is received.
     /// </summary>
-    /// <param name="Message">The newly received message.</param>
-    public delegate void ReceiveMessageHandler(Message Message);
+    /// <param name="Message">The newly received netdata packet.</param>
+    public delegate void ReceiveNetDataHandler(NetData Message);
 
     /// <summary>
     /// Connection through which messages can be sent.
@@ -47,7 +47,7 @@ namespace DUIP.Net
         /// </summary>
         /// <param name="Data">The data to send.</param>
         /// <param name="Target">The target ip and port to send to.</param>
-        void Send(byte[] Data,IPEndPoint Target);
+        void Send(byte[] Data, IPEndPoint Target);
     }
 
     /// <summary>
@@ -58,6 +58,6 @@ namespace DUIP.Net
         /// <summary>
         /// Receive message event for this connect.
         /// </summary>
-        event ReceiveMessageHandler ReceiveMessage;
+        event ReceiveNetDataHandler ReceiveMessage;
     }
 }

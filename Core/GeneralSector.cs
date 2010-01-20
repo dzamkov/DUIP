@@ -19,7 +19,7 @@ namespace DUIP.Core
         private GeneralSector(World World)
         {
             this._World = World;
-            int rc = this._World.ClientWorld.RelationCacheSize;
+            int rc = this._World.RelationCacheSize;
             this._Children = new GeneralSector[this.Size.Right, this.Size.Down];
             this._RelationCache = new GeneralSector[rc * 2 + 1, rc * 2 + 1];
         }
@@ -109,7 +109,7 @@ namespace DUIP.Core
 
         public override Sector GetRelation(LVector Vector)
         {
-            int rc = this._World.ClientWorld.RelationCacheSize;
+            int rc = this._World.RelationCacheSize;
             if (Vector.Down >= -rc && Vector.Down <= rc &&
                 Vector.Right >= -rc && Vector.Right <= rc)
             {

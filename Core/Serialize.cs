@@ -40,7 +40,7 @@ namespace DUIP.Core
         }
 
         /// <summary>
-        /// Deserializes an object. This is accomplished by looking for a public constructor
+        /// Deserializes an object. This is accomplished by looking for a constructor
         /// with a single BinaryReadStream parameter and calling or by looking for a "Deserialize"
         /// method that takes a BinaryReadStream and returns an object.
         /// </summary>
@@ -50,7 +50,7 @@ namespace DUIP.Core
         public static Serializable DeserializeShort(BinaryReadStream Stream, Type Type)
         {
             ConstructorInfo ci = Type.GetConstructor(new Type[] { typeof(BinaryReadStream) });
-            if (ci != null && ci.IsPublic && !Type.IsAbstract)
+            if (ci != null && !Type.IsAbstract)
             {
                 return (Serializable)ci.Invoke(new object[] { Stream }); 
             }
