@@ -21,19 +21,9 @@ namespace DUIP.Net
 
         }
 
-        public TestMessage(BinaryReadStream Stream)
-        {
-            this.Amount = Stream.ReadInt();
-        }
-
-        public override void Serialize(BinaryWriteStream Stream)
-        {
-            Stream.WriteInt(this.Amount);
-        }
-
         protected internal override void OnReceive()
         {
-            System.Windows.Forms.MessageBox.Show("Amount received: " + this.Amount.ToString());
+            System.Windows.Forms.MessageBox.Show("Received message \"" + this.Message + "\" from \"" + this.From.Location.ToString());
             this.Remove();
         }
 
@@ -42,6 +32,6 @@ namespace DUIP.Net
             this.Remove();
         }
 
-        public int Amount;
+        public string Message;
     }
 }

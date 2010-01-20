@@ -15,7 +15,7 @@ namespace DUIP.Core
     public class App
     {
 
-        private Serializable _GlobalData;
+        private object _GlobalData;
         private Sector[,] _Space;
         private Visual.Section _Section;
     }

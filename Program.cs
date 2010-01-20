@@ -32,7 +32,7 @@ namespace DUIP
             if (part)
             {
                 System.Net.IPEndPoint endpoint = new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 27200);
-                new TestMessage().Send(man, null, man.GetPeer(endpoint));
+                new TestMessage { Message = "Hello" }.Send(man, null, man.GetPeer(endpoint));
             }
 
             Visual.Window win = new Visual.Window(DisplayDevice.Default);

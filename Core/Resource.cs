@@ -13,7 +13,7 @@ namespace DUIP.Core
     /// <summary>
     /// An object that is stored across the network.
     /// </summary>
-    public abstract class Resource : Serializable
+    public abstract class Resource
     {
         public Resource(ID ID)
         {
@@ -72,12 +72,12 @@ namespace DUIP.Core
         /// Recreates the global state of the resource based on the data given.
         /// </summary>
         /// <param name="Data">The data containing the global state of </param>
-        public abstract void OnReceiveData(Serializable Data);
+        public abstract void OnReceiveData(object Data);
 
         /// <summary>
         /// Gets the data that stores the global state of this resource.
         /// </summary>
-        public abstract Serializable Data { get; }
+        public abstract object Data { get; }
 
         /// <summary>
         /// Gets if this resource is resolved. An unresolved resource can not have functions called,
@@ -117,7 +117,7 @@ namespace DUIP.Core
 
         }
 
-        public override void OnReceiveData(Serializable Data)
+        public override void OnReceiveData(object Data)
         {
             
         }
@@ -135,7 +135,7 @@ namespace DUIP.Core
             }
         }
 
-        public override Serializable Data
+        public override object Data
         {
             get 
             {
@@ -151,7 +151,7 @@ namespace DUIP.Core
     /// </summary>
     /// <param name="Params">The parameters for the function.</param>
     /// <param name="Entity">The entity that invoked the function.</param>
-    public delegate void GlobalFunction(Serializable Params, Entity Entity);
+    public delegate void GlobalFunction(object Params, Entity Entity);
 
     /// <summary>
     /// A call on a global function.

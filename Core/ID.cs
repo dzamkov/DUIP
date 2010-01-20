@@ -13,7 +13,7 @@ namespace DUIP.Core
     /// <summary>
     /// Global identifier for all sorts of data.
     /// </summary>
-    public struct ID : Serializable
+    public struct ID
     {
         public ID(Int32 A, Int32 B, Int32 C, Int32 D)
         {

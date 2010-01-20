@@ -15,7 +15,7 @@ namespace DUIP.Net
     /// <summary>
     /// A message sent across the network.
     /// </summary>
-    public abstract class Message : Serializable
+    public abstract class Message
     {
         public Message()
         {
@@ -23,11 +23,15 @@ namespace DUIP.Net
             this._Timed = new List<Timer>();
         }
 
-        /// <summary>
-        /// Serializes the contents of this message. AND ONLY THE CONTENTS. No metadata.
-        /// </summary>
-        /// <param name="Stream">The stream to serialize to.</param>
-        public abstract void Serialize(BinaryWriteStream Stream);
+        private void Serialize(BinaryWriteStream Stream)
+        {
+            // Nothing needs to be serialized
+        }
+
+        private void Deserialize(BinaryReadStream Stream)
+        {
+
+        }
 
         /// <summary>
         /// Called when this message is being responded to. This is called after the message's OnAssign

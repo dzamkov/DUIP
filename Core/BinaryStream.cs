@@ -117,6 +117,68 @@ namespace DUIP.Core
         }
 
         /// <summary>
+        /// Writes a character to the stream.
+        /// </summary>
+        /// <param name="Stream">The stream to write to.</param>
+        /// <param name="Value">The character to write.</param>
+        public static void WriteChar(this BinaryWriteStream Stream, char Value)
+        {
+            byte[] data = BitConverter.GetBytes(Value);
+            if (!BitConverter.IsLittleEndian)
+            {
+                data = _ByteReverse(data);
+            }
+            Stream.Write(data);
+        }
+        /// <summary>
+        /// Reads a character from the stream.
+        /// </summary>
+        /// <param name="Stream">The stream to read from.</param>
+        /// <returns>The value of the next bytes as a character.</returns>
+        public static char ReadChar(this BinaryReadStream Stream)
+        {
+            byte[] data = Stream.AssertRead(sizeof(char));
+            if (BitConverter.IsLittleEndian)
+            {
+                return BitConverter.ToChar(data, 0);
+            }
+            else
+            {
+                return BitConverter.ToChar(_ByteReverse(data), 0);
+            }
+        }
+
+        /// <summary>
+        /// Writes a string of any length and encoding to a stream.
+        /// </summary>
+        /// <param name="Stream">The stream to write to.</param>
+        /// <param name="String">The string to write.</param>
+        public static void WriteString(this BinaryWriteStream Stream, string String)
+        {
+            Stream.WriteInt(String.Length);
+            foreach (char c in String)
+            {
+                Stream.WriteChar(c);
+            }
+        }
+
+        /// <summary>
+        /// Reads a string from the stream.
+        /// </summary>
+        /// <param name="Stream">The stream to read from.</param>
+        /// <returns>The value of the next bytes as a string.</returns>
+        public static string ReadString(this BinaryReadStream Stream)
+        {
+            int len = Stream.ReadInt();
+            char[] chars = new char[len];
+            for (int t = 0; t < len; t++)
+            {
+                chars[t] = Stream.ReadChar();
+            }
+            return new string(chars);
+        }
+
+        /// <summary>
         /// Reverses the order of bytes in a byte array.
         /// </summary>
         private static byte[] _ByteReverse(byte[] Data)

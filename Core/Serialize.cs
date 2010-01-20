@@ -11,32 +11,101 @@ using System.Reflection;
 namespace DUIP.Core
 {
     /// <summary>
-    /// A class or data that can be stored and represented in binary form.
-    /// </summary>
-    public interface Serializable
-    {
-        /// <summary>
-        /// Serializes the object into the specified stream.
-        /// </summary>
-        /// <param name="Target">The stream to serialize to.</param>
-        void Serialize(BinaryWriteStream Target);
-    }
-
-    /// <summary>
     /// Helper class for serialization.
     /// </summary>
     public static class Serialize
     {
+        private const BindingFlags _AutoSerializedFields =
+            BindingFlags.DeclaredOnly |
+            BindingFlags.Instance |
+            BindingFlags.Public |
+            BindingFlags.NonPublic;
+
+        private const BindingFlags _InvokableMethods =
+            BindingFlags.DeclaredOnly |
+            BindingFlags.Public |
+            BindingFlags.Instance |
+            BindingFlags.Static |
+            BindingFlags.NonPublic;
+
+        /// <summary>
+        /// Automatically serializes an object based on members found in reflection.
+        /// </summary>
+        /// <param name="Object">The object to serialize.</param>
+        /// <param name="Type">The type of the object to serialize.</param>
+        /// <param name="Stream">The stream to serialize to.</param>
+        private static void _AutoSerialize(object Object, Type Type, BinaryWriteStream Stream)
+        {
+            foreach (FieldInfo fi in Type.GetFields(_AutoSerializedFields))
+            {
+                object val = fi.GetValue(Object);
+                Type ty = fi.FieldType;
+                SerializeShort(val, ty, Stream);
+            }
+        }
+
+        /// <summary>
+        /// Deserializes an object that was previously serialized with AutoSerialize.
+        /// </summary>
+        /// <param name="Object">The object to deserialize to.</param>
+        /// <param name="Type">The type of the object to deserialize.</param>
+        /// <param name="Stream">The stream to deserialize from.</param>
+        private static void _AutoDeserialize(object Object, Type Type, BinaryReadStream Stream)
+        {
+            foreach (FieldInfo fi in Type.GetFields(_AutoSerializedFields))
+            {
+                Type ty = fi.FieldType;
+                fi.SetValue(Object, DeserializeShort(null, ty, Stream));
+            }
+        }
 
         /// <summary>
         /// Serializes a short object. This type of serialization assumes that the
         /// type of the object is known at the receiving end.
         /// </summary>
         /// <param name="Object">The object to serialize.</param>
+        /// <param name="Type">The type of the object, or the type of the base of the object that
+        /// needs to be serialized.</param>
         /// <param name="Stream">The stream to serialize the object into.</param>
-        public static void SerializeShort(Serializable Object, BinaryWriteStream Stream)
+        public static void SerializeShort(object Object, Type Type, BinaryWriteStream Stream)
         {
-            Object.Serialize(Stream);
+            // Simple serialization
+            if (Type.IsPrimitive)
+            {
+                if (Type == typeof(int))
+                {
+                    Stream.WriteInt((int)(Object));
+                }
+                if (Type == typeof(double))
+                {
+                    Stream.WriteDouble((double)(Object));
+                }
+                if (Type == typeof(char))
+                {
+                    Stream.WriteChar((char)(Object));
+                }
+                return;
+            }
+            if (Type == typeof(string))
+            {
+                Stream.WriteString((string)(Object));
+                return;
+            }
+
+            // Complex serialization
+            MethodInfo ser = Type.GetMethod("Serialize", _InvokableMethods, null, new Type[] { typeof(BinaryWriteStream) }, null);
+            if (ser != null && !ser.IsStatic)
+            {
+                ser.Invoke(Object, new object[] { Stream });
+            }
+            else
+            {
+                _AutoSerialize(Object, Type, Stream);
+                if (Type.BaseType != null)
+                {
+                    SerializeShort(Object, Type.BaseType, Stream);
+                }
+            }
         }
 
         /// <summary>
@@ -44,28 +113,77 @@ namespace DUIP.Core
         /// with a single BinaryReadStream parameter and calling or by looking for a "Deserialize"
         /// method that takes a BinaryReadStream and returns an object.
         /// </summary>
+        /// <param name="Object">The object to deserialize to or null to construct the new object
+        /// in this method.</param>
         /// <param name="Stream">The stream to deserialize the object from.</param>
         /// <param name="Type">The type of the object.</param>
         /// <returns>The deserialized object.</returns>
-        public static Serializable DeserializeShort(BinaryReadStream Stream, Type Type)
+        public static object DeserializeShort(object Object, Type Type, BinaryReadStream Stream)
         {
-            ConstructorInfo ci = Type.GetConstructor(new Type[] { typeof(BinaryReadStream) });
-            if (ci != null && !Type.IsAbstract)
+            // Simple deserialization
+            if (Type.IsPrimitive)
             {
-                return (Serializable)ci.Invoke(new object[] { Stream }); 
+                if (Type == typeof(int))
+                {
+                    return Stream.ReadInt();
+                }
+                if (Type == typeof(double))
+                {
+                    return Stream.ReadDouble();
+                }
+                if (Type == typeof(char))
+                {
+                    return Stream.ReadChar();
+                }
+                return null;
+            }
+            if (Type == typeof(string))
+            {
+                return Stream.ReadString();
+            }
+
+            // Complex deserialization
+            if (Object == null)
+            {
+                ConstructorInfo ci = Type.GetConstructor(_InvokableMethods, null, new Type[] { typeof(BinaryReadStream) }, null);
+                if (ci != null && !Type.IsAbstract)
+                {
+                    return ci.Invoke(new object[] { Stream }); 
+                }
+
+                MethodInfo mi = Type.GetMethod("Deserialize", _InvokableMethods, null, new Type[] { typeof(BinaryReadStream) }, null);
+                if (mi != null && mi.IsStatic && mi.ReturnType == Type)
+                {
+                    return mi.Invoke(null, new object[] { Stream });
+                }
+
+                // Use default constructor to create object then deserialize in place.
+                ci = Type.GetConstructor(new Type[0]);
+                if (ci != null && !Type.IsAbstract)
+                {
+                    return DeserializeShort(ci.Invoke(new object[0]), Type, Stream);
+                }
             }
             else
             {
-                MethodInfo mi = Type.GetMethod("Deserialize", new Type[] { typeof(BinaryReadStream) });
-                if (mi != null && mi.ReturnType == Type)
+                // Deserialize method.
+                MethodInfo mi = Type.GetMethod("Deserialize", _InvokableMethods, null, new Type[] { typeof(BinaryReadStream) }, null);
+                if (mi != null && !mi.IsStatic)
                 {
-                    return (Serializable)mi.Invoke(null, new object[] { Stream });
+                    mi.Invoke(Object, new object[] { Stream });
+                    return Object;
                 }
-                else
+
+                // Autodeserialize
+                _AutoDeserialize(Object, Type, Stream);
+                if (Type.BaseType != null)
                 {
-                    throw new Exception("No deserializer");
+                    DeserializeShort(Object, Type.BaseType, Stream);
                 }
+                return Object;
             }
+
+            throw new Exception("Nope, I cant deserialize this, too hard");
         }
 
         /// <summary>
@@ -74,10 +192,11 @@ namespace DUIP.Core
         /// </summary>
         /// <param name="Object">The object to serialize.</param>
         /// <param name="Stream">The stream to serialize to.</param>
-        public static void SerializeLong(Serializable Object, BinaryWriteStream Stream)
+        public static void SerializeLong(object Object, BinaryWriteStream Stream)
         {
-            TypeDirectory.GetIDForType(Object.GetType()).Serialize(Stream);
-            SerializeShort(Object, Stream);
+            Type objtype = Object.GetType();
+            TypeDirectory.GetIDForType(objtype).Serialize(Stream);
+            SerializeShort(Object, objtype, Stream);
         }
 
 
@@ -86,10 +205,10 @@ namespace DUIP.Core
         /// </summary>
         /// <param name="Stream">The stream to deserialize from.</param>
         /// <returns>The deserialized object.</returns>
-        public static Serializable DeserializeLong(BinaryReadStream Stream)
+        public static object DeserializeLong(BinaryReadStream Stream)
         {
             Type Type = TypeDirectory.GetTypeByID(new ID(Stream));
-            return DeserializeShort(Stream, Type);
+            return DeserializeShort(null, Type, Stream);
         }
     }
 }

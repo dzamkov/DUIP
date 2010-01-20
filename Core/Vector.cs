@@ -13,7 +13,7 @@ namespace DUIP.Core
     /// Represents a long distance across sectors. The units, given in integers
     /// are the amount of sectors to the right and down the grid.
     /// </summary>
-    public struct LVector : Serializable
+    public struct LVector
     {
         public LVector(int Right, int Down)
         {

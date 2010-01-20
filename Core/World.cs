@@ -12,24 +12,12 @@ namespace DUIP.Core
     /// <summary>
     /// Defines the rules and properties in infinitely large grid of sectors.
     /// </summary>
-    public class World : Serializable
+    public class World
     {
         public World()
         {
             this._GridSize = new LVector(2, 2);
             this._GridRelationCacheSize = 1;
-        }
-
-        public World(BinaryReadStream Stream)
-        {
-            this._GridSize = new LVector(Stream);
-            this._GridRelationCacheSize = Stream.ReadInt();
-        }
-
-        public void Serialize(BinaryWriteStream Stream)
-        {
-            this._GridSize.Serialize(Stream);
-            Stream.WriteInt(this._GridRelationCacheSize);
         }
 
         /// <summary>
