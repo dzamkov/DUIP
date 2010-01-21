@@ -22,12 +22,16 @@ namespace DUIP.Net
             this._PullCon = PullCon;
             this._PushCon = PushCon;
             this._World = World;
-            this._World._NetManager = this;
             this._Self = new Peer(new IPEndPoint(IPAddress.Loopback, 0));
             this._OutstandingMessages = new Dictionary<ID, Message>();
             this._Peers = new Dictionary<IPEndPoint, Peer>();
             
             this._PullCon.ReceiveMessage += new ReceiveNetDataHandler(_ReceiveNetData);
+
+            if (this._World != null)
+            {
+                this._World._NetManager = this;
+            }
         }
 
         /// <summary>
@@ -125,7 +129,19 @@ namespace DUIP.Net
                             ParentID = parentid
                         };
                         m.OnExcept(pnfe);
+                        return;
                     }
+                }
+
+                if (this._OutstandingMessages.ContainsKey(messageid))
+                {
+                    MessageAlreadyExistsException maee = new MessageAlreadyExistsException()
+                    {
+                        For = m,
+                        ID = messageid
+                    };
+                    m.OnExcept(maee);
+                    return;
                 }
 
                 m._From = From;
@@ -208,6 +224,15 @@ namespace DUIP.Net
                     this._PushCon.Send(baw.Data, To.Location);
                 }
             }
+        }
+
+        /// <summary>
+        /// Marks a peer as destructive. This is used when a peer sends invalid or false data.
+        /// </summary>
+        /// <param name="Peer">The peer to "Slap".</param>
+        public void Slap(Peer Peer)
+        {
+
         }
 
         private PullConnection _PullCon;

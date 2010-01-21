@@ -16,14 +16,10 @@ namespace DUIP.Core
     /// </summary>
     public abstract class Entity : Resource
     {
-        public Entity(World World, ID ID) : base(World, ID)
+        public Entity(World World) : base(World)
         {
 
         }
 
-        public Entity(World World) : this(World, ID.Random())
-        {
-
-        }
     }
 }

@@ -25,7 +25,13 @@ namespace DUIP.Core
             }
         }
 
-        public void Serialize(BinaryWriteStream Target)
+        public Resource(World World)
+            : this(World, ID.Random())
+        {
+
+        }
+
+        private void Serialize(BinaryWriteStream Target)
         {
             // Either serialize the ID of the resource or its global data instead.
             throw new Exception("Serializing a resource is stupid; care to reconsider?");
@@ -44,32 +50,18 @@ namespace DUIP.Core
         }
 
         /// <summary>
-        /// Recreates the global state of the resource based on the data given.
+        /// Serializes the global state of the resource into a stream. The state is later retreieved with
+        /// DeserializeGlobal.
         /// </summary>
-        /// <param name="Data">The data containing the global state of the
-        /// resource.</param>
-        protected abstract void OnReceiveData(object Data);
+        /// <param name="Stream">The stream to save the global state into.</param>
+        protected abstract void SerializeGlobal(BinaryWriteStream Stream);
 
         /// <summary>
-        /// Initializes the local state of the resource based on the current global state
-        /// it has.
+        /// Deserializes the global state of the resource into the stream. After this, the resource should
+        /// be modified to use the new global state.
         /// </summary>
-        protected virtual void OnLocalInit()
-        {
-        }
-
-        /// <summary>
-        /// Initializes the global state of the resource if no data has been received for it. This
-        /// is called only one time in the resources life, when it is created.
-        /// </summary>
-        protected virtual void OnGlobalInit()
-        {
-        }
-
-        /// <summary>
-        /// Gets the data that stores the global state of this resource.
-        /// </summary>
-        protected abstract object Data { get; }
+        /// <param name="Stream">The stream to load the global state from.</param>
+        protected abstract void DeserializeGlobal(BinaryReadStream Stream);
 
         /// <summary>
         /// Gets the world this resource belongs to.
@@ -98,8 +90,6 @@ namespace DUIP.Core
                 throw new Exception("Resource with this ID already exists");
             }
             this._World._Resources.Add(this._ID, this);
-            this.OnGlobalInit();
-            this.OnLocalInit();
         }
 
         /// <summary>
@@ -134,7 +124,7 @@ namespace DUIP.Core
             ID typeid = TypeDirectory.GetIDForType(type);
 
             typeid.Serialize(Stream);
-            Core.Serialize.SerializeLong(this.Data, Stream);
+            this.SerializeGlobal(Stream);
         }
 
         /// <summary>
@@ -147,7 +137,6 @@ namespace DUIP.Core
         static internal Resource _LoadResourceDescription(World World, ID ResourceID, BinaryReadStream Stream)
         {
             ID typeid = new ID(Stream);
-            object data = Core.Serialize.DeserializeLong(Stream);
             Type type = TypeDirectory.GetTypeByID(typeid);
 
             // Check if world
@@ -156,8 +145,7 @@ namespace DUIP.Core
                 World w = new World(ResourceID);
                 w._World = w;
                 w._Add();
-                w.OnReceiveData(data);
-                w.OnLocalInit();
+                w.DeserializeGlobal(Stream);
                 return w;
             }
             else
@@ -170,8 +158,7 @@ namespace DUIP.Core
                     r._ID = ResourceID;
                     r._World = World;
                     r._Add();
-                    r.OnReceiveData(data);
-                    r.OnLocalInit();
+                    r.DeserializeGlobal(Stream);
                     return r;
                 }
                 else

@@ -241,6 +241,22 @@ namespace DUIP.Net
     }
 
     /// <summary>
+    /// A message that can't be responded to.
+    /// </summary>
+    public abstract class NoRespondMessage : Message
+    {
+        protected internal override void OnReceive()
+        {
+            this.Remove();
+        }
+
+        protected internal override void OnSend()
+        {
+            this.Remove();
+        }
+    }
+
+    /// <summary>
     /// Handler for a timed action.
     /// </summary>
     /// <returns>True to keep the timed action and cause it to
@@ -269,5 +285,17 @@ namespace DUIP.Net
         /// Identifier for the parent message.
         /// </summary>
         public ID ParentID;
+    }
+
+    /// <summary>
+    /// An exception where a message with the same id already exists, this can usually be
+    /// safely ignored.
+    /// </summary>
+    public class MessageAlreadyExistsException : NetworkException
+    {
+        /// <summary>
+        /// The id of the message that already exists.
+        /// </summary>
+        public ID ID;
     }
 }

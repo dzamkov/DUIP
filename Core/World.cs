@@ -18,6 +18,9 @@ namespace DUIP.Core
         {
             this._Resources = new Dictionary<ID, Resource>();
             this.World = this;
+
+            this._GlobalData.GridSize = new LVector(2, 2);
+            this._InitLocalData();
         }
 
         internal World(ID ID)
@@ -27,11 +30,15 @@ namespace DUIP.Core
             this._Resources = new Dictionary<ID, Resource>();
         }
 
-        protected override void  OnGlobalInit()
+        protected override void SerializeGlobal(BinaryWriteStream Stream)
         {
-            this._GlobalData = new GlobalData();
- 	        this._GlobalData.GridSize = new LVector(2, 2);
-            this._GlobalData.GridRelationCacheSize = 1;
+            Serialize.SerializeShort(this._GlobalData, typeof(GlobalData), Stream);
+        }
+
+        protected override void DeserializeGlobal(BinaryReadStream Stream)
+        {
+            Serialize.DeserializeShort(this._GlobalData, typeof(GlobalData), Stream);
+            this._InitLocalData();
         }
 
         /// <summary>
@@ -53,30 +60,25 @@ namespace DUIP.Core
         {
             get
             {
-                return this._GlobalData.GridRelationCacheSize;
+                return this._GridRelationCacheSize;
             }
         }
 
-        protected override object Data
+        /// <summary>
+        /// Initializes local data, the kind that isnt global.
+        /// </summary>
+        private void _InitLocalData()
         {
-            get 
-            {
-                return this._GlobalData;
-            }
+            this._GridRelationCacheSize = 1;
         }
 
-        protected override void OnReceiveData(object Data)
-        {
-            this._GlobalData = (GlobalData)Data;
-        }
-
-        public class GlobalData
+        public struct GlobalData
         {
             public LVector GridSize;
-            public int GridRelationCacheSize;
         }
 
         private GlobalData _GlobalData;
+        public int _GridRelationCacheSize;
         internal Net.NetManager _NetManager;
         internal Dictionary<ID, Resource> _Resources;
     }

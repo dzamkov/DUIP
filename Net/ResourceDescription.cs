@@ -32,8 +32,27 @@ namespace DUIP.Net
             this.Remove();
         }
 
+        protected internal override void OnRespond(Message Response)
+        {
+            ResourceDescriptionResponse rdr = Response as ResourceDescriptionResponse;
+            if (rdr != null && rdr.ResourceID == this.ResourceID)
+            {
+                if (this.ResourceLoad != null)
+                {
+                    this.ResourceLoad(rdr.Resource);
+                }
+            }
+        }
+
+        public event ResourceLoadHandler ResourceLoad;
         public ID ResourceID;
     }
+
+    /// <summary>
+    /// Callback for when a resource is loaded with a request.
+    /// </summary>
+    /// <param name="Resource">The resource that was loaded.</param>
+    public delegate void ResourceLoadHandler(Resource Resource);
 
     /// <summary>
     /// A request for the details of the world to be described.
@@ -54,8 +73,11 @@ namespace DUIP.Net
         protected internal override void OnRespond(Message Response)
         {
             ResourceDescriptionResponse rdr = Response as ResourceDescriptionResponse;
-            this.NetManager.World = (World)(rdr.Resource);
-            this.Remove();
+            if (rdr != null)
+            {
+                this.NetManager.World = (World)(rdr.Resource);
+                this.Remove();
+            }
         }
 
     }
@@ -63,7 +85,7 @@ namespace DUIP.Net
     /// <summary>
     /// Sucsessful response to a resource description that gives the details of the resource.
     /// </summary>
-    public class ResourceDescriptionResponse : Message
+    public class ResourceDescriptionResponse : NoRespondMessage
     {
 
         private void Serialize(BinaryWriteStream Stream)
@@ -92,16 +114,6 @@ namespace DUIP.Net
                     this.ID,
                     Stream);
             }
-        }
-
-        protected internal override void OnReceive()
-        {
-            this.Remove();
-        }
-
-        protected internal override void OnSend()
-        {
-            this.Remove();
         }
 
         public ID ResourceID;
