@@ -144,6 +144,24 @@ namespace DUIP.Net
         }
 
         /// <summary>
+        /// Writes extra data to the message after OnAssign but before OnSend.
+        /// </summary>
+        /// <param name="Stream">The stream to write extra data to.</param>
+        protected internal virtual void OnDataWrite(BinaryWriteStream Stream)
+        {
+
+        }
+
+        /// <summary>
+        /// Reads extra data from the message after OnAssign but before OnReceive.
+        /// </summary>
+        /// <param name="Stream">The stream to read data from.</param>
+        protected internal virtual void OnDataRead(BinaryReadStream Stream)
+        {
+
+        }
+
+        /// <summary>
         /// Sends this message. This can be called if OnAssign has not yet been
         /// called on the message.
         /// </summary>

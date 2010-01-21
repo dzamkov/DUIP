@@ -15,45 +15,20 @@ namespace DUIP.Core
     /// </summary>
     public abstract class Resource
     {
-        public Resource(ID ID)
+        public Resource(World World, ID ID)
         {
             this._ID = ID;
-            if (!_Resources.ContainsKey(ID))
+            this._World = World;
+            if (this._World != null)
             {
-                _Resources.Add(ID, new WeakReference(this));
-            }
-            else
-            {
-                throw new Exception("ID already in use");
+                this._Add();
             }
         }
 
         public void Serialize(BinaryWriteStream Target)
         {
-            this._ID.Serialize(Target);
-        }
-
-        public Resource Deserialize(BinaryReadStream Stream)
-        {
-            ID id = new ID(Stream);
-            WeakReference wr;
-            if (_Resources.TryGetValue(id, out wr))
-            {
-                if (wr.IsAlive)
-                {
-                    return (Resource)wr.Target;
-                }
-                else
-                {
-                    _Resources[id] = null;
-                }
-            }
-            return new UnresolvedResource(id);
-        }
-
-        static Resource()
-        {
-            _Resources = new Dictionary<ID, WeakReference>();
+            // Either serialize the ID of the resource or its global data instead.
+            throw new Exception("Serializing a resource is stupid; care to reconsider?");
         }
 
         /// <summary>
@@ -71,77 +46,143 @@ namespace DUIP.Core
         /// <summary>
         /// Recreates the global state of the resource based on the data given.
         /// </summary>
-        /// <param name="Data">The data containing the global state of </param>
-        public abstract void OnReceiveData(object Data);
+        /// <param name="Data">The data containing the global state of the
+        /// resource.</param>
+        protected abstract void OnReceiveData(object Data);
+
+        /// <summary>
+        /// Initializes the local state of the resource based on the current global state
+        /// it has.
+        /// </summary>
+        protected virtual void OnLocalInit()
+        {
+        }
+
+        /// <summary>
+        /// Initializes the global state of the resource if no data has been received for it. This
+        /// is called only one time in the resources life, when it is created.
+        /// </summary>
+        protected virtual void OnGlobalInit()
+        {
+        }
 
         /// <summary>
         /// Gets the data that stores the global state of this resource.
         /// </summary>
-        public abstract object Data { get; }
+        protected abstract object Data { get; }
 
         /// <summary>
-        /// Gets if this resource is resolved. An unresolved resource can not have functions called,
-        /// or store data and is useless until resolved.
+        /// Gets the world this resource belongs to.
         /// </summary>
-        public bool Resolved
+        public World World
         {
             get
             {
-                return this._Resolved;
+                return this._World;
+            }
+            internal set
+            {
+                // Setting should only be done when the world is previously null.
+                this._World = value;
+                this._Add();
             }
         }
 
         /// <summary>
-        /// Gets if this resource is resolved.
+        /// Adds this resource to its world.
         /// </summary>
-        internal virtual bool _Resolved
+        private void _Add()
         {
-            get
+            if(this._World._Resources.ContainsKey(this._ID))
             {
-                return true;
+                throw new Exception("Resource with this ID already exists");
             }
+            this._World._Resources.Add(this._ID, this);
+            this.OnGlobalInit();
+            this.OnLocalInit();
         }
 
-        private ID _ID;
-        private static Dictionary<ID, WeakReference> _Resources;
-    }
-
-    /// <summary>
-    /// A resource whose exact type and data is unknown. This type of resource still has
-    /// an id.
-    /// </summary>
-    public sealed class UnresolvedResource : Resource
-    {
-        internal UnresolvedResource(ID ID) : base(ID)
+        /// <summary>
+        /// Gets a resource by an id.
+        /// </summary>
+        /// <param name="World">The world to search in.</param>
+        /// <param name="ID">The id of the resource to find.</param>
+        /// <returns>The resource with the id if it exists and has a definit
+        /// state; null if no id for that resource is found.</returns>
+        public static Resource GetResource(World World, ID ID)
         {
-
-        }
-
-        public override void OnReceiveData(object Data)
-        {
-            
-        }
-
-        public override string ToString()
-        {
-            return "<Unresolved Resource>";
-        }
-
-        internal override bool _Resolved
-        {
-            get
+            Resource r;
+            if (World._Resources.TryGetValue(ID, out r))
             {
-                return false;
+                return r;
             }
-        }
-
-        public override object Data
-        {
-            get 
+            else
             {
                 return null;
             }
         }
+
+        /// <summary>
+        /// Creates a resource descripition that can be used to send or store
+        /// the resource. Resource descripitions do not contain data for other
+        /// resources used.
+        /// </summary>
+        /// <param name="Stream">The stream to write the descripition to.</param>
+        internal void _CreateResourceDescription(BinaryWriteStream Stream)
+        {
+            Type type = this.GetType();
+            ID typeid = TypeDirectory.GetIDForType(type);
+
+            typeid.Serialize(Stream);
+            Core.Serialize.SerializeLong(this.Data, Stream);
+        }
+
+        /// <summary>
+        /// Loads a resource from a resource description.
+        /// </summary>
+        /// <param name="World">The world this resource is for.</param>
+        /// <param name="ResourceID">The resource id of the resource.</param>
+        /// <param name="Stream">The stream to load the resource from.</param>
+        /// <returns>The resource loaded from the description.</returns>
+        static internal Resource _LoadResourceDescription(World World, ID ResourceID, BinaryReadStream Stream)
+        {
+            ID typeid = new ID(Stream);
+            object data = Core.Serialize.DeserializeLong(Stream);
+            Type type = TypeDirectory.GetTypeByID(typeid);
+
+            // Check if world
+            if (World == null && type == typeof(World))
+            {
+                World w = new World(ResourceID);
+                w._World = w;
+                w._Add();
+                w.OnReceiveData(data);
+                w.OnLocalInit();
+                return w;
+            }
+            else
+            {
+                // Create a resource of the type
+                ConstructorInfo ci = type.GetConstructor(new Type[] { typeof(World) });
+                if (ci != null)
+                {
+                    Resource r = (Resource)ci.Invoke(new object[] { null });
+                    r._ID = ResourceID;
+                    r._World = World;
+                    r._Add();
+                    r.OnReceiveData(data);
+                    r.OnLocalInit();
+                    return r;
+                }
+                else
+                {
+                    throw new Exception("Resource instance cannot be created.");
+                }
+            }
+        }
+
+        private ID _ID;
+        private World _World;
     }
 
     /// <summary>

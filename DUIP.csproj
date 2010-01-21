@@ -93,7 +93,7 @@
     <Compile Include="Net\Message.cs" />
     <Compile Include="Net\NetManager.cs" />
     <Compile Include="Net\Peer.cs" />
-    <Compile Include="Net\TestMessage.cs" />
+    <Compile Include="Net\ResourceDescription.cs" />
     <Compile Include="Net\UDPConnection.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

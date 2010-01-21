@@ -12,12 +12,26 @@ namespace DUIP.Core
     /// <summary>
     /// Defines the rules and properties in infinitely large grid of sectors.
     /// </summary>
-    public class World
+    public sealed class World : Resource
     {
-        public World()
+        public World() : base(null, ID.Random())
         {
-            this._GridSize = new LVector(2, 2);
-            this._GridRelationCacheSize = 1;
+            this._Resources = new Dictionary<ID, Resource>();
+            this.World = this;
+        }
+
+        internal World(ID ID)
+            : base(null, ID)
+        {
+            // This constuctor is for resource to initially load a world.
+            this._Resources = new Dictionary<ID, Resource>();
+        }
+
+        protected override void  OnGlobalInit()
+        {
+            this._GlobalData = new GlobalData();
+ 	        this._GlobalData.GridSize = new LVector(2, 2);
+            this._GlobalData.GridRelationCacheSize = 1;
         }
 
         /// <summary>
@@ -27,7 +41,7 @@ namespace DUIP.Core
         {
             get
             {
-                return this._GridSize;
+                return this._GlobalData.GridSize;
             }
         }
 
@@ -39,11 +53,31 @@ namespace DUIP.Core
         {
             get
             {
-                return this._GridRelationCacheSize;
+                return this._GlobalData.GridRelationCacheSize;
             }
         }
 
-        private LVector _GridSize;
-        private int _GridRelationCacheSize;
+        protected override object Data
+        {
+            get 
+            {
+                return this._GlobalData;
+            }
+        }
+
+        protected override void OnReceiveData(object Data)
+        {
+            this._GlobalData = (GlobalData)Data;
+        }
+
+        public class GlobalData
+        {
+            public LVector GridSize;
+            public int GridRelationCacheSize;
+        }
+
+        private GlobalData _GlobalData;
+        internal Net.NetManager _NetManager;
+        internal Dictionary<ID, Resource> _Resources;
     }
 }

@@ -27,12 +27,19 @@ namespace DUIP
             Core.TypeDirectory.LoadAssembly(typeof(Program).Assembly);
             DialogResult dr = MessageBox.Show("Wanna run Server(Okay) or Client(Cancel)?", "Honest question", MessageBoxButtons.OKCancel);
             bool part = dr == DialogResult.Cancel;
+
             UDPConnection con = new UDPConnection(27200 + (part ? 1 : 0));
-            NetManager man = new NetManager(con, con, null);
+            NetManager man;
             if (part)
             {
                 System.Net.IPEndPoint endpoint = new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 27200);
-                new TestMessage { Message = "Hello" }.Send(man, null, man.GetPeer(endpoint));
+                man = new NetManager(con, con, null);
+                man.Connect(endpoint);
+            }
+            else
+            {
+                Core.World world = new Core.World();
+                man = new NetManager(con, con, world);
             }
 
             Visual.Window win = new Visual.Window(DisplayDevice.Default);

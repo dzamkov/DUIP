@@ -22,6 +22,7 @@ namespace DUIP.Net
             this._PullCon = PullCon;
             this._PushCon = PushCon;
             this._World = World;
+            this._World._NetManager = this;
             this._Self = new Peer(new IPEndPoint(IPAddress.Loopback, 0));
             this._OutstandingMessages = new Dictionary<ID, Message>();
             this._Peers = new Dictionary<IPEndPoint, Peer>();
@@ -37,6 +38,10 @@ namespace DUIP.Net
         public Peer Connect(IPEndPoint Peer)
         {
             Peer p = new Peer(Peer);
+            if (this._World == null)
+            {
+                new WorldDescriptionRequest().Send(this, null, p);
+            }
             return p;
         }
 
@@ -50,6 +55,15 @@ namespace DUIP.Net
             get
             {
                 return this._World;
+            }
+            internal set
+            {
+                this._World = value;
+                this._World._NetManager = this;
+                if (this.WorldLoad != null)
+                {
+                    this.WorldLoad.Invoke(this._World);
+                }
             }
         }
 
@@ -124,6 +138,7 @@ namespace DUIP.Net
                 lock (m)
                 {
                     m.OnAssign(m._From, m._To, m._Manager);
+                    m.OnDataRead(Read);
                     m.OnReceive();
                     if (p != null)
                     {
@@ -158,13 +173,15 @@ namespace DUIP.Net
         {
             lock (Message)
             {
+                Message._Manager = this;
                 Message._From = this._Self;
                 Message._To = To;
-                Message.OnSend();
+                this._OutstandingMessages[Message._ID] = Message;
+                Message.OnAssign(Message.From, Message.To, this);
                 if (To == this._Self)
                 {
                     // Message sent to self
-                    this._OutstandingMessages[Message._ID] = Message;
+                    Message.OnSend();
                     Message.OnReceive();
                     if (Message.Parent != null)
                     {
@@ -186,6 +203,8 @@ namespace DUIP.Net
                         Message.Parent.ID.Serialize(baw);
                     }
                     Serialize.SerializeLong(Message, baw);
+                    Message.OnDataWrite(baw);
+                    Message.OnSend();
                     this._PushCon.Send(baw.Data, To.Location);
                 }
             }
