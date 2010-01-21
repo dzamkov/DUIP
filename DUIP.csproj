@@ -80,7 +80,6 @@
     <Compile Include="Core\App.cs" />
     <Compile Include="Core\BinaryStream.cs" />
     <Compile Include="Core\Entity.cs" />
-    <Compile Include="Core\GeneralSector.cs" />
     <Compile Include="Core\ID.cs" />
     <Compile Include="Core\Relation.cs" />
     <Compile Include="Core\Resource.cs" />

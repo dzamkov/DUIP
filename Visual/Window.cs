@@ -29,7 +29,7 @@ namespace DUIP.Visual
 
             World w = new World();
             View v = new View();
-            v.Location = GeneralSector.Create(w).Center;
+            v.Location = Sector.Create(w).Center;
             v.ZoomLevel = 0.7;
             TestSection.CreateIntrestingEnvironment(v.Location.Sector, 0);
 

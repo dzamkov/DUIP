@@ -69,8 +69,15 @@ namespace DUIP.Core
     /// <summary>
     /// A square block of space that can be subdivided into more sectors.
     /// </summary>
-    public abstract class Sector
+    public class Sector
     {
+        private Sector(World World)
+        {
+            this._World = World;
+            int rc = this._World.RelationCacheSize;
+            this._Children = new Sector[this.Size.Right, this.Size.Down];
+            this._RelationCache = new Sector[rc * 2 + 1, rc * 2 + 1];
+        }
 
         /// <summary>
         /// Gets a child sector of this sector.
@@ -79,14 +86,49 @@ namespace DUIP.Core
         /// get. This vector is in relation to the child at the top-left corner
         /// of this sector.</param>
         /// <returns>The specified child sector. Cannot be null.</returns>
-        public abstract Sector GetChild(LVector Child);
+        public Sector GetChild(LVector Child)
+        {
+            Sector child = this._Children[Child.Right, Child.Down];
+            if (child == null)
+            {
+                child = this._Children[Child.Right, Child.Down] = new Sector(this._World);
+                child._Parent = this;
+                child._ChildRelation = Child;
+                child._Init();
+            }
+            return child;
+        }
 
         /// <summary>
         /// Gets a sector in relation to this sector.
         /// </summary>
         /// <param name="Vector">The vector from this sector to search.</param>
         /// <returns>The sector at the specified relation from this sector. Cannot be null.</returns>
-        public virtual Sector GetRelation(LVector Vector)
+        public Sector GetRelation(LVector Vector)
+        {
+            int rc = this._World.RelationCacheSize;
+            if (Vector.Down >= -rc && Vector.Down <= rc &&
+                Vector.Right >= -rc && Vector.Right <= rc)
+            {
+                LVector diff = Vector + new LVector(rc, rc);
+                if (this._RelationCache[diff.Right, diff.Down] != null)
+                {
+                    return this._RelationCache[diff.Right, diff.Down];
+                }
+                else
+                {
+                    return this._RelationCache[diff.Right, diff.Down] = this._GetRelation(Vector);
+                }
+            }
+            return this._GetRelation(Vector);
+        }
+
+        /// <summary>
+        /// Gets a relation without caching.
+        /// </summary>
+        /// <param name="Vector">The vector for the relation.</param>
+        /// <returns>The sector at the specified relation</returns>
+        private Sector _GetRelation(LVector Vector)
         {
             LVector size = this.Size;
             Sector parent = this.GetParent(new LVector
@@ -120,12 +162,28 @@ namespace DUIP.Core
         /// <param name="ChildRelation">The relation this will have to its parent if the parent
         /// is not yet created. This is only a suggestion.</param>
         /// <returns>The parent of this sector. Cannot be null.</returns>
-        public abstract Sector GetParent(LVector ChildRelation);
+        public Sector GetParent(LVector ChildRelation)
+        {
+            if (this._Parent == null)
+            {
+                this._Parent = new Sector(this._World);
+                this._ChildRelation = ChildRelation;
+                this._Parent._Children[ChildRelation.Right, ChildRelation.Down] = this;
+                this._Parent._Init();
+            }
+            return this._Parent;
+        }
 
         /// <summary>
         /// Returns true if the parent is blank or unassigned.
         /// </summary>
-        public abstract bool BlankParent { get; }
+        public bool BlankParent
+        {
+            get
+            {
+                return this._Parent == null;
+            }
+        }
 
         /// <summary>
         /// Gets the parent sector that has this as a child. Cannot be null.
@@ -142,16 +200,19 @@ namespace DUIP.Core
         /// Gets an enumeration of all children of this sector. May or may
         /// not include unassigned children.
         /// </summary>
-        public virtual IEnumerable<Sector> Children
+        public IEnumerable<Sector> Children
         {
             get
             {
-                LVector size = this.Size;
-                for (int x = 0; x < size.Right; x++)
+                for (int x = 0; x < this.Size.Right; x++)
                 {
-                    for (int y = 0; y < size.Down; y++)
+                    for (int y = 0; y < this.Size.Down; y++)
                     {
-                        yield return this.GetChild(new LVector(x, y));
+                        Sector gs = this._Children[x, y];
+                        if (gs != null)
+                        {
+                            yield return gs;
+                        }
                     }
                 }
             }
@@ -162,12 +223,28 @@ namespace DUIP.Core
         /// of rows of sectors and Up specifies the amount of coloumns of sectors. All sectors in the grid
         /// must have the same size.
         /// </summary>
-        public abstract LVector Size { get; }
+        public LVector Size
+        {
+            get
+            {
+                return this._World.SectorSize;
+            }
+        }
 
         /// <summary>
         /// Gets a vector such that this.Parent.GetChild(this.ChildRelation) == this.
         /// </summary>
-        public abstract LVector ChildRelation { get; }
+        public LVector ChildRelation
+        {
+            get
+            {
+                if (this._Parent == null)
+                {
+                    this.GetParent(new LVector());
+                }
+                return this._ChildRelation;
+            }
+        }
 
         /// <summary>
         /// Gets the location at the center of this sector.
@@ -181,8 +258,30 @@ namespace DUIP.Core
         }
 
         /// <summary>
-        /// Visual aspects in this sector.
+        /// Creates a blank unfilled general sector.
         /// </summary>
+        /// <param name="World">The world this unit is for.</param>
+        /// <returns>A new general sector.</returns>
+        public static Sector Create(World World)
+        {
+            Sector gs = new Sector(World);
+            gs._Init();
+            return gs;
+        }
+
+        /// <summary>
+        /// Initializes the sector after its relations are set up.
+        /// </summary>
+        private void _Init()
+        {
+            this._VisData = new Visual.SectorVisData(this);
+        }
+
+        private World _World;
+        private Sector[,] _Children;
+        private Sector[,] _RelationCache;
+        private Sector _Parent;
+        private LVector _ChildRelation;
         internal Visual.SectorVisData _VisData;
     }
 }
