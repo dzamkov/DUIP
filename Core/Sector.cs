@@ -74,7 +74,7 @@ namespace DUIP.Core
         private Sector(World World)
         {
             this._World = World;
-            int rc = this._World.RelationCacheSize;
+            int rc = this._World.RelationSize;
             this._Children = new Sector[this.Size.Right, this.Size.Down];
             this._RelationCache = new Sector[rc * 2 + 1, rc * 2 + 1];
         }
@@ -106,7 +106,7 @@ namespace DUIP.Core
         /// <returns>The sector at the specified relation from this sector. Cannot be null.</returns>
         public Sector GetRelation(LVector Vector)
         {
-            int rc = this._World.RelationCacheSize;
+            int rc = this._World.RelationSize;
             if (Vector.Down >= -rc && Vector.Down <= rc &&
                 Vector.Right >= -rc && Vector.Right <= rc)
             {
