@@ -71,12 +71,11 @@ namespace DUIP.Core
     /// </summary>
     public class Sector
     {
-        private Sector(World World)
+        private Sector(World World, XTransform Transform)
         {
             this._World = World;
-            int rc = this._World.RelationSize;
-            this._Children = new Sector[this.Size.Right, this.Size.Down];
-            this._RelationCache = new Sector[rc * 2 + 1, rc * 2 + 1];
+            this._RelData = new SectorRelationData(World);
+            this._RootTransform = Transform;
         }
 
         /// <summary>
@@ -88,12 +87,12 @@ namespace DUIP.Core
         /// <returns>The specified child sector. Cannot be null.</returns>
         public Sector GetChild(LVector Child)
         {
-            Sector child = this._Children[Child.Right, Child.Down];
+            Sector child = this._RelData.Children[Child.Right, Child.Down];
             if (child == null)
             {
-                child = this._Children[Child.Right, Child.Down] = new Sector(this._World);
-                child._Parent = this;
-                child._ChildRelation = Child;
+                child = this._RelData.Children[Child.Right, Child.Down] = new Sector(this._World, new XTransform(this._RootTransform, new XVector(Child, -1)));
+                child._RelData.Parent = this;
+                child._RelData.ChildRelation = Child;
                 child._Init();
             }
             return child;
@@ -111,13 +110,13 @@ namespace DUIP.Core
                 Vector.Right >= -rc && Vector.Right <= rc)
             {
                 LVector diff = Vector + new LVector(rc, rc);
-                if (this._RelationCache[diff.Right, diff.Down] != null)
+                if (this._RelData.RelationCache[diff.Right, diff.Down] != null)
                 {
-                    return this._RelationCache[diff.Right, diff.Down];
+                    return this._RelData.RelationCache[diff.Right, diff.Down];
                 }
                 else
                 {
-                    return this._RelationCache[diff.Right, diff.Down] = this._GetRelation(Vector);
+                    return this._RelData.RelationCache[diff.Right, diff.Down] = this._GetRelation(Vector);
                 }
             }
             return this._GetRelation(Vector);
@@ -164,14 +163,16 @@ namespace DUIP.Core
         /// <returns>The parent of this sector. Cannot be null.</returns>
         public Sector GetParent(LVector ChildRelation)
         {
-            if (this._Parent == null)
+            if (this._RelData.Parent == null)
             {
-                this._Parent = new Sector(this._World);
-                this._ChildRelation = ChildRelation;
-                this._Parent._Children[ChildRelation.Right, ChildRelation.Down] = this;
-                this._Parent._Init();
+                Sector par = new Sector(this._World, new XTransform(this._RootTransform, new XVector(new LVector(), 1)));
+                this._RelData.Parent = par;
+                this._RelData.ChildRelation = ChildRelation;
+                par._RelData.Children[ChildRelation.Right, ChildRelation.Down] = this;
+                par._Init();
+                return par;
             }
-            return this._Parent;
+            return this._RelData.Parent;
         }
 
         /// <summary>
@@ -181,7 +182,7 @@ namespace DUIP.Core
         {
             get
             {
-                return this._Parent == null;
+                return this._RelData.Parent == null;
             }
         }
 
@@ -208,7 +209,7 @@ namespace DUIP.Core
                 {
                     for (int y = 0; y < this.Size.Down; y++)
                     {
-                        Sector gs = this._Children[x, y];
+                        Sector gs = this._RelData.Children[x, y];
                         if (gs != null)
                         {
                             yield return gs;
@@ -238,11 +239,11 @@ namespace DUIP.Core
         {
             get
             {
-                if (this._Parent == null)
+                if (this._RelData.Parent == null)
                 {
                     this.GetParent(new LVector());
                 }
-                return this._ChildRelation;
+                return this._RelData.ChildRelation;
             }
         }
 
@@ -258,15 +259,16 @@ namespace DUIP.Core
         }
 
         /// <summary>
-        /// Creates a blank unfilled general sector.
+        /// Creates the root sector for the specified world. The root sector is used for relationships
+        /// between other sectors.
         /// </summary>
-        /// <param name="World">The world this unit is for.</param>
-        /// <returns>A new general sector.</returns>
-        public static Sector Create(World World)
+        /// <param name="World">The world to create the sector for.</param>
+        /// <returns>The sector to be used as the root sector.</returns>
+        internal static Sector _CreateRoot(World World)
         {
-            Sector gs = new Sector(World);
-            gs._Init();
-            return gs;
+            Sector s = new Sector(World, new XTransform());
+            s._Init();
+            return s;
         }
 
         /// <summary>
@@ -277,11 +279,31 @@ namespace DUIP.Core
             this._VisData = new Visual.SectorVisData(this);
         }
 
+        /// <summary>
+        /// Information about a sectors relations.
+        /// </summary>
+        public struct SectorRelationData
+        {
+            public SectorRelationData(World World)
+            {
+                LVector size = World.SectorSize;
+                int rc = World.RelationSize;
+                this.Children = new Sector[size.Right, size.Down];
+                this.RelationCache = new Sector[rc * 2 + 1, rc * 2 + 1];
+                this.Parent = null;
+                this.ChildRelation = new LVector(0, 0);
+            }
+
+            public Sector[,] Children;
+            public Sector[,] RelationCache;
+            public Sector Parent;
+            public LVector ChildRelation;
+        }
+
+        private XTransform _RootTransform;
         private World _World;
-        private Sector[,] _Children;
-        private Sector[,] _RelationCache;
-        private Sector _Parent;
-        private LVector _ChildRelation;
+
+        private SectorRelationData _RelData;
         internal Visual.SectorVisData _VisData;
     }
 }

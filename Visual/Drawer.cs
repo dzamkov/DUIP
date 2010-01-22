@@ -195,7 +195,7 @@ namespace DUIP.Visual
             /// <summary>
             /// Transform from the central sector.
             /// </summary>
-            public SectorTransform SectorTransform;
+            public STransform SectorTransform;
 
             /// <summary>
             /// The sector this information is for.
@@ -254,7 +254,7 @@ namespace DUIP.Visual
                         for (int y = 0; y < size.Down; y++)
                         {
                             LVector rel = new LVector(x, y);
-                            SectorTransform ctrans = SectorTransform.Child(size, rel);
+                            STransform ctrans = STransform.Child(size, rel);
                             SectorDrawInfo sdi = new SectorDrawInfo();
                             sdi.Sector = this.Sector.GetChild(rel);
                             sdi.Size = -1;
@@ -272,7 +272,7 @@ namespace DUIP.Visual
             {
                 get
                 {
-                    SectorTransform ptrans = SectorTransform.Parent(this.Sector.Size, this.Sector.ChildRelation);
+                    STransform ptrans = STransform.Parent(this.Sector.Size, this.Sector.ChildRelation);
                     SectorDrawInfo sdi = new SectorDrawInfo();
                     sdi.Sector = this.Sector.Parent;
                     sdi.Size = 1;

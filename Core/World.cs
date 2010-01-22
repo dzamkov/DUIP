@@ -21,6 +21,8 @@ namespace DUIP.Core
 
             this._GridSize = new LVector(2, 2);
             this._GridRelationSize = 1;
+            this._Root = Sector._CreateRoot(this);
+
             this._InitLocalData();
         }
 
@@ -68,6 +70,17 @@ namespace DUIP.Core
         }
 
         /// <summary>
+        /// Gets the root sector for this world. The root sector acts as a point of reference for others.
+        /// </summary>
+        public Sector Root
+        {
+            get
+            {
+                return this._Root;
+            }
+        }
+
+        /// <summary>
         /// Initializes local data, the kind that isnt global.
         /// </summary>
         private void _InitLocalData()
@@ -77,6 +90,7 @@ namespace DUIP.Core
 
         private LVector _GridSize;
         private int _GridRelationSize;
+        private Sector _Root;
         internal Net.NetManager _NetManager;
         internal Dictionary<ID, Resource> _Resources;
     }
