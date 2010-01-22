@@ -108,4 +108,56 @@ namespace DUIP.Core
             return new SVector { Down = A.Down - (double)B.Down, Right = A.Right - (double)B.Right };
         }
     }
+
+    /// <summary>
+    /// An integer based vector that specifies movement up and down the sector
+    /// tree along with LVector movement. A string of XVectors applied one after another
+    /// can specify any relationship between sectors.
+    /// </summary>
+    public struct XVector
+    {
+        public XVector(LVector Offset, int Level)
+        {
+            this.Offset = Offset;
+            this.Level = Level;
+        }
+
+        public XVector(BinaryReadStream Stream)
+        {
+            this.Offset = new LVector(Stream);
+            this.Level = Stream.ReadInt();
+        }
+
+        public void Serialize(BinaryWriteStream Stream)
+        {
+            this.Offset.Serialize(Stream);
+            Stream.WriteInt(this.Level);
+        }
+
+        public LVector Offset;
+        public int Level;
+
+        /// <summary>
+        /// Applies the XVector transform to a sector, getting another sector based on the offset
+        /// caused by the XVector.
+        /// </summary>
+        /// <param name="Sector">The sector to start from.</param>
+        /// <returns>The resulting sector after transforming.</returns>
+        public Sector Apply(Sector Sector)
+        {
+            Sector cur = Sector;
+            int l = this.Level;
+            while (l > 0)
+            {
+                cur = cur.Parent;
+                l--;
+            }
+            while (l < 0)
+            {
+                cur = cur.GetChild(new LVector(0, 0));
+                l++;
+            }
+            return cur.GetRelation(this.Offset);
+        }
+    }
 }
