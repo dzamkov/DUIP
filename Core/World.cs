@@ -81,6 +81,17 @@ namespace DUIP.Core
         }
 
         /// <summary>
+        /// The netmanager that manages the network for the client representation of the world.
+        /// </summary>
+        public Net.NetManager Net
+        {
+            get
+            {
+                return this._NetManager;
+            }
+        }
+
+        /// <summary>
         /// Initializes local data, the kind that isnt global.
         /// </summary>
         private void _InitLocalData()

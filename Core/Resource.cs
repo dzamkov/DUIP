@@ -312,4 +312,100 @@ namespace DUIP.Core
             }
         }
     }
+
+    /// <summary>
+    /// Pointer to a resource across the network. This can point to a resource that
+    /// is not loaded on the current computer but exists in the network.
+    /// </summary>
+    /// <typeparam name="R">The type of resource to be pointed to.</typeparam>
+    public struct Ptr<R> where R : Resource
+    {
+        public Ptr(R Res)
+        {
+            this._Res = Res;
+            this._ResID = this._Res.ResourceID;
+        }
+
+        public Ptr(BinaryReadStream Stream)
+        {
+            this._ResID = new ID(Stream);
+            this._Res = null;
+        }
+
+        public void Serialize(BinaryWriteStream Stream)
+        {
+            this._ResID.Serialize(Stream);
+        }
+
+        /// <summary>
+        /// Gets if the resource pointer is null. This does not have to do with
+        /// if the current instance has the resource loaded, but instead if the
+        /// pointer is null.
+        /// </summary>
+        public bool IsNull
+        {
+            get
+            {
+                return this._ResID == ID.Blank();
+            }
+        }
+
+        /// <summary>
+        /// Gets if the resource is loaded on the current instance.
+        /// </summary>
+        public bool IsLoaded
+        {
+            get
+            {
+                return this._Res != null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the actual resource pointed to by this pointer. This is null if the
+        /// pointer is null or if the instance hasn't loaded the resource.
+        /// </summary>
+        public R Dereference
+        {
+            get
+            {
+                return this._Res;
+            }
+        }
+
+        /// <summary>
+        /// Tries loading the resource for this pointer. This call may be blocking.
+        /// </summary>
+        /// <param name="World">The world to load the resource in.</param>
+        /// <returns>The resource when found.</returns>
+        public R Resolve(World World)
+        {
+            return this.Resolve(World, Resource.DefaultResourceHandler);
+        }
+
+        /// <summary>
+        /// Tries to load the resource for the pointer with the specified handler.
+        /// </summary>
+        /// <param name="World">The world to load the resource in.</param>
+        /// <param name="Handler">The handler to use to find the resource.</param>
+        /// <returns>The resource when found.</returns>
+        public R Resolve(World World, FindResourceHandler Handler)
+        {
+            Resource b = Handler(this._ResID, World);
+            R a = b as R;
+            if (a == null)
+            {
+                throw new Exception("Resource can not be converted to the specified type.");
+            }
+            return a;
+        }
+
+        public static implicit operator R(Ptr<R> Ptr)
+        {
+            return Ptr.Dereference;
+        }
+
+        private ID _ResID;
+        private R _Res;
+    }
 }
