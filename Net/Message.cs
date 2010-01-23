@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Timers;
+using Thread = System.Threading.Thread;
 
 using DUIP.Core;
 
@@ -141,6 +142,17 @@ namespace DUIP.Net
                 this._Timed.Add(t);
                 t.Start();
             }
+        }
+
+        /// <summary>
+        /// Performs the specified action asynchronously.
+        /// </summary>
+        /// <param name="Action">The action to perform.</param>
+        protected void ASync(Action Action)
+        {
+            Thread t = new Thread(delegate() { Action(); });
+            t.IsBackground = true;
+            t.Start();
         }
 
         /// <summary>

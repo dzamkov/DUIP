@@ -39,7 +39,7 @@ namespace DUIP.Core
             Stream.WriteInt(this._GridRelationSize);
         }
 
-        protected override void DeserializeGlobal(BinaryReadStream Stream)
+        protected override void DeserializeGlobal(BinaryReadStream Stream, FindResourceHandler FindResource)
         {
             this._GridSize = new LVector(Stream);
             this._GridRelationSize = Stream.ReadInt();

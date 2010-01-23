@@ -61,7 +61,8 @@ namespace DUIP.Core
         /// be modified to use the new global state.
         /// </summary>
         /// <param name="Stream">The stream to load the global state from.</param>
-        protected abstract void DeserializeGlobal(BinaryReadStream Stream);
+        /// <param name="FindResource">The handler used to get additional resources.</param>
+        protected abstract void DeserializeGlobal(BinaryReadStream Stream, FindResourceHandler FindResource);
 
         /// <summary>
         /// Gets the world this resource belongs to.
@@ -85,11 +86,14 @@ namespace DUIP.Core
         /// </summary>
         private void _Add()
         {
-            if(this._World._Resources.ContainsKey(this._ID))
+            lock (this._World._Resources)
             {
-                throw new Exception("Resource with this ID already exists");
+                if (this._World._Resources.ContainsKey(this._ID))
+                {
+                    throw new Exception("Resource with this ID already exists");
+                }
+                this._World._Resources.Add(this._ID, this);
             }
-            this._World._Resources.Add(this._ID, this);
         }
 
         /// <summary>
@@ -101,24 +105,27 @@ namespace DUIP.Core
         /// state; null if no id for that resource is found.</returns>
         public static Resource GetResource(World World, ID ID)
         {
-            Resource r;
-            if (World._Resources.TryGetValue(ID, out r))
+            lock (World._Resources)
             {
-                return r;
-            }
-            else
-            {
-                return null;
+                Resource r;
+                if (World._Resources.TryGetValue(ID, out r))
+                {
+                    return r;
+                }
+                else
+                {
+                    return null;
+                }
             }
         }
 
         /// <summary>
         /// Creates a resource descripition that can be used to send or store
-        /// the resource. Resource descripitions do not contain data for other
+        /// the resource. Resource descripitions do not contain data for the other
         /// resources used.
         /// </summary>
         /// <param name="Stream">The stream to write the descripition to.</param>
-        internal void _CreateResourceDescription(BinaryWriteStream Stream)
+        public void CreateResourceDescription(BinaryWriteStream Stream)
         {
             Type type = this.GetType();
             ID typeid = TypeDirectory.GetIDForType(type);
@@ -128,16 +135,25 @@ namespace DUIP.Core
         }
 
         /// <summary>
-        /// Loads a resource from a resource description.
+        /// Loads a resource from a resource description. This function is blocking depending on the find resource
+        /// handler.
         /// </summary>
         /// <param name="World">The world this resource is for.</param>
         /// <param name="ResourceID">The resource id of the resource.</param>
         /// <param name="Stream">The stream to load the resource from.</param>
+        /// <param name="FindResource">The handler used to look for additional resources that may
+        /// be needed by the resource. Specify null to use the default handler.</param>
         /// <returns>The resource loaded from the description.</returns>
-        static internal Resource _LoadResourceDescription(World World, ID ResourceID, BinaryReadStream Stream)
+        static public Resource LoadResourceDescription(
+            World World, 
+            ID ResourceID, 
+            BinaryReadStream Stream, 
+            FindResourceHandler FindResource)
         {
             ID typeid = new ID(Stream);
             Type type = TypeDirectory.GetTypeByID(typeid);
+
+            FindResourceHandler fdh = FindResource == null ? DefaultResourceHandler : FindResource;
 
             // Check if world
             if (World == null && type == typeof(World))
@@ -145,7 +161,7 @@ namespace DUIP.Core
                 World w = new World(ResourceID);
                 w._World = w;
                 w._Add();
-                w.DeserializeGlobal(Stream);
+                w.DeserializeGlobal(Stream, fdh);
                 return w;
             }
             else
@@ -157,8 +173,8 @@ namespace DUIP.Core
                     Resource r = (Resource)ci.Invoke(new object[] { null });
                     r._ID = ResourceID;
                     r._World = World;
+                    r.DeserializeGlobal(Stream, fdh);
                     r._Add();
-                    r.DeserializeGlobal(Stream);
                     return r;
                 }
                 else
@@ -168,9 +184,91 @@ namespace DUIP.Core
             }
         }
 
+        /// <summary>
+        /// Combines two find resource handlers.
+        /// </summary>
+        /// <param name="Primary">The first handler to check for the resource.</param>
+        /// <param name="Secondary">The second handler to check if the first was null.</param>
+        /// <returns>The resource if either handler found it or null if neither was able to.</returns>
+        public static FindResourceHandler Combine(FindResourceHandler Primary, FindResourceHandler Secondary)
+        {
+            return delegate(ID ResourceID, World World)
+            {
+                Resource r = Primary(ResourceID, World);
+                r = (r == null) ? Secondary(ResourceID, World) : r;
+                return r;
+            };
+        }
+
+        /// <summary>
+        /// Gets the find resource handler that looks up the resource in the world's resource table and returns the
+        /// resource if it is found or null if it isn't.
+        /// </summary>
+        public static FindResourceHandler ResourceTableHandler
+        {
+            get
+            {
+                return delegate(ID ResourceID, World World)
+                {
+                    Resource r;
+                    if (World._Resources.TryGetValue(ResourceID, out r))
+                    {
+                        return r;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                };
+            }
+        }
+
+        /// <summary>
+        /// Gets a find resource handler that will raise an exception if called. This can be used to insure that either the resource
+        /// is loaded completely or not at all.
+        /// </summary>
+        public static FindResourceHandler ErrorResourceHandler
+        {
+            get
+            {
+                return delegate
+                {
+                    throw new NoResourceException();
+                };
+            }
+        }
+
+        /// <summary>
+        /// Gets the default find resource handler used to find resources if no other resource handler is specified.
+        /// </summary>
+        public static FindResourceHandler DefaultResourceHandler
+        {
+            get
+            {
+                return Combine(ResourceTableHandler, ErrorResourceHandler);
+            }
+        }
+
         private ID _ID;
         private World _World;
     }
+
+    /// <summary>
+    /// Exception raised when no resource is available from a find resource handler.
+    /// </summary>
+    public class NoResourceException : Exception
+    {
+
+    }
+
+    /// <summary>
+    /// Handler for finding an additional resource while processing another. This function may be
+    /// blocking if it means the resource will be found.
+    /// </summary>
+    /// <param name="ResourceID">The id of the resource to find.</param>
+    /// <param name="World">The world where the resource should be in.</param>
+    /// <returns>The resource if it is found or null if it isn't.</returns>
+    public delegate Resource FindResourceHandler(ID ResourceID, World World);
 
     /// <summary>
     /// A function that is part of a resource that is called on a global scale. If any entity on

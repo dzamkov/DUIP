@@ -94,6 +94,7 @@
     <Compile Include="Net\Peer.cs" />
     <Compile Include="Net\ResourceDescription.cs" />
     <Compile Include="Net\UDPConnection.cs" />
+    <Compile Include="Net\Unit.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">

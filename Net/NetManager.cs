@@ -44,7 +44,7 @@ namespace DUIP.Net
             Peer p = new Peer(Peer);
             if (this._World == null)
             {
-                new WorldDescriptionRequest().Send(this, null, p);
+                new WorldRequest().Send(this, null, p);
             }
             return p;
         }
