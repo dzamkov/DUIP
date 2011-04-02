@@ -19,7 +19,10 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
-
+            byte[] testdata = new byte[] { 5, 6, 7, 8 };
+            Cipher cipher = new RSACipher(4);
+            Key d, e;
+            cipher.GenerateKeys(new Random(), out e, out d);
         }
     }
 }
