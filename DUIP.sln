@@ -1,9 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C# Express 2008
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DUIP", "DUIP.csproj", "{E17ECEDA-4722-4480-998B-15926BFDC8FB}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleApps", "SampleApps\SampleApps.csproj", "{BDC5A21A-5553-4CBE-9577-28A2C3D19142}"
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DUIP", "DUIP.csproj", "{525DDE35-A006-4764-A1BE-5451E2F92FE7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,14 +9,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E17ECEDA-4722-4480-998B-15926BFDC8FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E17ECEDA-4722-4480-998B-15926BFDC8FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E17ECEDA-4722-4480-998B-15926BFDC8FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E17ECEDA-4722-4480-998B-15926BFDC8FB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BDC5A21A-5553-4CBE-9577-28A2C3D19142}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BDC5A21A-5553-4CBE-9577-28A2C3D19142}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BDC5A21A-5553-4CBE-9577-28A2C3D19142}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BDC5A21A-5553-4CBE-9577-28A2C3D19142}.Release|Any CPU.Build.0 = Release|Any CPU
+		{525DDE35-A006-4764-A1BE-5451E2F92FE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{525DDE35-A006-4764-A1BE-5451E2F92FE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{525DDE35-A006-4764-A1BE-5451E2F92FE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{525DDE35-A006-4764-A1BE-5451E2F92FE7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

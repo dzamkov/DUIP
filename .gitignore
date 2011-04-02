@@ -1,4 +1,13 @@
-/bin
-/obj
+Debug
+Release
+*/Debug
+*/Release
+*.suo
+*.ncb
+*.user
+bin
+obj
 */bin
 */obj
+*.userprefs
+*.pidb
