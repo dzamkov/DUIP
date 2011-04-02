@@ -39,12 +39,13 @@
   </Target>
   -->
   <ItemGroup>
-    <Compile Include="BigMath.cs" />
+    <Compile Include="Content.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="Cryptography.cs" />
     <Compile Include="Datum.cs" />
     <Compile Include="ID.cs" />
     <Compile Include="Key.cs" />
+    <Compile Include="Network.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Query.cs" />
     <Compile Include="User.cs" />

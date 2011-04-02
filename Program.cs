@@ -23,8 +23,8 @@ namespace DUIP
             Cipher cipher = new RSACipher();
             Key d, e;
             cipher.GenerateKeys(new Random(), out e, out d);
-            cipher.Encrypt(d, ref testdata);
-            cipher.Decrypt(e, ref testdata);
+            cipher.Decrypt(d, ref testdata);
+            cipher.Encrypt(e, ref testdata);
         }
     }
 }
