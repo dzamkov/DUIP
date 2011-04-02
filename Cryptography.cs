@@ -29,16 +29,6 @@ namespace DUIP
         /// Gets if this cipher has symmetric keys.
         /// </summary>
         public abstract bool Symmetric { get; }
-
-        /// <summary>
-        /// Gets the size of the encryption key.
-        /// </summary>
-        public abstract int EncryptKeySize { get; }
-
-        /// <summary>
-        /// Gets the size of the decryption key.
-        /// </summary>
-        public abstract int DecryptKeySize { get; }
     }
 
     /// <summary>
@@ -54,9 +44,9 @@ namespace DUIP
     /// </summary>
     public class RSACipher : Cipher
     {
-        public RSACipher(int KeySize)
+        public RSACipher()
         {
-            this._KeySize = KeySize;
+
         }
 
         public override void Encrypt(Key Key, ref byte[] Data)
@@ -66,12 +56,16 @@ namespace DUIP
 
         public override void Decrypt(Key Key, ref byte[] Data)
         {
-
+            throw new NotImplementedException();
         }
 
         public override void GenerateKeys(Random Random, out Key Encryption, out Key Decryption)
         {
+            RSACryptoServiceProvider p = new RSACryptoServiceProvider();
+            RSAParameters r = p.ExportParameters(true);
             
+
+            throw new NotImplementedException();
         }
 
         public override bool Symmetric
@@ -81,23 +75,5 @@ namespace DUIP
                 return false;
             }
         }
-
-        public override int EncryptKeySize
-        {
-            get
-            {
-                return this._KeySize;
-            }
-        }
-
-        public override int DecryptKeySize
-        {
-            get
-            {
-                return this._KeySize;
-            }
-        }
-
-        private int _KeySize;
     }
 }

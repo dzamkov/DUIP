@@ -39,6 +39,7 @@
   </Target>
   -->
   <ItemGroup>
+    <Compile Include="BigMath.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="Cryptography.cs" />
     <Compile Include="Datum.cs" />
