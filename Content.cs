@@ -9,20 +9,27 @@ namespace DUIP
     /// </summary>
     public abstract class Content
     {
+
+    }
+
+    /// <summary>
+    /// A reference to a datum on the current network.
+    /// </summary>
+    public abstract class Reference : Content
+    {
         /// <summary>
-        /// Tries getting a named property of the content.
+        /// Gets the ID of the referenced datum.
         /// </summary>
-        public virtual Query<Content> Get(string Property)
-        {
-            return new StaticQuery<Content>(null);
-        }
+        public abstract ID ID { get; }
 
         /// <summary>
-        /// Tries calling this content as a function with the given parameter.
+        /// Gets the current value of the referenced content.
         /// </summary>
-        public virtual Query<Content> Call(Content Parameter)
-        {
-            return new StaticQuery<Content>(null);
-        }
+        public abstract Query<Content> Value { get; }
+
+        /// <summary>
+        /// Gets he most specific type the value is guaranteed to be of.
+        /// </summary>
+        public abstract Query<Content> Type { get; }
     }
 }
