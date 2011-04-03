@@ -10,19 +10,19 @@ namespace DUIP
     public abstract class Context : Content
     {
         /// <summary>
-        /// Gets the root user that can add and modify owned items to the context.
+        /// Gets the root actor that can add and modify owned items to the context.
         /// </summary>
-        public abstract Query<User> Editor { get; }
+        public abstract Query<Actor> Editor { get; }
 
         /// <summary>
-        /// Gets the root user that can execute operations within the context.
+        /// Gets the root actor that can execute operations within the context.
         /// </summary>
-        public abstract Query<User> Executor { get; }
+        public abstract Query<Actor> Executor { get; }
 
         /// <summary>
-        /// Gets the root user that can view this context.
+        /// Gets the root actor that can view this context.
         /// </summary>
-        public abstract Query<User> Viewer { get; }
+        public abstract Query<Actor> Viewer { get; }
 
         /// <summary>
         /// Tries adding a static datum to the context using the current network user.
@@ -31,12 +31,12 @@ namespace DUIP
 
         /// <summary>
         /// Tries adding a variable datum to the context using the current network user. The owner of the variable is
-        /// the root user that is allowed to modify its value.
+        /// the root actor that is allowed to modify its value.
         /// </summary>
-        public abstract Query<VariableDatum> AddVariable(User Owner, Content Type, Content Value);
+        public abstract Query<VariableDatum> AddVariable(Actor Owner, Content Type, Content Value);
 
         /// <summary>
-        /// Tries adding a variable datum to the context using the current network user with the owner being the current network user.
+        /// Tries adding a variable datum to the context using the current network user as the owner.
         /// </summary>
         public abstract Query<VariableDatum> AddVariable(Content Type, Content Value);
     }

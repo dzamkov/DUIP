@@ -34,14 +34,14 @@ namespace DUIP
     }
 
     /// <summary>
-    /// A mutable datum that stores content which can be modified by the owner user.
+    /// A mutable datum that stores content which can be modified by the owner actor.
     /// </summary>
     public abstract class VariableDatum : Datum
     {
         /// <summary>
-        /// Gets the user which can modify the value of this variable datum.
+        /// Gets the root actor which can modify the value of this variable datum.
         /// </summary>
-        public abstract Query<User> Owner { get; }
+        public abstract Query<Actor> Owner { get; }
 
         /// <summary>
         /// Gets the type the datum is constrainted to.
@@ -53,5 +53,10 @@ namespace DUIP
         /// on success or false on failure.
         /// </summary>
         public abstract Query<bool> Modify(Content Value);
+
+        /// <summary>
+        /// Transfers ownership of the datum to another actor.
+        /// </summary>
+        public abstract Query<bool> Transfer(Actor Actor);
     }
 }

@@ -5,62 +5,15 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// Represents an actor which can modify data.
+    /// An actor whose actions are explicitly given. To act as the user, one most have the complimentary proof for the user.
     /// </summary>
-    public abstract class User : Content
+    public abstract class User : Actor
     {
-        /// <summary>
-        /// Gets a non-unique readable name for the user. The name may be null if it is not defined.
-        /// </summary>
-        public abstract string Name { get; }
 
-        /// <summary>
-        /// Gets the credential for the user.
-        /// </summary>
-        public abstract Credential Credential { get; }
-
-        /// <summary>
-        /// Gets if this user can act as another user. If so, this user may make any modification the given
-        /// user can, including modifications to the user itself such as which users can act as or under the given user.
-        /// </summary>
-        public abstract Query<bool> CanActAs(User User);
-
-        /// <summary>
-        /// Gets if this user can act under another user. If so, this user may make any modification the given
-        /// user can, excluding modifications to the user itself.
-        /// </summary>
-        public abstract Query<bool> CanActUnder(User User);
-
-        public override string ToString()
-        {
-            return this.Name;
-        }
     }
 
     /// <summary>
-    /// A public method of proving if a command was issued directly from a user.
-    /// </summary>
-    public abstract class Credential : Content
-    {
-        /// <summary>
-        /// Gets if the specified proof is sufficient for this credential.
-        /// </summary>
-        public abstract bool CanProve(Proof Proof);
-
-        /// <summary>
-        /// Gets the null credential (a credential that cannot be proven).
-        /// </summary>
-        public static NullCredential Null
-        {
-            get
-            {
-                return NullCredential.Singleton;
-            }
-        }
-    }
-
-    /// <summary>
-    /// A private method of proving a command is issued directly from a user.
+    /// A private method of proving that a command was issued by a user.
     /// </summary>
     public abstract class Proof : Content
     {
@@ -68,23 +21,24 @@ namespace DUIP
     }
 
     /// <summary>
-    /// Credential that disallows all direct commands from a user.
+    /// A user-proof pair that can be used to act as a user in a network.
     /// </summary>
-    public class NullCredential : Credential
+    public struct Credential
     {
-        private NullCredential()
+        public Credential(User User, Proof Proof)
         {
-
+            this.User = User;
+            this.Proof = Proof;
         }
 
         /// <summary>
-        /// Gets the only instance of this class.
+        /// The user for the credential.
         /// </summary>
-        public static readonly NullCredential Singleton = new NullCredential();
+        public User User;
 
-        public override bool CanProve(Proof Proof)
-        {
-            return false;
-        }
+        /// <summary>
+        /// The proof for the user.
+        /// </summary>
+        public Proof Proof;
     }
 }

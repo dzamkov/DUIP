@@ -39,6 +39,8 @@
   </Target>
   -->
   <ItemGroup>
+    <Compile Include="Actor.cs" />
+    <Compile Include="ByteStream.cs" />
     <Compile Include="Content.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="Cryptography.cs" />

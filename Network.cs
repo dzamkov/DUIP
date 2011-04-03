@@ -10,14 +10,9 @@ namespace DUIP
     public abstract class Network
     {
         /// <summary>
-        /// Gets the current user used for querying the network.
+        /// Gets the credential used in the network.
         /// </summary>
-        public abstract User User { get; }
-
-        /// <summary>
-        /// Gets the proof used to authenticate as the current user.
-        /// </summary>
-        public abstract Proof Proof { get; }
+        public abstract Credential Credential { get; }
 
         /// <summary>
         /// Looks for the datum with the specified index in the network.
