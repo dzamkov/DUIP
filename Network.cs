@@ -20,8 +20,13 @@ namespace DUIP
         public abstract Proof Proof { get; }
 
         /// <summary>
-        /// Tries getting or setting the content with the given global network index.
+        /// Looks for the datum with the specified index in the network.
         /// </summary>
-        public abstract Query<Content> this[ID Index] { get; set; }
+        public abstract Query<Datum> this[ID Index] { get; }
+
+        /// <summary>
+        /// Gets the root context for the network.
+        /// </summary>
+        public abstract Query<Context> Root { get; }
     }
 }

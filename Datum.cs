@@ -18,6 +18,11 @@ namespace DUIP
         /// Gets the current content of the datum.
         /// </summary>
         public abstract Query<Content> Content { get; }
+
+        /// <summary>
+        /// Gets the context this datum is in.
+        /// </summary>
+        public abstract Query<Context> Context { get; }
     }
 
     /// <summary>
