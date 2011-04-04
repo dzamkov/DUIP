@@ -23,6 +23,14 @@ namespace DUIP
         {
             return Query.Execute();
         }
+
+        /// <summary>
+        /// Creates a query based on a function.
+        /// </summary>
+        public static FunctionQuery<T> Create(Func<T> Function)
+        {
+            return new FunctionQuery<T>(Function);
+        }
     }
 
     /// <summary>
@@ -52,5 +60,23 @@ namespace DUIP
         }
 
         private T _Value;
+    }
+
+    /// <summary>
+    /// A query that is defined by a function.
+    /// </summary>
+    public class FunctionQuery<T> : Query<T>
+    {
+        public FunctionQuery(Func<T> Function)
+        {
+            this._Function = Function;
+        }
+
+        public override T Execute()
+        {
+            return this._Function();
+        }
+
+        private Func<T> _Function;
     }
 }

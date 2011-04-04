@@ -5,7 +5,7 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// An indexable collection of unnamed data.
+    /// A reference to an indexable collection of unnamed data.
     /// </summary>
     public abstract class Context : Content
     {
@@ -13,11 +13,6 @@ namespace DUIP
         /// Gets the root actor that can add and modify owned items to the context.
         /// </summary>
         public abstract Query<Actor> Editor { get; }
-
-        /// <summary>
-        /// Gets the root actor that can execute operations within the context.
-        /// </summary>
-        public abstract Query<Actor> Executor { get; }
 
         /// <summary>
         /// Gets the root actor that can view this context.

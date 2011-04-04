@@ -39,20 +39,20 @@
   </Target>
   -->
   <ItemGroup>
-    <Compile Include="Actor.cs" />
-    <Compile Include="ByteStream.cs" />
-    <Compile Include="Content.cs" />
-    <Compile Include="Context.cs" />
-    <Compile Include="Cryptography.cs" />
-    <Compile Include="Datum.cs" />
-    <Compile Include="ID.cs" />
-    <Compile Include="Key.cs" />
-    <Compile Include="Network.cs" />
+    <Compile Include="Core\Actor.cs" />
+    <Compile Include="Data\ByteStream.cs" />
+    <Compile Include="Core\Content.cs" />
+    <Compile Include="Core\Context.cs" />
+    <Compile Include="Data\Cryptography.cs" />
+    <Compile Include="Core\Datum.cs" />
+    <Compile Include="Data\ID.cs" />
+    <Compile Include="Data\Key.cs" />
+    <Compile Include="Net\Network.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Query.cs" />
-    <Compile Include="UDP.cs" />
-    <Compile Include="User.cs" />
-    <Compile Include="Void.cs" />
+    <Compile Include="Data\Query.cs" />
+    <Compile Include="Net\UDP.cs" />
+    <Compile Include="Core\User.cs" />
+    <Compile Include="Data\Void.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

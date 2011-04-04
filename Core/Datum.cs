@@ -9,26 +9,37 @@ namespace DUIP
     /// </summary>
     public abstract class Datum
     {
+
+    }
+
+    /// <summary>
+    /// A datum that defines a context.
+    /// </summary>
+    public abstract class ContextDatum : Datum
+    {
+
+    }
+
+    /// <summary>
+    /// A datum that stores and represents content.
+    /// </summary>
+    public abstract class ContentDatum : Datum
+    {
         /// <summary>
-        /// Gets the ID of the datum.
+        /// Gets the most specific type for the allowable content in this datum.
         /// </summary>
-        public abstract ID ID { get; }
+        public abstract Content<Type> Type { get; }
 
         /// <summary>
-        /// Gets the current content of the datum.
+        /// Gets the current content in the datum.
         /// </summary>
-        public abstract Query<Content> Content { get; }
-
-        /// <summary>
-        /// Gets the context this datum is in.
-        /// </summary>
-        public abstract Query<Context> Context { get; }
+        public abstract Content Content { get; }
     }
 
     /// <summary>
     /// An immutable datum that stores content.
     /// </summary>
-    public abstract class StaticDatum : Datum
+    public abstract class StaticDatum : ContentDatum
     {
 
     }
@@ -36,21 +47,16 @@ namespace DUIP
     /// <summary>
     /// A mutable datum that stores content which can be modified by the owner actor.
     /// </summary>
-    public abstract class VariableDatum : Datum
+    public abstract class VariableDatum : ContentDatum
     {
         /// <summary>
         /// Gets the root actor which can modify the value of this variable datum.
         /// </summary>
-        public abstract Query<Actor> Owner { get; }
-
-        /// <summary>
-        /// Gets the type the datum is constrainted to.
-        /// </summary>
-        public abstract Query<Content> Type { get; }
+        public abstract Content<Actor> Owner { get; }
 
         /// <summary>
         /// Sets the value of the datum directly using the current user for the network this datum is for. Returns true
-        /// on success or false on failure.
+        /// on success or false on failure. Note that the value must be of the type for the datum.
         /// </summary>
         public abstract Query<bool> Modify(Content Value);
 
