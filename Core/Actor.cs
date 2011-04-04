@@ -18,6 +18,28 @@ namespace DUIP
     public abstract class Group : Actor
     {
         /// <summary>
+        /// Gets the universal group.
+        /// </summary>
+        public static UniversalGroup Universal
+        {
+            get
+            {
+                return UniversalGroup.Singleton;
+            }
+        }
+
+        /// <summary>
+        /// Gets the null group.
+        /// </summary>
+        public static NullGroup Null
+        {
+            get
+            {
+                return NullGroup.Singleton;
+            }
+        }
+
+        /// <summary>
         /// Gets if the specified actor is a member of this group.
         /// </summary>
         public abstract Query<bool> IsMember(Actor Actor);
@@ -26,8 +48,18 @@ namespace DUIP
     /// <summary>
     /// A group with every actor as a member. Any actor can act under the universal group.
     /// </summary>
-    public abstract class UniversalGroup : Group
+    public class UniversalGroup : Group
     {
+        private UniversalGroup()
+        {
+
+        }
+
+        /// <summary>
+        /// Gets the only instance of this class.
+        /// </summary>
+        public static readonly UniversalGroup Singleton = new UniversalGroup();
+
         public override Query<bool> IsMember(Actor Actor)
         {
             return true;
@@ -37,8 +69,18 @@ namespace DUIP
     /// <summary>
     /// A group with no actors as members. This actor will not be able to issue any commands.
     /// </summary>
-    public abstract class NullGroup : Group
+    public class NullGroup : Group
     {
+        private NullGroup()
+        {
+            
+        }
+
+        /// <summary>
+        /// Gets the only instance of this class.
+        /// </summary>
+        public static readonly NullGroup Singleton = new NullGroup();
+
         public override Query<bool> IsMember(Actor Actor)
         {
             return false;    

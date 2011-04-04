@@ -7,7 +7,8 @@ namespace DUIP
     /// <summary>
     /// An interface to an external network.
     /// </summary>
-    public abstract class Network
+    /// <typeparam name="TRef">Reference to a datum in the network.</typeparam>
+    public abstract class Network<T>
     {
         /// <summary>
         /// Gets the credential used in the network.
@@ -17,11 +18,16 @@ namespace DUIP
         /// <summary>
         /// Looks for the datum with the specified index in the network.
         /// </summary>
-        public abstract Query<Datum> this[ID Index] { get; }
+        public abstract Query<Datum> this[T Index] { get; }
 
         /// <summary>
-        /// Gets the root context for the network.
+        /// Serializes a datum reference (not the actual datum) in this network to a byte stream.
         /// </summary>
-        public abstract Query<Context> Root { get; }
+        public abstract void Serialize(T Ref, OutByteStream Stream);
+
+        /// <summary>
+        /// Deserializes a datum reference from a byte stream.
+        /// </summary>
+        public abstract T Deserialize(InByteStream Stream);
     }
 }

@@ -9,15 +9,10 @@ namespace DUIP
     /// </summary>
     public abstract class Datum
     {
-
-    }
-
-    /// <summary>
-    /// A datum that defines a context.
-    /// </summary>
-    public abstract class ContextDatum : Datum
-    {
-
+        /// <summary>
+        /// Gets the root actor that can view this datum.
+        /// </summary>
+        public abstract Query<Actor> Viewer { get; }
     }
 
     /// <summary>
@@ -28,7 +23,7 @@ namespace DUIP
         /// <summary>
         /// Gets the most specific type for the allowable content in this datum.
         /// </summary>
-        public abstract Content<Type> Type { get; }
+        public abstract Query<Type> Type { get; }
 
         /// <summary>
         /// Gets the current content in the datum.
@@ -52,7 +47,7 @@ namespace DUIP
         /// <summary>
         /// Gets the root actor which can modify the value of this variable datum.
         /// </summary>
-        public abstract Content<Actor> Owner { get; }
+        public abstract Query<Actor> Owner { get; }
 
         /// <summary>
         /// Sets the value of the datum directly using the current user for the network this datum is for. Returns true
