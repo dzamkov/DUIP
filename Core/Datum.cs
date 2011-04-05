@@ -10,7 +10,8 @@ namespace DUIP
     public abstract class Datum
     {
         /// <summary>
-        /// Gets the root actor that can view this datum.
+        /// Gets the root actor that can view this datum. The universal actor can be used to indicate that this datum
+        /// is unsecured.
         /// </summary>
         public abstract Query<Actor> Viewer { get; }
     }
@@ -26,7 +27,7 @@ namespace DUIP
         public abstract Query<Type> Type { get; }
 
         /// <summary>
-        /// Gets the current content in the datum.
+        /// Gets the current content in the datum or returns null if not possible.
         /// </summary>
         public abstract Content Content { get; }
     }

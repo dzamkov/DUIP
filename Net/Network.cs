@@ -21,13 +21,18 @@ namespace DUIP
         public abstract Query<Datum> this[T Index] { get; }
 
         /// <summary>
-        /// Serializes a datum reference (not the actual datum) in this network to a byte stream.
+        /// Determines wether some content is an instance of the given type.
         /// </summary>
-        public abstract void Serialize(T Ref, OutByteStream Stream);
+        public abstract Query<bool> IsInstance(Type Type, Content Content);
 
         /// <summary>
-        /// Deserializes a datum reference from a byte stream.
+        /// Serializes an instance of a certain type to a stream.
         /// </summary>
-        public abstract T Deserialize(InByteStream Stream);
+        public abstract void Serialize(Type Type, Content Instance, OutByteStream Stream);
+
+        /// <summary>
+        /// Deserializes an instance of a certain type from a stream, or returns null if not possible.
+        /// </summary>
+        public abstract Query<Content> Deserialize(Type Type, InByteStream Stream);
     }
 }

@@ -10,10 +10,9 @@ namespace DUIP
     /// <typeparam name="T">The type of index, and network, this reference is for.</typeparam>
     public class Reference<T> : Content
     {
-        public Reference(T Index, Network<T> Network)
+        public Reference(T Index)
         {
             this._Index = Index;
-            this._Network = Network;
         }
 
         /// <summary>
@@ -27,19 +26,7 @@ namespace DUIP
             }
         }
 
-        /// <summary>
-        /// Gets the network this reference is for.
-        /// </summary>
-        public Network<T> Network
-        {
-            get
-            {
-                return this._Network;
-            }
-        }
-
         private T _Index;
-        private Network<T> _Network;
     }
 
     /// <summary>
@@ -47,9 +34,10 @@ namespace DUIP
     /// </summary>
     public class ReferenceType : Type
     {
-        public ReferenceType(bool ForceReference, Type Target)
+        public ReferenceType(bool ForceReference, bool Secured, Type Target)
         {
             this._ForceReference = ForceReference;
+            this._Secured = Secured;
             this._Target = Target;
         }
 
@@ -65,6 +53,21 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Gets wether an instance can be to a secured datum (a datum with a Viewer set to anything but the
+        /// universal actor). If this is false, than all references that reference secured datums will not be
+        /// instances of this type. A reference to an unsecured datum is still an instance of a secured reference
+        /// type. Note that secured reference types can not be implicitly converted, because access restrictions have
+        /// to be checked first.
+        /// </summary>
+        public bool Secured
+        {
+            get
+            {
+                return this._Secured;
+            }
+        }
+
+        /// <summary>
         /// The target (referenced) type of this reference type;
         /// </summary>
         public Type Target
@@ -75,6 +78,7 @@ namespace DUIP
             }
         }
 
+        private bool _Secured;
         private bool _ForceReference;
         private Type _Target;
     }
