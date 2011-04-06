@@ -17,6 +17,17 @@ namespace DUIP
     }
 
     /// <summary>
+    /// A datum that stores raw data without giving additional information of how to interpret it.
+    /// </summary>
+    public abstract class RawDatum : Datum
+    {
+        /// <summary>
+        /// Gets a stream for the raw data in the datum.
+        /// </summary>
+        public abstract InByteStream Read { get; }
+    }
+
+    /// <summary>
     /// A datum that stores and represents content.
     /// </summary>
     public abstract class ContentDatum : Datum
