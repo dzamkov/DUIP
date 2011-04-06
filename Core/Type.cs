@@ -26,12 +26,12 @@ namespace DUIP
         /// <summary>
         /// Serializes an instance of this type to an output stream.
         /// </summary>
-        public abstract void Serialize(Context Context, TInstance Instance, OutByteStream Stream);
+        public abstract void Serialize(Context Context, TInstance Instance, OutStream Stream);
 
         /// <summary>
         /// Deserializes an instance of this type from a stream, or returns null if not possible.
         /// </summary>
-        public abstract Query<TInstance> Deserialize(Context Context, InByteStream Stream);
+        public abstract Query<TInstance> Deserialize(Context Context, InStream Stream);
 
         internal sealed override F _Resolve<F>(Type._IResolver<F> Resolver)
         {
@@ -120,9 +120,9 @@ namespace DUIP
         /// <summary>
         /// Serializes this type to an output stream.
         /// </summary>
-        protected abstract void SerializeType(Context Context, OutByteStream Stream);
+        protected abstract void SerializeType(Context Context, OutStream Stream);
 
-        internal void _SerializeType(Context Context, OutByteStream Stream)
+        internal void _SerializeType(Context Context, OutStream Stream)
         {
             this.SerializeType(Context, Stream);
         }
@@ -150,12 +150,12 @@ namespace DUIP
         /// </summary>
         public static ReflexiveType Singleton = new ReflexiveType();
 
-        public override void Serialize(Context Context, Type Instance, OutByteStream Stream)
+        public override void Serialize(Context Context, Type Instance, OutStream Stream)
         {
             Instance._SerializeType(Context, Stream);
         }
 
-        public override Query<Type> Deserialize(Context Context, InByteStream Stream)
+        public override Query<Type> Deserialize(Context Context, InStream Stream)
         {
             TypeMode mode = (TypeMode)Stream.Read();
             switch (mode)
@@ -175,7 +175,7 @@ namespace DUIP
             return null;
         }
 
-        protected override void SerializeType(Context Context, OutByteStream Stream)
+        protected override void SerializeType(Context Context, OutStream Stream)
         {
             Stream.Write((byte)TypeMode.Reflexive);
         }

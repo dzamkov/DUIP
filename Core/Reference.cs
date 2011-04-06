@@ -116,7 +116,7 @@ namespace DUIP
             }
         }
 
-        public override void Serialize(Context Context, Reference Instance, OutByteStream Stream)
+        public override void Serialize(Context Context, Reference Instance, OutStream Stream)
         {
             if (this._Force)
             {
@@ -138,12 +138,12 @@ namespace DUIP
             }       
         }
 
-        public override Query<Reference> Deserialize(Context Context, InByteStream Stream)
+        public override Query<Reference> Deserialize(Context Context, InStream Stream)
         {
             throw new NotImplementedException();
         }
 
-        protected override void SerializeType(Context Context, OutByteStream Stream)
+        protected override void SerializeType(Context Context, OutStream Stream)
         {
             Stream.Write((byte)TypeMode.Reference);
             Stream.WriteBool(this._Force);

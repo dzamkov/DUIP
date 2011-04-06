@@ -44,7 +44,8 @@
     <Compile Include="Core\Function.cs" />
     <Compile Include="Core\Reference.cs" />
     <Compile Include="Core\Type.cs" />
-    <Compile Include="Data\ByteStream.cs" />
+    <Compile Include="Data\MemoryStream.cs" />
+    <Compile Include="Data\Stream.cs" />
     <Compile Include="Data\Cryptography.cs" />
     <Compile Include="Core\Datum.cs" />
     <Compile Include="Data\ID.cs" />

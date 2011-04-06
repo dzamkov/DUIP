@@ -18,20 +18,20 @@ namespace DUIP
         /// <summary>
         /// Serializes a network reference to a stream.
         /// </summary>
-        public abstract void Serialize(TRef Ref, OutByteStream Stream);
+        public abstract void Serialize(TRef Ref, OutStream Stream);
 
         /// <summary>
         /// Deserializes a network reference from a stream.
         /// </summary>
-        public abstract TRef Deserialize(InByteStream Stream);
+        public abstract TRef Deserialize(InStream Stream);
 
-        public sealed override void Serialize(Reference Reference, OutByteStream Stream)
+        public sealed override void Serialize(Reference Reference, OutStream Stream)
         {
             Reference<TRef> tref = Reference as Reference<TRef>;
             this.Serialize(tref.Index, Stream);
         }
 
-        public override Reference Deserialize(Reference Reference, InByteStream Stream)
+        public override Reference Deserialize(Reference Reference, InStream Stream)
         {
             return new Reference<TRef>(this.Deserialize(Stream));
         }
@@ -50,11 +50,11 @@ namespace DUIP
         /// <summary>
         /// Serializes a reference for this network to the given output stream.
         /// </summary>
-        public abstract void Serialize(Reference Reference, OutByteStream Stream);
+        public abstract void Serialize(Reference Reference, OutStream Stream);
 
         /// <summary>
         /// Deserializes a reference for this network from a input stream.
         /// </summary>
-        public abstract Reference Deserialize(Reference Reference, InByteStream Stream);
+        public abstract Reference Deserialize(Reference Reference, InStream Stream);
     }
 }

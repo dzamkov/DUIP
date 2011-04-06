@@ -7,7 +7,7 @@ namespace DUIP
     /// <summary>
     /// A byte stream that can be read from.
     /// </summary>
-    public abstract class InByteStream
+    public abstract class InStream
     {
         /// <summary>
         /// Reads a single byte from the stream.
@@ -48,7 +48,7 @@ namespace DUIP
     /// <summary>
     /// A byte stream that can be written to.
     /// </summary>
-    public abstract class OutByteStream
+    public abstract class OutStream
     {
         /// <summary>
         /// Writes a single byte to the stream.

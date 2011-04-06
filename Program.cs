@@ -19,12 +19,13 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
-            byte[] testdata = new byte[] { 5, 6, 7, 8 };
-            Cipher cipher = new RSACipher();
-            Key d, e;
-            cipher.GenerateKeys(new Random(), out e, out d);
-            cipher.Decrypt(d, ref testdata);
-            cipher.Encrypt(e, ref testdata);
+            MemoryOutStream os = new MemoryOutStream();
+
+            Type bigtype = Type.Function(Type.Function(Type.Reflexive, Type.Reflexive), Type.Reflexive);
+
+            Type.Reflexive.Serialize(null, bigtype, os);
+
+            Type nbigtype = Type.Reflexive.Deserialize(null, os.Read);
         }
     }
 }

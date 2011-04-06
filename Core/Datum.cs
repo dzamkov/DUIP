@@ -24,7 +24,7 @@ namespace DUIP
         /// <summary>
         /// Gets a stream for the raw data in the datum.
         /// </summary>
-        public abstract InByteStream Read { get; }
+        public abstract InStream Read { get; }
     }
 
     /// <summary>

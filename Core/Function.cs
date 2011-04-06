@@ -30,7 +30,7 @@ namespace DUIP
         /// <summary>
         /// Serializes this function to a stream.
         /// </summary>
-        public abstract void Serialize(Context Context, FunctionType<TArg, TRes> Type, OutByteStream Stream);
+        public abstract void Serialize(Context Context, FunctionType<TArg, TRes> Type, OutStream Stream);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ namespace DUIP
             return this._Value;
         }
 
-        public override void Serialize(Context Context, FunctionType<TArg, TRes> Type, OutByteStream Stream)
+        public override void Serialize(Context Context, FunctionType<TArg, TRes> Type, OutStream Stream)
         {
             Stream.Write((byte)FunctionMode.Constant);
             Type.Result.Serialize(Context, this._Value, Stream);
@@ -101,12 +101,12 @@ namespace DUIP
             }
         }
 
-        public override void Serialize(Context Context, Function<TArg, TRes> Instance, OutByteStream Stream)
+        public override void Serialize(Context Context, Function<TArg, TRes> Instance, OutStream Stream)
         {
             Instance.Serialize(Context, this, Stream);
         }
 
-        public override Query<Function<TArg, TRes>> Deserialize(Context Context, InByteStream Stream)
+        public override Query<Function<TArg, TRes>> Deserialize(Context Context, InStream Stream)
         {
             FunctionMode mode = (FunctionMode)Stream.Read();
             switch (mode)
@@ -120,7 +120,7 @@ namespace DUIP
             return null;
         }
 
-        protected override void SerializeType(Context Context, OutByteStream Stream)
+        protected override void SerializeType(Context Context, OutStream Stream)
         {
             Stream.Write((byte)TypeMode.Function);
             Type.Reflexive.Serialize(Context, this._Argument, Stream);
