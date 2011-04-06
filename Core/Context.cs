@@ -5,9 +5,9 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// Immutable data that can be stored across a network.
+    /// An implicit environment used for content and functions.
     /// </summary>
-    public abstract class Content
+    public class Context
     {
 
     }

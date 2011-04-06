@@ -28,19 +28,11 @@ namespace DUIP
     }
 
     /// <summary>
-    /// A datum that stores and represents content.
+    /// A datum that stores and represents typed content.
     /// </summary>
     public abstract class ContentDatum : Datum
     {
-        /// <summary>
-        /// Gets the most specific type for the allowable content in this datum.
-        /// </summary>
-        public abstract Query<Type> Type { get; }
 
-        /// <summary>
-        /// Gets the current content in the datum or returns null if not possible.
-        /// </summary>
-        public abstract Content Content { get; }
     }
 
     /// <summary>
@@ -56,20 +48,6 @@ namespace DUIP
     /// </summary>
     public abstract class VariableDatum : ContentDatum
     {
-        /// <summary>
-        /// Gets the root actor which can modify the value of this variable datum.
-        /// </summary>
-        public abstract Query<Actor> Owner { get; }
 
-        /// <summary>
-        /// Sets the value of the datum directly using the current user for the network this datum is for. Returns true
-        /// on success or false on failure. Note that the value must be of the type for the datum.
-        /// </summary>
-        public abstract Query<bool> Modify(Content Value);
-
-        /// <summary>
-        /// Transfers ownership of the datum to another actor.
-        /// </summary>
-        public abstract Query<bool> Transfer(Actor Actor);
     }
 }

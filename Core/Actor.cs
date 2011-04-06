@@ -7,7 +7,7 @@ namespace DUIP
     /// <summary>
     /// Represents a entity which can request and modify data, and execute operations.
     /// </summary>
-    public abstract class Actor : Content
+    public abstract class Actor
     {
         
     }

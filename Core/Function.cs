@@ -30,12 +30,7 @@ namespace DUIP
         /// <summary>
         /// Serializes this function to a stream.
         /// </summary>
-        public abstract void Serialize(FunctionType<TArg, TRes> Type, OutByteStream Stream);
-
-        /// <summary>
-        /// Gets the mode to be used for storing this function.
-        /// </summary>
-        public abstract FunctionMode Mode { get; }
+        public abstract void Serialize(Context Context, FunctionType<TArg, TRes> Type, OutByteStream Stream);
     }
 
     /// <summary>
@@ -64,17 +59,10 @@ namespace DUIP
             return this._Value;
         }
 
-        public override void Serialize(FunctionType<TArg, TRes> Type, OutByteStream Stream)
+        public override void Serialize(Context Context, FunctionType<TArg, TRes> Type, OutByteStream Stream)
         {
-            Type.Result.Serialize(this._Value, Stream);
-        }
-
-        public override FunctionMode Mode
-        {
-            get
-            {
-                return FunctionMode.Constant;
-            }
+            Stream.Write((byte)FunctionMode.Constant);
+            Type.Result.Serialize(Context, this._Value, Stream);
         }
 
         private TRes _Value; 
@@ -113,25 +101,30 @@ namespace DUIP
             }
         }
 
-        public override void Serialize(Function<TArg, TRes> Instance, OutByteStream Stream)
+        public override void Serialize(Context Context, Function<TArg, TRes> Instance, OutByteStream Stream)
         {
-            FunctionMode mode = Instance.Mode;
-            Stream.Write((byte)mode);
-            Instance.Serialize(this, Stream);
+            Instance.Serialize(Context, this, Stream);
         }
 
-        public override Query<Function<TArg, TRes>> Deserialize(InByteStream Stream)
+        public override Query<Function<TArg, TRes>> Deserialize(Context Context, InByteStream Stream)
         {
             FunctionMode mode = (FunctionMode)Stream.Read();
             switch (mode)
             {
                 case FunctionMode.Constant:
-                    return this._Result.Deserialize(Stream).Bind<Function<TArg, TRes>>(delegate(TRes Value)
+                    return this._Result.Deserialize(Context, Stream).Bind<Function<TArg, TRes>>(delegate(TRes Value)
                     {
                         return new ConstantFunction<TArg, TRes>(Value);
                     });
             }
             return null;
+        }
+
+        protected override void SerializeType(Context Context, OutByteStream Stream)
+        {
+            Stream.Write((byte)TypeMode.Function);
+            Type.Reflexive.Serialize(Context, this._Argument, Stream);
+            Type.Reflexive.Serialize(Context, this._Result, Stream);
         }
 
         private Type<TArg> _Argument;
@@ -143,6 +136,20 @@ namespace DUIP
     /// </summary>
     public static class Function
     {
-        
+        /// <summary>
+        /// Creates a function type given the argument and result type.
+        /// </summary>
+        public static FunctionType<TArg, TRes> Type<TArg, TRes>(Type<TArg> Argument, Type<TRes> Result)
+        {
+            return new FunctionType<TArg, TRes>(Argument, Result);
+        }
+
+        /// <summary>
+        /// Creates a function with a constant value.
+        /// </summary>
+        public static ConstantFunction<TArg, TRes> Constant<TArg, TRes>(TRes Value)
+        {
+            return new ConstantFunction<TArg, TRes>(Value);
+        }
     }
 }

@@ -15,6 +15,14 @@ namespace DUIP
         public abstract byte Read();
 
         /// <summary>
+        /// Reads a boolean value fromt the stream.
+        /// </summary>
+        public virtual bool ReadBool()
+        {
+            return this.Read() == 1 ? true : false;
+        }
+
+        /// <summary>
         /// Reads data to the given buffer.
         /// </summary>
         public virtual void Read(byte[] Buffer, int Offset, int Length)
@@ -46,6 +54,14 @@ namespace DUIP
         /// Writes a single byte to the stream.
         /// </summary>
         public abstract void Write(byte Data);
+
+        /// <summary>
+        /// Writes a boolean value to the stream.
+        /// </summary>
+        public virtual void WriteBool(bool Data)
+        {
+            this.Write(Data ? (byte)1 : (byte)0);
+        }
 
         /// <summary>
         /// Writes data from the given buffer.

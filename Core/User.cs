@@ -15,7 +15,7 @@ namespace DUIP
     /// <summary>
     /// A private method of proving that a command was issued by a user.
     /// </summary>
-    public abstract class Proof : Content
+    public abstract class Proof
     {
 
     }
