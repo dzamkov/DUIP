@@ -133,12 +133,13 @@ namespace DUIP
         /// <summary>
         /// Gets a reference type.
         /// </summary>
-        public static Type Reference(bool Force, bool Secured, Type Target)
+        public static Type Reference(bool Force, bool Secured, bool Static, Type Target)
         {
             return Target.Resolve(new _ReferenceResolver()
             {
                 Force = Force,
-                Secured = Secured
+                Secured = Secured,
+                Static = Static
             });
         }
 
@@ -146,11 +147,12 @@ namespace DUIP
         {
             public Type Resolve<T>(Type<T> Type)
             {
-                return DUIP.Reference.Type(this.Force, this.Secured, Type);
+                return DUIP.Reference.Type(this.Force, this.Secured, this.Static, Type);
             }
 
             public bool Force;
             public bool Secured;
+            public bool Static;
         }
 
         /// <summary>
@@ -205,8 +207,9 @@ namespace DUIP
                 case TypeMode.Reference:
                     bool force = Stream.ReadBool();
                     bool secured = Stream.ReadBool();
+                    bool stat = Stream.ReadBool();
                     Type target = this.Deserialize(Context, Stream);
-                    return Type.Reference(force, secured, target);
+                    return Type.Reference(force, secured, stat, target);
                 case TypeMode.Void:
                     return Type.Void;
                 case TypeMode.Any:

@@ -61,9 +61,9 @@ namespace DUIP
         /// <summary>
         /// Creates a reference type.
         /// </summary>
-        public static ReferenceType<TTar> Type<TTar>(bool Force, bool Secured, Type<TTar> Target)
+        public static ReferenceType<TTar> Type<TTar>(bool Force, bool Secured, bool Static, Type<TTar> Target)
         {
-            return new ReferenceType<TTar>(Force, Secured, Target);
+            return new ReferenceType<TTar>(Force, Secured, Static, Target);
         }
     }
 
@@ -72,11 +72,12 @@ namespace DUIP
     /// </summary>
     public class ReferenceType<TTar> : Type<Reference>
     {
-        internal ReferenceType(bool Force, bool Secured, Type<TTar> Target)
+        internal ReferenceType(bool Force, bool Secured, bool Static, Type<TTar> Target)
         {
             this._Force = Force;
             this._Secured = Secured;
             this._Target = Target;
+            this._Static = Static;
         }
 
         /// <summary>
@@ -102,6 +103,17 @@ namespace DUIP
             get
             {
                 return this._Secured;
+            }
+        }
+
+        /// <summary>
+        /// Gets if the target of the reference must be static.
+        /// </summary>
+        public bool Static
+        {
+            get
+            {
+                return this._Static;
             }
         }
 
@@ -148,11 +160,13 @@ namespace DUIP
             Stream.Write((byte)TypeMode.Reference);
             Stream.WriteBool(this._Force);
             Stream.WriteBool(this._Secured);
+            Stream.WriteBool(this._Static);
             Type.Reflexive.Serialize(Context, this._Target, Stream);
         }
 
         private bool _Secured;
         private bool _Force;
+        private bool _Static;
         private Type<TTar> _Target;
     }
 }
