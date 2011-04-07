@@ -41,9 +41,11 @@
   <ItemGroup>
     <Compile Include="Core\Actor.cs" />
     <Compile Include="Core\Context.cs" />
-    <Compile Include="Core\Function.cs" />
+    <Compile Include="Core\Data\Any.cs" />
+    <Compile Include="Core\Data\Bool.cs" />
+    <Compile Include="Core\Data\Function.cs" />
     <Compile Include="Core\Reference.cs" />
-    <Compile Include="Core\Type.cs" />
+    <Compile Include="Core\Data\Type.cs" />
     <Compile Include="Data\MemoryStream.cs" />
     <Compile Include="Data\Stream.cs" />
     <Compile Include="Data\Cryptography.cs" />
@@ -55,7 +57,7 @@
     <Compile Include="Data\Query.cs" />
     <Compile Include="Net\UDP.cs" />
     <Compile Include="Core\User.cs" />
-    <Compile Include="Data\Void.cs" />
+    <Compile Include="Core\Data\Void.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

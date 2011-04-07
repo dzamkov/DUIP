@@ -19,13 +19,13 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
-            MemoryOutStream os = new MemoryOutStream();
+            MemoryOutStream mos = new MemoryOutStream();
 
             Type bigtype = Type.Function(Type.Function(Type.Reflexive, Type.Reflexive), Type.Reflexive);
 
-            Type.Reflexive.Serialize(null, bigtype, os);
+            Type.Reflexive.Serialize(null, bigtype, mos);
 
-            Type nbigtype = Type.Reflexive.Deserialize(null, os.Read);
+            Type nbigtype = Type.Reflexive.Deserialize(null, mos.Read);
         }
     }
 }

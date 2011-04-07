@@ -11,7 +11,10 @@ namespace DUIP
     {
         Reflexive,
         Function,
-        Reference
+        Reference,
+        Void,
+        Any,
+        Bool
     }
 
     /// <summary>
@@ -33,7 +36,7 @@ namespace DUIP
         /// </summary>
         public abstract Query<TInstance> Deserialize(Context Context, InStream Stream);
 
-        internal sealed override F _Resolve<F>(Type._IResolver<F> Resolver)
+        public sealed override F Resolve<F>(Type.IResolver<F> Resolver)
         {
             return Resolver.Resolve(this);
         }
@@ -50,7 +53,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Gets the reflexive type.
+        /// Gets the reflexive type, a type whose instances are all types including the reflexive type itself.
         /// </summary>
         public static ReflexiveType Reflexive
         {
@@ -61,27 +64,60 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Gets the void type, a type with only one instance.
+        /// </summary>
+        public static VoidType Void
+        {
+            get
+            {
+                return VoidType.Singleton;
+            }
+        }
+
+        /// <summary>
+        /// Gets the any type, a type whose instances include all instances of all types.
+        /// </summary>
+        public static AnyType Any
+        {
+            get
+            {
+                return AnyType.Singleton;
+            }
+        }
+
+        /// <summary>
+        /// Gets the boolean type, a type whose instances are true and false.
+        /// </summary>
+        public static BoolType Bool
+        {
+            get
+            {
+                return BoolType.Singleton;
+            }
+        }
+
+        /// <summary>
         /// Gets a function type.
         /// </summary>
         public static Type Function(Type Argument, Type Result)
         {
-            return Argument._Resolve(new _FunctionResolver()
+            return Argument.Resolve(new _FunctionResolver()
             {
                 Result = Result
             });
         }
 
-        private class _FunctionResolver : _IResolver<Type>
+        private class _FunctionResolver : IResolver<Type>
         {
             public Type Resolve<T>(Type<T> Type)
             {
-                return Result._Resolve(new _ResultResolver<T>()
+                return Result.Resolve(new _ResultResolver<T>()
                 {
                     Argument = Type
                 });
             }
 
-            private class _ResultResolver<TArg> : _IResolver<Type>
+            private class _ResultResolver<TArg> : IResolver<Type>
             {
                 public Type Resolve<T>(Type<T> Type)
                 {
@@ -99,14 +135,14 @@ namespace DUIP
         /// </summary>
         public static Type Reference(bool Force, bool Secured, Type Target)
         {
-            return Target._Resolve(new _ReferenceResolver()
+            return Target.Resolve(new _ReferenceResolver()
             {
                 Force = Force,
                 Secured = Secured
             });
         }
 
-        private class _ReferenceResolver : _IResolver<Type>
+        private class _ReferenceResolver : IResolver<Type>
         {
             public Type Resolve<T>(Type<T> Type)
             {
@@ -127,9 +163,9 @@ namespace DUIP
             this.SerializeType(Context, Stream);
         }
 
-        internal abstract F _Resolve<F>(_IResolver<F> Resolver);
+        public abstract F Resolve<F>(IResolver<F> Resolver);
 
-        internal interface _IResolver<F>
+        public interface IResolver<F>
         {
             F Resolve<T>(Type<T> Type);
         }
@@ -171,6 +207,10 @@ namespace DUIP
                     bool secured = Stream.ReadBool();
                     Type target = this.Deserialize(Context, Stream);
                     return Type.Reference(force, secured, target);
+                case TypeMode.Void:
+                    return Type.Void;
+                case TypeMode.Any:
+                    return Type.Any;
             }
             return null;
         }
