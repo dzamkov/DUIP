@@ -61,6 +61,14 @@ namespace DUIP
     public abstract class Any
     {
         /// <summary>
+        /// Creates a instance of the AnyType.
+        /// </summary>
+        public static Any<T> Create<T>(Type<T> Type, T Value)
+        {
+            return new Any<T>(Type, Value);
+        }
+
+        /// <summary>
         /// Gets the general form of the type for the instance.
         /// </summary>
         public abstract Type GeneralType { get; }

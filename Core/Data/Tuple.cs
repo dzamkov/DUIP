@@ -15,6 +15,99 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Creates a tuple with no parts.
+        /// </summary>
+        public static Tuple Create()
+        {
+            return new Tuple(new Part[0]);
+        }
+
+        /// <summary>
+        /// Creates a tuple with one part. 
+        /// </summary>
+        /// <remarks>
+        /// The parameter types should be given explicitly as type inference may get
+        /// a type that is too specialized for the tuple.
+        /// </remarks>
+        public static Tuple Create<TA>(TA A)
+        {
+            return new Tuple(new Part[]
+            {
+                new Part<TA>(A)
+            });
+        }
+
+        /// <summary>
+        /// Creates a tuple with two parts.
+        /// </summary>
+        /// <remarks>
+        /// The parameter types should be given explicitly as type inference may get
+        /// a type that is too specialized for the tuple.
+        /// </remarks>
+        public static Tuple Create<TA, TB>(TA A, TB B)
+        {
+            return new Tuple(new Part[]
+            {
+                new Part<TA>(A),
+                new Part<TB>(B)
+            });
+        }
+
+        /// <summary>
+        /// Creates a tuple with three parts.
+        /// </summary>
+        /// <remarks>
+        /// The parameter types should be given explicitly as type inference may get
+        /// a type that is too specialized for the tuple.
+        /// </remarks>
+        public static Tuple Create<TA, TB, TC>(TA A, TB B, TC C)
+        {
+            return new Tuple(new Part[]
+            {
+                new Part<TA>(A),
+                new Part<TB>(B),
+                new Part<TC>(C)
+            });
+        }
+
+        /// <summary>
+        /// Creates a tuple with four parts.
+        /// </summary>
+        /// <remarks>
+        /// The parameter types should be given explicitly as type inference may get
+        /// a type that is too specialized for the tuple.
+        /// </remarks>
+        public static Tuple Create<TA, TB, TC, TD>(TA A, TB B, TC C, TD D)
+        {
+            return new Tuple(new Part[]
+            {
+                new Part<TA>(A),
+                new Part<TB>(B),
+                new Part<TC>(C),
+                new Part<TD>(D)
+            });
+        }
+
+        /// <summary>
+        /// Creates a tuple with five parts.
+        /// </summary>
+        /// <remarks>
+        /// The parameter types should be given explicitly as type inference may get
+        /// a type that is too specialized for the tuple.
+        /// </remarks>
+        public static Tuple Create<TA, TB, TC, TD, TE>(TA A, TB B, TC C, TD D, TE E)
+        {
+            return new Tuple(new Part[]
+            {
+                new Part<TA>(A),
+                new Part<TB>(B),
+                new Part<TC>(C),
+                new Part<TD>(D),
+                new Part<TE>(E)
+            });
+        }
+
+        /// <summary>
         /// Creates a tuple type with the specified part types.
         /// </summary>
         public static TupleType Type(Type[] Parts)

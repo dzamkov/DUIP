@@ -20,12 +20,12 @@ namespace DUIP
         public static void Main(string[] Args)
         {
             MemoryOutStream mos = new MemoryOutStream();
+            Any val = Any.Create(Type.Tuple(new Type[] { Type.Bool, Type.Bool, Type.Reflexive }),
+                Tuple.Create<bool, bool, Type>(true, false, Type.Any));
+            Type.Any.Serialize(null, val, mos);
 
-            Type bigtype = Type.Function(Type.Function(Type.Void, Type.Tuple(new Type[] { Type.Bool, Type.Bool })), Type.Reflexive);
-
-            Type.Reflexive.Serialize(null, bigtype, mos);
-
-            Type nbigtype = Type.Reflexive.Deserialize(null, mos.Read);
+            MemoryInStream mis = mos.Read;
+            Any nval = Type.Any.Deserialize(null, mis);
         }
     }
 }
