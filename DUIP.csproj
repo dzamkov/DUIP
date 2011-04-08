@@ -59,6 +59,10 @@
     <Compile Include="Net\UDP.cs" />
     <Compile Include="Core\User.cs" />
     <Compile Include="Core\Data\Void.cs" />
+    <Compile Include="UI\Input.cs" />
+    <Compile Include="UI\Output.cs" />
+    <Compile Include="UI\Point.cs" />
+    <Compile Include="UI\Surface.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
