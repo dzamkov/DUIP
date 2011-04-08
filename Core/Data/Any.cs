@@ -82,7 +82,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Gets the only instance of this cl
+        /// Gets the only instance of this class.
         /// </summary>
         public static readonly AnyType Singleton = new AnyType();
 

@@ -21,7 +21,7 @@ namespace DUIP
         {
             MemoryOutStream mos = new MemoryOutStream();
 
-            Type bigtype = Type.Function(Type.Function(Type.Reflexive, Type.Reflexive), Type.Reflexive);
+            Type bigtype = Type.Function(Type.Function(Type.Void, Type.Tuple(new Type[] { Type.Bool, Type.Bool })), Type.Reflexive);
 
             Type.Reflexive.Serialize(null, bigtype, mos);
 

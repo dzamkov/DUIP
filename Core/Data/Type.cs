@@ -14,7 +14,8 @@ namespace DUIP
         Reference,
         Void,
         Any,
-        Bool
+        Bool,
+        Tuple
     }
 
     /// <summary>
@@ -94,6 +95,14 @@ namespace DUIP
             {
                 return BoolType.Singleton;
             }
+        }
+
+        /// <summary>
+        /// Creates a tuple type with the given types for the parts.
+        /// </summary>
+        public static TupleType Tuple(Type[] Parts)
+        {
+            return DUIP.Tuple.Type(Parts);
         }
 
         /// <summary>
@@ -214,6 +223,15 @@ namespace DUIP
                     return Type.Void;
                 case TypeMode.Any:
                     return Type.Any;
+                case TypeMode.Bool:
+                    return Type.Bool;
+                case TypeMode.Tuple:
+                    Type[] parts = new Type[Stream.ReadInt()];
+                    for (int t = 0; t < parts.Length; t++)
+                    {
+                        parts[t] = this.Deserialize(Context, Stream);
+                    };
+                    return Type.Tuple(parts);
             }
             return null;
         }

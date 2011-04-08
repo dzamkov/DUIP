@@ -44,6 +44,7 @@
     <Compile Include="Core\Data\Any.cs" />
     <Compile Include="Core\Data\Bool.cs" />
     <Compile Include="Core\Data\Function.cs" />
+    <Compile Include="Core\Data\Tuple.cs" />
     <Compile Include="Core\Reference.cs" />
     <Compile Include="Core\Data\Type.cs" />
     <Compile Include="Data\MemoryStream.cs" />
