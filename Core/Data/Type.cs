@@ -140,28 +140,14 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Gets a reference type.
+        /// Gets the reference type.
         /// </summary>
-        public static Type Reference(bool Force, bool Secured, bool Static, Type Target)
+        public static Type Reference
         {
-            return Target.Resolve(new _ReferenceResolver()
+            get
             {
-                Force = Force,
-                Secured = Secured,
-                Static = Static
-            });
-        }
-
-        private class _ReferenceResolver : IResolver<Type>
-        {
-            public Type Resolve<T>(Type<T> Type)
-            {
-                return DUIP.Reference.Type(this.Force, this.Secured, this.Static, Type);
+                return DUIP.Reference.Type;
             }
-
-            public bool Force;
-            public bool Secured;
-            public bool Static;
         }
 
         /// <summary>
@@ -214,11 +200,7 @@ namespace DUIP
                     Type res = this.Deserialize(Context, Stream);
                     return Type.Function(arg, res);
                 case TypeMode.Reference:
-                    bool force = Stream.ReadBool();
-                    bool secured = Stream.ReadBool();
-                    bool stat = Stream.ReadBool();
-                    Type target = this.Deserialize(Context, Stream);
-                    return Type.Reference(force, secured, stat, target);
+                    return Type.Reference;
                 case TypeMode.Void:
                     return Type.Void;
                 case TypeMode.Any:

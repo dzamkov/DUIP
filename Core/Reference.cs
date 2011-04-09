@@ -30,143 +30,50 @@ namespace DUIP
     }
 
     /// <summary>
-    /// An instance of a non-forced reference type that embeds the target instead of referencing a datum.
-    /// </summary>
-    public class AntiReference<TTar> : Reference
-    {
-        public AntiReference(TTar Value)
-        {
-            this._Value = Value;
-        }
-
-        /// <summary>
-        /// Gets the value of the reference.
-        /// </summary>
-        public TTar Value
-        {
-            get
-            {
-                return this._Value;
-            }
-        }
-
-        private TTar _Value;
-    }
-
-    /// <summary>
     /// A generalized reference with no specified index type. Contains static helper functions for references.
     /// </summary>
     public abstract class Reference
     {
         /// <summary>
-        /// Creates a reference type.
+        /// Gets the type for references.
         /// </summary>
-        public static ReferenceType<TTar> Type<TTar>(bool Force, bool Secured, bool Static, Type<TTar> Target)
+        public static ReferenceType Type
         {
-            return new ReferenceType<TTar>(Force, Secured, Static, Target);
+            get
+            {
+                return ReferenceType.Singleton;
+            }
         }
     }
 
     /// <summary>
-    /// The type for a reference to content of a certain more specific type.
+    /// The type for a reference to a datum on a network.
     /// </summary>
-    public class ReferenceType<TTar> : Type<Reference>
+    public class ReferenceType : Type<Reference>
     {
-        internal ReferenceType(bool Force, bool Secured, bool Static, Type<TTar> Target)
+        private ReferenceType()
         {
-            this._Force = Force;
-            this._Secured = Secured;
-            this._Target = Target;
-            this._Static = Static;
+
         }
 
         /// <summary>
-        /// Gets wether content of this type has to be referenced, or can it be included normally?
+        /// Gets the only instance of this class.
         /// </summary>
-        public bool Force
-        {
-            get
-            {
-                return this._Force;
-            }
-        }
-
-        /// <summary>
-        /// Gets wether an instance can be to a secured datum (a datum with a Viewer set to anything but the
-        /// universal actor). If this is false, than all references that reference secured datums will not be
-        /// instances of this type. A reference to an unsecured datum is still an instance of a secured reference
-        /// type. Note that secured reference types can not be implicitly converted, because access restrictions have
-        /// to be checked first.
-        /// </summary>
-        public bool Secured
-        {
-            get
-            {
-                return this._Secured;
-            }
-        }
-
-        /// <summary>
-        /// Gets if the target of the reference must be static.
-        /// </summary>
-        public bool Static
-        {
-            get
-            {
-                return this._Static;
-            }
-        }
-
-        /// <summary>
-        /// The target (referenced) type of this reference type;
-        /// </summary>
-        public Type<TTar> Target
-        {
-            get
-            {
-                return this._Target;
-            }
-        }
+        public static ReferenceType Singleton = new ReferenceType();
 
         public override void Serialize(Context Context, Reference Instance, OutStream Stream)
         {
-            if (this._Force)
-            {
-                (Context as Network).Serialize(Instance, Stream);
-            }
-            else
-            {
-                AntiReference<TTar> ar = Instance as AntiReference<TTar>;
-                if (ar != null)
-                {
-                    Stream.WriteBool(true); // Embedded reference
-                    this._Target.Serialize(Context, ar.Value, Stream);
-                }
-                else
-                {
-                    Stream.WriteBool(false);
-                    (Context as Network).Serialize(Instance, Stream);
-                }
-            }       
+            (Context as Network).Serialize(Instance, Stream);
         }
 
         public override Query<Reference> Deserialize(Context Context, InStream Stream)
         {
-            throw new NotImplementedException();
+            return (Context as Network).Deserialize(Stream);
         }
 
         protected override void SerializeType(Context Context, OutStream Stream)
         {
             Stream.Write((byte)TypeMode.Reference);
-            Stream.WriteBool(this._Force);
-            Stream.WriteBool(this._Secured);
-            Stream.WriteBool(this._Static);
-            Type.Reflexive.Serialize(Context, this._Target, Stream);
         }
-
-        private bool _Secured;
-        private bool _Force;
-        private bool _Static;
-        private Type<TTar> _Target;
     }
 }
