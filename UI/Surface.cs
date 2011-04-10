@@ -5,14 +5,63 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// An unbounded, two-dimensional dynamic object a user can interaction with.
+    /// An two-dimensional dynamic object a user can interaction with.
     /// </summary>
     public abstract class Surface
     {
         /// <summary>
-        /// Updates the state of the surface with and for user interaction.
+        /// Updates the state of the surface for user interaction.
         /// </summary>
-        public abstract void Update(Input Input, Output Output);
+        public abstract void Update(UpdateInterface Interface);
+
+        /// <summary>
+        /// Renders the surface to the given render interface.
+        /// </summary>
+        public abstract void Render(RenderInterface Interface);
+
+        /// <summary>
+        /// Gets the area this surface occupies.
+        /// </summary>
+        public virtual Rectangle Bounds
+        {
+            get
+            {
+                return Rectangle.Unbound;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Collection of methods that allow a surface to receive input from the user over a time interval.
+    /// </summary>
+    public abstract class UpdateInterface
+    {
+        /// <summary>
+        /// Gets the amount of time that has elapsed during the scope of the interface.
+        /// </summary>
+        public abstract double Time { get; }
+
+        /// <summary>
+        /// Informs the interface that the visual contents of the given area have changed during the update and
+        /// need to be redrawn. This may be called at any time for any area but doing so may result in a performance loss.
+        /// </summary>
+        public abstract void Invalidate(Rectangle Area);
+    }
+
+    /// <summary>
+    /// Collection of methods that allows a surface to be displayed.
+    /// </summary>
+    public abstract class RenderInterface
+    {
+        /// <summary>
+        /// Clears the entirety of the renderable area to a single color. 
+        /// </summary>
+        public abstract void Clear(Color Color);
+
+        /// <summary>
+        /// Draws a solid line between two points.
+        /// </summary>
+        public abstract void Line(Color Color, Point A, Point B, double Thickness);
     }
 
     /// <summary>
@@ -22,8 +71,33 @@ namespace DUIP.UI
     public abstract class Control : Surface
     {
         /// <summary>
-        /// Gets or sets the size of the rectangle bounding the control.
+        /// The size of the rectangle bounding the control.
         /// </summary>
-        public abstract Point Size { get; set; }
+        public Point Size;
+
+        public override Rectangle Bounds
+        {
+            get
+            {
+                return new Rectangle(new Point(0.0, 0.0), this.Size);
+            }
+        }
+    }
+
+    /// <summary>
+    /// A control that displays as a solid color.
+    /// </summary>
+    public class TestControl : Control
+    {
+        public override void Update(UpdateInterface Interface)
+        {
+            
+        }
+
+        public override void Render(RenderInterface Interface)
+        {
+            Interface.Clear(Color.RGB(1.0, 0.0, 0.0));
+            Interface.Line(Color.RGB(1.0, 1.0, 0.0), new Point(0.0, 0.0), this.Size, 2.0);
+        }
     }
 }

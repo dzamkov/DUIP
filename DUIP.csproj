@@ -59,8 +59,11 @@
     <Compile Include="Net\UDP.cs" />
     <Compile Include="Core\User.cs" />
     <Compile Include="Core\Data\Void.cs" />
-    <Compile Include="UI\Input.cs" />
-    <Compile Include="UI\Output.cs" />
+    <Compile Include="UI\Color.cs" />
+    <Compile Include="UI\GDI\ControlHost.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\GDI\Render.cs" />
     <Compile Include="UI\Point.cs" />
     <Compile Include="UI\Rectangle.cs" />
     <Compile Include="UI\Surface.cs" />

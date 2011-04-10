@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using DUIP.UI;
+using DUIP.UI.GDI;
+
 namespace DUIP
 {
     /// <summary>
@@ -19,13 +22,7 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
-            MemoryOutStream mos = new MemoryOutStream();
-            Any val = Any.Create(Type.Tuple(new Type[] { Type.Bool, Type.Bool, Type.Reflexive }),
-                Tuple.Create<bool, bool, Type>(true, false, Type.Any));
-            Type.Any.Serialize(null, val, mos);
-
-            MemoryInStream mis = mos.Read;
-            Any nval = Type.Any.Deserialize(null, mis);
+            ControlHost.Run(new TestControl());
         }
     }
 }
