@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using DUIP.UI;
-using DUIP.UI.GDI;
-
 namespace DUIP
 {
     /// <summary>
@@ -22,7 +19,7 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
-            ControlHost.Run(new TestControl());
+
         }
     }
 }

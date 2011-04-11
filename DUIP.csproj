@@ -39,37 +39,15 @@
   </Target>
   -->
   <ItemGroup>
-    <Compile Include="Core\Actor.cs" />
-    <Compile Include="Core\Context.cs" />
-    <Compile Include="Core\Data\Any.cs" />
-    <Compile Include="Core\Data\Bool.cs" />
-    <Compile Include="Core\Data\Function.cs" />
-    <Compile Include="Core\Data\Tuple.cs" />
-    <Compile Include="Core\Reference.cs" />
-    <Compile Include="Core\Data\Type.cs" />
     <Compile Include="Data\MemoryStream.cs" />
     <Compile Include="Data\Stream.cs" />
     <Compile Include="Data\Cryptography.cs" />
-    <Compile Include="Core\Datum.cs" />
     <Compile Include="Data\ID.cs" />
     <Compile Include="Data\Key.cs" />
-    <Compile Include="Core\Network.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Data\Query.cs" />
     <Compile Include="Net\UDP.cs" />
-    <Compile Include="Core\User.cs" />
-    <Compile Include="Core\Data\Void.cs" />
-    <Compile Include="UI\Color.cs" />
-    <Compile Include="UI\GDI\ControlHost.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="UI\GDI\Render.cs" />
-    <Compile Include="UI\Image.cs" />
-    <Compile Include="UI\Path.cs" />
-    <Compile Include="UI\Point.cs" />
-    <Compile Include="UI\Rectangle.cs" />
-    <Compile Include="UI\Shape.cs" />
-    <Compile Include="UI\Surface.cs" />
+    <Compile Include="Data\Void.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
