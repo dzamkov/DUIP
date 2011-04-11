@@ -33,7 +33,7 @@ namespace DUIP.UI.GDI
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            this._Control.Render(new GDIRenderInterface(e.Graphics));
+            GDI.Render(e.Graphics, this._Control.Image);
         }
 
         /// <summary>
@@ -83,7 +83,7 @@ namespace DUIP.UI.GDI
             ControlHost ch = new ControlHost(Control);
             ch.Show();
             DateTime dt = DateTime.Now;
-            while (true)
+            while (ch.Visible)
             {
                 DateTime nt = DateTime.Now;
                 double updatetime = (nt - dt).TotalSeconds;

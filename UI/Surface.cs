@@ -15,12 +15,13 @@ namespace DUIP.UI
         public abstract void Update(UpdateInterface Interface);
 
         /// <summary>
-        /// Renders the surface to the given render interface.
+        /// Gets an image that can be used to display the surface to the user.
         /// </summary>
-        public abstract void Render(RenderInterface Interface);
+        public abstract Image Image { get; }
 
         /// <summary>
-        /// Gets the area this surface occupies.
+        /// Gets the area this surface occupies. The surface will not receive any input from outside this rectangle and can not draw
+        /// outside the rectangle (the image outside this rectangle should be transparent).
         /// </summary>
         public virtual Rectangle Bounds
         {
@@ -94,10 +95,13 @@ namespace DUIP.UI
             
         }
 
-        public override void Render(RenderInterface Interface)
+        public override Image Image
         {
-            Interface.Clear(Color.RGB(1.0, 0.0, 0.0));
-            Interface.Line(Color.RGB(1.0, 1.0, 0.0), new Point(0.0, 0.0), this.Size, 2.0);
+            get
+            {
+                return Image.Solid(Color.RGB(1.0, 0.0, 0.0))
+                    .OverDraw(Image.Path(Path.Line(new Point(0.0, 0.0), this.Size), Color.RGB(0.0, 1.0, 1.0), 5.0));
+            }
         }
     }
 }
