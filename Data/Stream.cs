@@ -46,6 +46,11 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Gets the amount of bytes available to read from the stream.
+        /// </summary>
+        public abstract int BytesAvailable { get; }
+
+        /// <summary>
         /// Advances the stream by the given amount of bytes.
         /// </summary>
         public virtual void Advance(int Amount)

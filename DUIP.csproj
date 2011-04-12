@@ -39,15 +39,20 @@
   </Target>
   -->
   <ItemGroup>
+    <Compile Include="Core\Any.cs" />
+    <Compile Include="Core\Bool.cs" />
+    <Compile Include="Core\Context.cs" />
+    <Compile Include="Core\Function.cs" />
+    <Compile Include="Core\Tuple.cs" />
+    <Compile Include="Core\Type.cs" />
+    <Compile Include="Core\Void.cs" />
     <Compile Include="Data\MemoryStream.cs" />
     <Compile Include="Data\Stream.cs" />
     <Compile Include="Data\Cryptography.cs" />
-    <Compile Include="Data\ID.cs" />
     <Compile Include="Data\Key.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Data\Query.cs" />
     <Compile Include="Net\UDP.cs" />
-    <Compile Include="Data\Void.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

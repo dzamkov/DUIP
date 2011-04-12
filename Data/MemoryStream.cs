@@ -97,6 +97,14 @@ namespace DUIP
             this._Index += Amount;
         }
 
+        public override int BytesAvailable
+        {
+            get
+            {
+                return this._Data.Count - this._Index;
+            }
+        }
+
         private List<byte> _Data;
         private int _Index;
     }
