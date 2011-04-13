@@ -20,7 +20,23 @@ namespace DUIP
         public static void Main(string[] Args)
         {
             Console.Title = "DUIP";
-            Console.ReadKey();
+            new RootInterface().Display();
+        }
+    }
+
+    /// <summary>
+    /// The primary interface started when the program starts.
+    /// </summary>
+    public class RootInterface : Interface
+    {
+        protected override void Receive(string Message)
+        {
+
+        }
+
+        protected override void Enter()
+        {
+            this.Send("Welcome to DUIP (Version " + Program.Version.ToString() + ")");
         }
     }
 }

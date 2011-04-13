@@ -53,6 +53,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Data\Query.cs" />
     <Compile Include="Net\UDP.cs" />
+    <Compile Include="Interface.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
