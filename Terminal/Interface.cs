@@ -119,21 +119,4 @@ namespace DUIP.Terminal
         private bool _Exited;
         private Interface _Parent;
     }
-
-    /// <summary>
-    /// An interface that parses and interprets commands from the user.
-    /// </summary>
-    public abstract class CommandInterface : Interface
-    {
-        public CommandInterface(IEnumerable<Command> Commands)
-        {
-            this._Commands = new Dictionary<string, Command>();
-            foreach (Command c in Commands)
-            {
-                this._Commands.Add(c.Name, c);
-            }
-        }
-
-        private Dictionary<string, Command> _Commands;
-    }
 }

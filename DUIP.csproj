@@ -40,7 +40,6 @@
   -->
   <ItemGroup>
     <Compile Include="Core\Maybe.cs" />
-    <Compile Include="Terminal\Command.cs" />
     <Compile Include="Core\Any.cs" />
     <Compile Include="Core\Bool.cs" />
     <Compile Include="Core\Context.cs" />

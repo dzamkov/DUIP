@@ -33,27 +33,5 @@ namespace DUIP
         {
             Stream.Write((byte)TypeMode.Bool);
         }
-
-        public override string Name
-        {
-            get
-            {
-                return "bool";
-            }
-        }
-
-        public override Maybe<bool> Parse(string Value)
-        {
-            string l = Value.Trim().ToLower();
-            if (l == "t" || l == "true")
-            {
-                return true;
-            }
-            if (l == "f" || l == "false")
-            {
-                return false;
-            }
-            return Maybe<bool>.Nothing;
-        }
     }
 }

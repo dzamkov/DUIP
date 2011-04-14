@@ -29,20 +29,12 @@ namespace DUIP
     /// <summary>
     /// The primary interface started when the program starts.
     /// </summary>
-    public class RootInterface : CommandInterface
+    public class RootInterface : Interface
     {
-        public RootInterface() : base()
+        public RootInterface()
         {
 
         }
-
-        /// <summary>
-        /// The commands available in the root interface.
-        /// </summary>
-        public static readonly IEnumerable<Command> Commands = new Command[]
-        {
-
-        };
 
         public override string Name
         {
