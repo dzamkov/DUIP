@@ -44,5 +44,18 @@ namespace DUIP
         {
             Stream.Write((byte)TypeMode.Void);
         }
+
+        public override string Name
+        {
+            get
+            {
+                return "void";
+            }
+        }
+
+        public override Maybe<Void> Parse(string Value)
+        {
+            return DUIP.Void.Value;
+        }
     }
 }

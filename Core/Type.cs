@@ -36,6 +36,14 @@ namespace DUIP
         /// </summary>
         public abstract Query<TInstance> Deserialize(Context Context, InStream Stream);
 
+        /// <summary>
+        /// Tries a simple parsing of a string to obtain an instance of this type, or returns nothing if not possible.
+        /// </summary>
+        public virtual Maybe<TInstance> Parse(string Value)
+        {
+            return Maybe<TInstance>.Nothing;
+        }
+
         public sealed override F Resolve<F>(Type.IResolver<F> Resolver)
         {
             return Resolver.Resolve(this);
@@ -154,6 +162,17 @@ namespace DUIP
         {
             F Resolve<T>(Type<T> Type);
         }
+
+        /// <summary>
+        /// Gets a user-friendly consistent name for the type, or an indication of the nature of the type.
+        /// </summary>
+        public virtual string Name
+        {
+            get
+            {
+                return "<unknown>";
+            }
+        }
     }
 
     /// <summary>
@@ -207,6 +226,14 @@ namespace DUIP
         protected override void SerializeType(Context Context, OutStream Stream)
         {
             Stream.Write((byte)TypeMode.Reflexive);
+        }
+
+        public override string Name
+        {
+            get
+            {
+                return "type";
+            }
         }
     }
 }

@@ -127,6 +127,14 @@ namespace DUIP
             Type.Reflexive.Serialize(Context, this._Result, Stream);
         }
 
+        public override string Name
+        {
+            get
+            {
+                return "(" + this._Argument.Name + " -> " + this._Result.Name + ")";
+            }
+        }
+
         private Type<TArg> _Argument;
         private Type<TRes> _Result;
     }

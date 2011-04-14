@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using DUIP.Terminal;
+
 namespace DUIP
 {
     /// <summary>
@@ -27,11 +29,32 @@ namespace DUIP
     /// <summary>
     /// The primary interface started when the program starts.
     /// </summary>
-    public class RootInterface : Interface
+    public class RootInterface : CommandInterface
     {
-        protected override void Receive(string Message)
+        public RootInterface() : base()
         {
 
+        }
+
+        /// <summary>
+        /// The commands available in the root interface.
+        /// </summary>
+        public static readonly IEnumerable<Command> Commands = new Command[]
+        {
+
+        };
+
+        public override string Name
+        {
+            get
+            {
+                return "";
+            }
+        }
+
+        protected override void Receive(string Message)
+        {
+            this.Send("You said, " + Message + "?");
         }
 
         protected override void Enter()

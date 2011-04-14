@@ -19,7 +19,7 @@ namespace DUIP
         /// </summary>
         public virtual bool ReadBool()
         {
-            return this.Read() == 1 ? true : false;
+            return this.Read() != 0;
         }
 
         /// <summary>

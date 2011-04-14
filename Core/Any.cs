@@ -126,5 +126,13 @@ namespace DUIP
         {
             Stream.Write((byte)TypeMode.Any);
         }
+
+        public override string Name
+        {
+            get
+            {
+                return "any";
+            }
+        }
     }
 }

@@ -39,6 +39,8 @@
   </Target>
   -->
   <ItemGroup>
+    <Compile Include="Core\Maybe.cs" />
+    <Compile Include="Terminal\Command.cs" />
     <Compile Include="Core\Any.cs" />
     <Compile Include="Core\Bool.cs" />
     <Compile Include="Core\Context.cs" />
@@ -53,7 +55,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Data\Query.cs" />
     <Compile Include="Net\UDP.cs" />
-    <Compile Include="Interface.cs" />
+    <Compile Include="Terminal\Interface.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
