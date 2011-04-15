@@ -5,20 +5,6 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// Method of storing a type.
-    /// </summary>
-    public enum TypeMode : byte
-    {
-        Reflexive,
-        Function,
-        Void,
-        Any,
-        Bool,
-        Tuple,
-        ID
-    }
-
-    /// <summary>
     /// A type of data that can be stored on the network. It may be assumed that types will not have their instances
     /// used with other types and networks.
     /// </summary>
@@ -27,16 +13,6 @@ namespace DUIP
     /// <typeparam name="T">An instance of this type.</typeparam>
     public abstract class Type<T> : Type
     {
-        /// <summary>
-        /// Serializes an instance of this type to an output stream.
-        /// </summary>
-        public abstract void Serialize(Context Context, T Instance, OutStream.F Stream);
-
-        /// <summary>
-        /// Deserializes an instance of this type from a stream, or returns null if not possible.
-        /// </summary>
-        public abstract T Deserialize(Context Context, InStream.F Stream);
-
         public sealed override F Resolve<F>(Type.IResolver<F> Resolver)
         {
             return Resolver.Resolve(this);
@@ -150,16 +126,6 @@ namespace DUIP
             public Type Result;
         }
 
-        /// <summary>
-        /// Serializes this type to an output stream.
-        /// </summary>
-        protected abstract void SerializeType(Context Context, OutStream.F Stream);
-
-        internal void _SerializeType(Context Context, OutStream.F Stream)
-        {
-            this.SerializeType(Context, Stream);
-        }
-
         public abstract F Resolve<F>(IResolver<F> Resolver);
 
         public interface IResolver<F>
@@ -182,43 +148,5 @@ namespace DUIP
         /// Gets the only instance of this class.
         /// </summary>
         public static ReflexiveType Singleton = new ReflexiveType();
-
-        public override void Serialize(Context Context, Type Instance, OutStream.F Stream)
-        {
-            Instance._SerializeType(Context, Stream);
-        }
-
-        public override Type Deserialize(Context Context, InStream.F Stream)
-        {
-            TypeMode mode = (TypeMode)Stream.ReadByte();
-            switch (mode)
-            {
-                case TypeMode.Reflexive:
-                    return this;
-                case TypeMode.Function:
-                    Type arg = this.Deserialize(Context, Stream);
-                    Type res = this.Deserialize(Context, Stream);
-                    return Type.Function(arg, res);
-                case TypeMode.Void:
-                    return Type.Void;
-                case TypeMode.Any:
-                    return Type.Any;
-                case TypeMode.Bool:
-                    return Type.Bool;
-                case TypeMode.Tuple:
-                    Type[] parts = new Type[Stream.ReadInt()];
-                    for (int t = 0; t < parts.Length; t++)
-                    {
-                        parts[t] = this.Deserialize(Context, Stream);
-                    };
-                    return Type.Tuple(parts);
-            }
-            return null;
-        }
-
-        protected override void SerializeType(Context Context, OutStream.F Stream)
-        {
-            Stream.WriteByte((byte)TypeMode.Reflexive);
-        }
     }
 }

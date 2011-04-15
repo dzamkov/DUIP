@@ -68,27 +68,5 @@ namespace DUIP
         /// The only instance of this class.
         /// </summary>
         public static readonly IDType Singleton = new IDType();
-
-        public override void Serialize(Context Context, ID Instance, OutStream.F Stream)
-        {
-            Stream.WriteInt(Instance.A);
-            Stream.WriteInt(Instance.B);
-            Stream.WriteInt(Instance.C);
-            Stream.WriteInt(Instance.D);
-        }
-
-        public override ID Deserialize(Context Context, InStream.F Stream)
-        {
-            return new ID(
-                Stream.ReadInt(),
-                Stream.ReadInt(),
-                Stream.ReadInt(),
-                Stream.ReadInt());
-        }
-
-        protected override void SerializeType(Context Context, OutStream.F Stream)
-        {
-            Stream.WriteByte((byte)TypeMode.ID);
-        }
     }
 }

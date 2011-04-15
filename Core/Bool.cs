@@ -18,20 +18,5 @@ namespace DUIP
         /// Gets the only instance of this class.
         /// </summary>
         public static readonly BoolType Singleton = new BoolType();
-
-        public override void Serialize(Context Context, bool Instance, OutStream.F Stream)
-        {
-            Stream.WriteBool(Instance);
-        }
-
-        public override bool Deserialize(Context Context, InStream.F Stream)
-        {
-            return Stream.ReadBool();
-        }
-
-        protected override void SerializeType(Context Context, OutStream.F Stream)
-        {
-            Stream.WriteByte((byte)TypeMode.Bool);
-        }
     }
 }

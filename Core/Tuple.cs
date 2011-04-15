@@ -125,11 +125,6 @@ namespace DUIP
                 this.Value = Value;
             }
 
-            public override void Serialize(Context Context, Type Type, OutStream.F Stream)
-            {
-                (Type as Type<T>).Serialize(Context, this.Value, Stream);
-            }
-
             /// <summary>
             /// Gets the value of this part.
             /// </summary>
@@ -141,10 +136,7 @@ namespace DUIP
         /// </summary>
         public abstract class Part
         {
-            /// <summary>
-            /// Serializes this part to a stream when interpreted with the given type.
-            /// </summary>
-            public abstract void Serialize(Context Context, Type Type, OutStream.F Stream);
+
         }
 
         /// <summary>
@@ -171,50 +163,6 @@ namespace DUIP
             get
             {
                 return this._Parts;
-            }
-        }
-
-        public override void Serialize(Context Context, Tuple Instance, OutStream.F Stream)
-        {
-            Tuple.Part[] parts = Instance.Parts;
-            for (int t = 0; t < parts.Length; t++)
-            {
-                parts[t].Serialize(Context, this._Parts[t], Stream);
-            }
-        }
-
-        public override Tuple Deserialize(Context Context, InStream.F Stream)
-        {
-            Tuple.Part[] parts = new Tuple.Part[this._Parts.Length];
-            for (int t = 0; t < this._Parts.Length; t++)
-            {
-                parts[t] = this._Parts[t].Resolve(new _TypeResolver()
-                {
-                    Context = Context,
-                    Stream = Stream
-                });
-            }
-            return new Tuple(parts);
-        }
-
-        private class _TypeResolver : Type.IResolver<Tuple.Part>
-        {
-            public Tuple.Part Resolve<T>(Type<T> Type)
-            {
-                return new Tuple.Part<T>(Type.Deserialize(Context, Stream));
-            }
-
-            public Context Context;
-            public InStream.F Stream;
-        }
-
-        protected override void SerializeType(Context Context, OutStream.F Stream)
-        {
-            Stream.WriteByte((byte)TypeMode.Tuple);
-            Stream.WriteInt(this._Parts.Length);
-            for (int t = 0; t < this._Parts.Length; t++)
-            {
-                Type.Reflexive.Serialize(Context, this._Parts[t], Stream);
             }
         }
 

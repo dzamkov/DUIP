@@ -29,20 +29,5 @@ namespace DUIP
         /// Gets the only instance of this class.
         /// </summary>
         public static readonly VoidType Singleton = new VoidType();
-
-        public override void Serialize(Context Context, Void Instance, OutStream.F Stream)
-        {
-
-        }
-
-        public override Void Deserialize(Context Context, InStream.F Stream)
-        {
-            return DUIP.Void.Value;
-        }
-
-        protected override void SerializeType(Context Context, OutStream.F Stream)
-        {
-            Stream.WriteByte((byte)TypeMode.Void);
-        }
     }
 }

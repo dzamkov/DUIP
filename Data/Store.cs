@@ -15,15 +15,4 @@ namespace DUIP
         /// </summary>
         public abstract Query<Data> Lookup(T Reference);
     }
-
-    /// <summary>
-    /// A store that can accept new datums.
-    /// </summary>
-    public abstract class Cache<T> : Store<T>
-    {
-        /// <summary>
-        /// Stores a piece of data in the cache.
-        /// </summary>
-        public abstract Query<Void> Set(T Reference, Data Data);
-    }
 }
