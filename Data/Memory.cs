@@ -108,4 +108,44 @@ namespace DUIP
         private List<byte> _Data;
         private int _Index;
     }
+
+    /// <summary>
+    /// Data whose source is a byte list.
+    /// </summary>
+    public class MemoryData : Data
+    {
+        public MemoryData(List<byte> Source)
+        {
+            this._Source = Source;
+        }
+
+        /// <summary>
+        /// Gets the source byte list for this data.
+        /// </summary>
+        public List<byte> Source
+        {
+            get
+            {
+                return this._Source;
+            }
+        }
+
+        public override InStream Read
+        {
+            get
+            {
+                return new MemoryInStream(this._Source);
+            }
+        }
+
+        public override int Length
+        {
+            get
+            {
+                return this._Source.Count;
+            }
+        }
+
+        private List<byte> _Source;
+    }
 }

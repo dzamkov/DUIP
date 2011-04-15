@@ -183,33 +183,25 @@ namespace DUIP
             }
         }
 
-        public override Query<Tuple> Deserialize(Context Context, InStream Stream)
+        public override Tuple Deserialize(Context Context, InStream Stream)
         {
-            Query<Tuple.Part>[] qparts = new Query<Tuple.Part>[this._Parts.Length];
+            Tuple.Part[] parts = new Tuple.Part[this._Parts.Length];
             for (int t = 0; t < this._Parts.Length; t++)
             {
-                qparts[t] = this._Parts[t].Resolve(new _TypeResolver()
+                parts[t] = this._Parts[t].Resolve(new _TypeResolver()
                 {
                     Context = Context,
                     Stream = Stream
                 });
             }
-            return Query<Tuple>.Create(delegate
-            {
-                Tuple.Part[] parts = new Tuple.Part[qparts.Length];
-                for (int t = 0; t < qparts.Length; t++)
-                {
-                    parts[t] = qparts[t];
-                }
-                return new Tuple(parts);
-            });
+            return new Tuple(parts);
         }
 
-        private class _TypeResolver : Type.IResolver<Query<Tuple.Part>>
+        private class _TypeResolver : Type.IResolver<Tuple.Part>
         {
-            public Query<Tuple.Part> Resolve<T>(Type<T> Type)
+            public Tuple.Part Resolve<T>(Type<T> Type)
             {
-                return Type.Deserialize(Context, Stream).Bind<Tuple.Part>(x => new Tuple.Part<T>(x));
+                return new Tuple.Part<T>(Type.Deserialize(Context, Stream));
             }
 
             public Context Context;

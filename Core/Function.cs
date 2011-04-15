@@ -106,16 +106,13 @@ namespace DUIP
             Instance.Serialize(Context, this, Stream);
         }
 
-        public override Query<Function<TArg, TRes>> Deserialize(Context Context, InStream Stream)
+        public override Function<TArg, TRes> Deserialize(Context Context, InStream Stream)
         {
             FunctionMode mode = (FunctionMode)Stream.Read();
             switch (mode)
             {
                 case FunctionMode.Constant:
-                    return this._Result.Deserialize(Context, Stream).Bind<Function<TArg, TRes>>(delegate(TRes Value)
-                    {
-                        return new ConstantFunction<TArg, TRes>(Value);
-                    });
+                    return new ConstantFunction<TArg, TRes>(this._Result.Deserialize(Context, Stream));
             }
             return null;
         }

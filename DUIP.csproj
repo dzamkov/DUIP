@@ -47,10 +47,14 @@
     <Compile Include="Core\Tuple.cs" />
     <Compile Include="Core\Type.cs" />
     <Compile Include="Core\Void.cs" />
-    <Compile Include="Data\MemoryStream.cs" />
+    <Compile Include="Core\ID.cs" />
+    <Compile Include="Data\Data.cs" />
+    <Compile Include="Data\Memory.cs" />
     <Compile Include="Data\Stream.cs" />
     <Compile Include="Data\Cryptography.cs" />
     <Compile Include="Data\Key.cs" />
+    <Compile Include="Net\Network.cs" />
+    <Compile Include="Net\Store.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Data\Query.cs" />
     <Compile Include="Net\UDP.cs" />

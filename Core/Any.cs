@@ -99,7 +99,7 @@ namespace DUIP
             Instance.Serialize(Context, Stream);
         }
 
-        public override Query<Any> Deserialize(Context Context, InStream Stream)
+        public override Any Deserialize(Context Context, InStream Stream)
         {
             Type t = Type.Reflexive.Deserialize(Context, Stream);
             return t.Resolve(new _TypeResolver()

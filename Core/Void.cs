@@ -35,7 +35,7 @@ namespace DUIP
 
         }
 
-        public override Query<Void> Deserialize(Context Context, InStream Stream)
+        public override Void Deserialize(Context Context, InStream Stream)
         {
             return DUIP.Void.Value;
         }

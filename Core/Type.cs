@@ -14,7 +14,8 @@ namespace DUIP
         Void,
         Any,
         Bool,
-        Tuple
+        Tuple,
+        ID
     }
 
     /// <summary>
@@ -23,18 +24,18 @@ namespace DUIP
     /// </summary>
     /// <remarks>Types can be viewed as a range of possible values and a 
     /// way to convert them into a data representation.</remarks>
-    /// <typeparam name="TInstance">An instance of this type.</typeparam>
-    public abstract class Type<TInstance> : Type
+    /// <typeparam name="T">An instance of this type.</typeparam>
+    public abstract class Type<T> : Type
     {
         /// <summary>
         /// Serializes an instance of this type to an output stream.
         /// </summary>
-        public abstract void Serialize(Context Context, TInstance Instance, OutStream Stream);
+        public abstract void Serialize(Context Context, T Instance, OutStream Stream);
 
         /// <summary>
         /// Deserializes an instance of this type from a stream, or returns null if not possible.
         /// </summary>
-        public abstract Query<TInstance> Deserialize(Context Context, InStream Stream);
+        public abstract T Deserialize(Context Context, InStream Stream);
 
         public sealed override F Resolve<F>(Type.IResolver<F> Resolver)
         {
@@ -102,6 +103,17 @@ namespace DUIP
         public static TupleType Tuple(Type[] Parts)
         {
             return DUIP.Tuple.Type(Parts);
+        }
+
+        /// <summary>
+        /// Gets a type for an identifier.
+        /// </summary>
+        public static IDType ID
+        {
+            get
+            {
+                return IDType.Singleton;
+            }
         }
 
         /// <summary>
@@ -176,7 +188,7 @@ namespace DUIP
             Instance._SerializeType(Context, Stream);
         }
 
-        public override Query<Type> Deserialize(Context Context, InStream Stream)
+        public override Type Deserialize(Context Context, InStream Stream)
         {
             TypeMode mode = (TypeMode)Stream.Read();
             switch (mode)

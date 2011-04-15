@@ -24,7 +24,7 @@ namespace DUIP
             Stream.WriteBool(Instance);
         }
 
-        public override Query<bool> Deserialize(Context Context, InStream Stream)
+        public override bool Deserialize(Context Context, InStream Stream)
         {
             return Stream.ReadBool();
         }
