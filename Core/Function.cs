@@ -30,7 +30,7 @@ namespace DUIP
         /// <summary>
         /// Serializes this function to a stream.
         /// </summary>
-        public abstract void Serialize(Context Context, FunctionType<TArg, TRes> Type, OutStream Stream);
+        public abstract void Serialize(Context Context, FunctionType<TArg, TRes> Type, OutStream.F Stream);
     }
 
     /// <summary>
@@ -59,9 +59,9 @@ namespace DUIP
             return this._Value;
         }
 
-        public override void Serialize(Context Context, FunctionType<TArg, TRes> Type, OutStream Stream)
+        public override void Serialize(Context Context, FunctionType<TArg, TRes> Type, OutStream.F Stream)
         {
-            Stream.Write((byte)FunctionMode.Constant);
+            Stream.WriteByte((byte)FunctionMode.Constant);
             Type.Result.Serialize(Context, this._Value, Stream);
         }
 
@@ -101,14 +101,14 @@ namespace DUIP
             }
         }
 
-        public override void Serialize(Context Context, Function<TArg, TRes> Instance, OutStream Stream)
+        public override void Serialize(Context Context, Function<TArg, TRes> Instance, OutStream.F Stream)
         {
             Instance.Serialize(Context, this, Stream);
         }
 
-        public override Function<TArg, TRes> Deserialize(Context Context, InStream Stream)
+        public override Function<TArg, TRes> Deserialize(Context Context, InStream.F Stream)
         {
-            FunctionMode mode = (FunctionMode)Stream.Read();
+            FunctionMode mode = (FunctionMode)Stream.ReadByte();
             switch (mode)
             {
                 case FunctionMode.Constant:
@@ -117,9 +117,9 @@ namespace DUIP
             return null;
         }
 
-        protected override void SerializeType(Context Context, OutStream Stream)
+        protected override void SerializeType(Context Context, OutStream.F Stream)
         {
-            Stream.Write((byte)TypeMode.Function);
+            Stream.WriteByte((byte)TypeMode.Function);
             Type.Reflexive.Serialize(Context, this._Argument, Stream);
             Type.Reflexive.Serialize(Context, this._Result, Stream);
         }

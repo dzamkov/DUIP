@@ -45,7 +45,7 @@ namespace DUIP
             }
         }
 
-        public override void Serialize(Context Context, OutStream Stream)
+        public override void Serialize(Context Context, OutStream.F Stream)
         {
             DUIP.Type.Reflexive.Serialize(Context, this._Type, Stream);
             this._Type.Serialize(Context, this._Value, Stream);
@@ -76,7 +76,7 @@ namespace DUIP
         /// <summary>
         /// Serializes this object to a stream.
         /// </summary>
-        public abstract void Serialize(Context Context, OutStream Stream);
+        public abstract void Serialize(Context Context, OutStream.F Stream);
     }
 
     /// <summary>
@@ -94,12 +94,12 @@ namespace DUIP
         /// </summary>
         public static readonly AnyType Singleton = new AnyType();
 
-        public override void Serialize(Context Context, Any Instance, OutStream Stream)
+        public override void Serialize(Context Context, Any Instance, OutStream.F Stream)
         {
             Instance.Serialize(Context, Stream);
         }
 
-        public override Any Deserialize(Context Context, InStream Stream)
+        public override Any Deserialize(Context Context, InStream.F Stream)
         {
             Type t = Type.Reflexive.Deserialize(Context, Stream);
             return t.Resolve(new _TypeResolver()
@@ -119,12 +119,12 @@ namespace DUIP
             }
 
             public Context Context;
-            public InStream Stream;
+            public InStream.F Stream;
         }
 
-        protected override void SerializeType(Context Context, OutStream Stream)
+        protected override void SerializeType(Context Context, OutStream.F Stream)
         {
-            Stream.Write((byte)TypeMode.Any);
+            Stream.WriteByte((byte)TypeMode.Any);
         }
     }
 }

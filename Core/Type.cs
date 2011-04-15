@@ -30,12 +30,12 @@ namespace DUIP
         /// <summary>
         /// Serializes an instance of this type to an output stream.
         /// </summary>
-        public abstract void Serialize(Context Context, T Instance, OutStream Stream);
+        public abstract void Serialize(Context Context, T Instance, OutStream.F Stream);
 
         /// <summary>
         /// Deserializes an instance of this type from a stream, or returns null if not possible.
         /// </summary>
-        public abstract T Deserialize(Context Context, InStream Stream);
+        public abstract T Deserialize(Context Context, InStream.F Stream);
 
         public sealed override F Resolve<F>(Type.IResolver<F> Resolver)
         {
@@ -153,9 +153,9 @@ namespace DUIP
         /// <summary>
         /// Serializes this type to an output stream.
         /// </summary>
-        protected abstract void SerializeType(Context Context, OutStream Stream);
+        protected abstract void SerializeType(Context Context, OutStream.F Stream);
 
-        internal void _SerializeType(Context Context, OutStream Stream)
+        internal void _SerializeType(Context Context, OutStream.F Stream)
         {
             this.SerializeType(Context, Stream);
         }
@@ -183,14 +183,14 @@ namespace DUIP
         /// </summary>
         public static ReflexiveType Singleton = new ReflexiveType();
 
-        public override void Serialize(Context Context, Type Instance, OutStream Stream)
+        public override void Serialize(Context Context, Type Instance, OutStream.F Stream)
         {
             Instance._SerializeType(Context, Stream);
         }
 
-        public override Type Deserialize(Context Context, InStream Stream)
+        public override Type Deserialize(Context Context, InStream.F Stream)
         {
-            TypeMode mode = (TypeMode)Stream.Read();
+            TypeMode mode = (TypeMode)Stream.ReadByte();
             switch (mode)
             {
                 case TypeMode.Reflexive:
@@ -216,9 +216,9 @@ namespace DUIP
             return null;
         }
 
-        protected override void SerializeType(Context Context, OutStream Stream)
+        protected override void SerializeType(Context Context, OutStream.F Stream)
         {
-            Stream.Write((byte)TypeMode.Reflexive);
+            Stream.WriteByte((byte)TypeMode.Reflexive);
         }
     }
 }

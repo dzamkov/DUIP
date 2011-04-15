@@ -125,7 +125,7 @@ namespace DUIP
                 this.Value = Value;
             }
 
-            public override void Serialize(Context Context, Type Type, OutStream Stream)
+            public override void Serialize(Context Context, Type Type, OutStream.F Stream)
             {
                 (Type as Type<T>).Serialize(Context, this.Value, Stream);
             }
@@ -144,7 +144,7 @@ namespace DUIP
             /// <summary>
             /// Serializes this part to a stream when interpreted with the given type.
             /// </summary>
-            public abstract void Serialize(Context Context, Type Type, OutStream Stream);
+            public abstract void Serialize(Context Context, Type Type, OutStream.F Stream);
         }
 
         /// <summary>
@@ -174,7 +174,7 @@ namespace DUIP
             }
         }
 
-        public override void Serialize(Context Context, Tuple Instance, OutStream Stream)
+        public override void Serialize(Context Context, Tuple Instance, OutStream.F Stream)
         {
             Tuple.Part[] parts = Instance.Parts;
             for (int t = 0; t < parts.Length; t++)
@@ -183,7 +183,7 @@ namespace DUIP
             }
         }
 
-        public override Tuple Deserialize(Context Context, InStream Stream)
+        public override Tuple Deserialize(Context Context, InStream.F Stream)
         {
             Tuple.Part[] parts = new Tuple.Part[this._Parts.Length];
             for (int t = 0; t < this._Parts.Length; t++)
@@ -205,12 +205,12 @@ namespace DUIP
             }
 
             public Context Context;
-            public InStream Stream;
+            public InStream.F Stream;
         }
 
-        protected override void SerializeType(Context Context, OutStream Stream)
+        protected override void SerializeType(Context Context, OutStream.F Stream)
         {
-            Stream.Write((byte)TypeMode.Tuple);
+            Stream.WriteByte((byte)TypeMode.Tuple);
             Stream.WriteInt(this._Parts.Length);
             for (int t = 0; t < this._Parts.Length; t++)
             {
