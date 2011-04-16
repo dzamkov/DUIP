@@ -9,10 +9,12 @@ namespace DUIP
     /// </summary>
     public class FileStore<T> : Store<T>
     {
-        public FileStore(ISerialization<T> ReferenceSerialization, IOrdering<T> ReferenceOrdering)
+        public FileStore(Path Path, ISerialization<T> ReferenceSerialization, IOrdering<T> ReferenceOrdering)
         {
             this._ReferenceSerialization = ReferenceSerialization;
             this._ReferenceOrdering = ReferenceOrdering;
+
+            Path.MakeDirectory();
         }
 
         public override Query<Data> Lookup(T Reference)
@@ -42,6 +44,19 @@ namespace DUIP
             }
         }
 
+        /// <summary>
+        /// Gets the path to the directory in which the data is stored. If this directory did not exist before creating the filestore, it will
+        /// be created and initialized when needed.
+        /// </summary>
+        public Path Path
+        {
+            get
+            {
+                return this._Path;
+            }
+        }
+
+        private Path _Path;
         private ISerialization<T> _ReferenceSerialization;
         private IOrdering<T> _ReferenceOrdering;
     }

@@ -39,6 +39,17 @@ namespace DUIP
             }
         }
 
+        /// <summary>
+        /// Gets an ordering method for ID's.
+        /// </summary>
+        public static IOrdering<ID> Ordering
+        {
+            get
+            {
+                return IDType.Singleton;
+            }
+        }
+
         public override string ToString()
         {
             return
@@ -46,6 +57,30 @@ namespace DUIP
                 this.B.ToString("{0:X2}") + "-" +
                 this.C.ToString("{0:X2}") + "-" +
                 this.D.ToString("{0:X2}");
+        }
+
+        /// <summary>
+        /// Gets the relation between two ID's.
+        /// </summary>
+        public static Relation Compare(ID A, ID B)
+        {
+            if (A.A < B.A)
+                return Relation.Lesser;
+            if (A.A > B.A)
+                return Relation.Greater;
+            if (A.B < B.B)
+                return Relation.Lesser;
+            if (A.B > B.B)
+                return Relation.Greater;
+            if (A.C < B.C)
+                return Relation.Lesser;
+            if (A.C > B.C)
+                return Relation.Greater;
+            if (A.D < B.D)
+                return Relation.Lesser;
+            if (A.D > B.D)
+                return Relation.Greater;
+            return Relation.Equal;
         }
 
         public override int GetHashCode()
@@ -73,7 +108,7 @@ namespace DUIP
     /// <summary>
     /// A type for an id.
     /// </summary>
-    public class IDType : Type<ID>, ISerialization<ID>
+    public class IDType : Type<ID>, ISerialization<ID>, IOrdering<ID>
     {
         /// <summary>
         /// The only instance of this class.
@@ -95,6 +130,11 @@ namespace DUIP
                 Stream.ReadInt(),
                 Stream.ReadInt(),
                 Stream.ReadInt());
+        }
+
+        public Relation Compare(ID A, ID B)
+        {
+            return ID.Compare(A, B);
         }
     }
 }

@@ -27,14 +27,83 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Gets the parent directory of this path.
+        /// Gets the parent directory of this path. If this is a root directory, the same path is returned.
         /// </summary>
         public Path Parent
         {
             get
             {
-                return System.IO.Path.GetDirectoryName(this);
+                return System.IO.Path.GetDirectoryName(this) ?? this;
             }
+        }
+
+        /// <summary>
+        /// Gets wether there is a file or directory at this path.
+        /// </summary>
+        public bool Exists
+        {
+            get
+            {
+                return Directory.Exists(this) || File.Exists(this);
+            }
+        }
+
+        /// <summary>
+        /// Gets wether there is a directory at this path.
+        /// </summary>
+        public bool DirectoryExists
+        {
+            get
+            {
+                return Directory.Exists(this);
+            }
+        }
+
+        /// <summary>
+        /// Gets wether there is a file at this path.
+        /// </summary>
+        public bool FileExists
+        {
+            get
+            {
+                return File.Exists(this);
+            }
+        }
+
+        /// <summary>
+        /// Insures a directory exists at this path. Returns true if a new directory was created.
+        /// </summary>
+        public bool MakeDirectory()
+        {
+            if (this.DirectoryExists)
+            {
+                return false;
+            }
+            if (this.FileExists)
+            {
+                this.Delete();
+            }
+            this.Parent.MakeDirectory();
+            Directory.CreateDirectory(this);
+            return true;
+        }
+
+        /// <summary>
+        /// Deletes whatever is at this path if anything. Returns false if nothing exists at this path.
+        /// </summary>
+        public bool Delete()
+        {
+            if (this.FileExists)
+            {
+                File.Delete(this);
+                return true;
+            }
+            if (this.DirectoryExists)
+            {
+                Directory.Delete(this);
+                return true;
+            }
+            return false;
         }
         
         /// <summary>
