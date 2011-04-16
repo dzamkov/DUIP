@@ -130,12 +130,14 @@ namespace DUIP
             }
         }
 
-        public override InStream Read
+        public override InStream Read()
         {
-            get
-            {
-                return new MemoryInStream(this._Source);
-            }
+            return new MemoryInStream(this._Source);
+        }
+
+        public override InStream Read(int Start)
+        {
+            return new MemoryInStream(this._Source, Start);
         }
 
         public override int Length

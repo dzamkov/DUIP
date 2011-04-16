@@ -122,21 +122,48 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Opens the file at this path as data.
+        /// Opens the file at this path as data. If no file exists, null will be returned.
         /// </summary>
-        public FileData Open
+        public FileData Open(bool AllowRead, bool AllowWrite)
         {
-            get
+            try
             {
-                try
-                {
-                    return new FileData(File.OpenRead(this));
-                }
-                catch
-                {
-                    return null;
-                }
+                return new FileData(File.Open(this, FileMode.Open, _GetAccess(AllowRead, AllowWrite)));
             }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Creates a file with this path. The file will be able to be read and modified.
+        /// </summary>
+        public FileData Create(int Size)
+        {
+            try
+            {
+                FileStream fs = File.Open(this, FileMode.Create, FileAccess.ReadWrite);
+                fs.SetLength((long)Size);
+                return new FileData(fs);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static FileAccess _GetAccess(bool Read, bool Write)
+        {
+            if (Read)
+            {
+                if (Write)
+                {
+                    return FileAccess.ReadWrite;
+                }
+                return FileAccess.Read;
+            }
+            return FileAccess.Write;
         }
 
         /// <summary>
@@ -155,7 +182,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Creates a stream to write to or over a file.
+        /// Creates a stream to write to or over a file. If the file already exists, its original contents will be lost.
         /// </summary>
         public FileOutStream OpenWrite()
         {
@@ -216,11 +243,28 @@ namespace DUIP
             this._FileStream.Close();
         }
 
-        public override InStream Read
+        public override InStream Read()
         {
-            get
+            if (this._WriteStream || !this._FileStream.CanRead)
             {
-                throw new NotImplementedException();
+                return null;
+            }
+            else
+            {
+                return new _InStream(0, this);
+            }
+        }
+
+        public override OutStream Modify(int Start)
+        {
+            if (this._ReadStreams > 0 || !this._FileStream.CanWrite)
+            {
+                return null;
+            }
+            else
+            {
+                this._FileStream.Position = (long)Start;
+                return new _OutStream(this);
             }
         }
 
@@ -233,20 +277,22 @@ namespace DUIP
         }
 
         /// <summary>
-        /// A stream for file data.
+        /// An input stream for file data.
         /// </summary>
-        private class _Stream : InStream
+        private class _InStream : InStream
         {
-            public _Stream(int Position, FileStream FileStream)
+            public _InStream(int Position, FileData File)
             {
                 this._Position = Position;
-                this._FileStream = FileStream;
+                this._File = File;
+                this._File._ReadStreams++;
             }
 
             public override byte Read()
             {
-                this._Scan();
-                return (byte)this._FileStream.ReadByte();
+                this._File._Seek(this._Position);
+                this._Position++;
+                return (byte)this._File._FileStream.ReadByte();
             }
 
             public override void Advance(int Amount)
@@ -254,35 +300,80 @@ namespace DUIP
                 this._Position += Amount;
             }
 
-            /// <summary>
-            /// Goes to the correct position in the file.
-            /// </summary>
-            private void _Scan()
-            {
-                if ((int)this._FileStream.Position != this._Position)
-                {
-                    this._FileStream.Position = (long)this._Position;
-                }
-            }
-
             public override int BytesAvailable
             {
                 get
                 {
-                    return (int)this._FileStream.Length - this._Position;
+                    return (int)this._File._FileStream.Length - this._Position;
                 }
             }
 
             public override void Read(byte[] Buffer, int Offset, int Length)
             {
-                this._Scan();
-                this._FileStream.Read(Buffer, Offset, Length);
+                this._File._Seek(this._Position);
+                this._Position += Length;
+                this._File._FileStream.Read(Buffer, Offset, Length);
+            }
+
+            public override void Finish()
+            {
+                this._File._ReadStreams--;
             }
                     
             private int _Position;
-            private FileStream _FileStream;
+            private FileData _File;
         }
 
+        /// <summary>
+        /// An output stream for file data.
+        /// </summary>
+        private class _OutStream : OutStream
+        {
+            public _OutStream(FileData File)
+            {
+                this._File = File;
+                this._File._WriteStream = true;
+            }
+
+            public override void Write(byte Data)
+            {
+                this._File._FileStream.WriteByte(Data);
+            }
+
+            public override void Write(byte[] Buffer, int Offset, int Length)
+            {
+                this._File._FileStream.Write(Buffer, Offset, Length);
+            }
+
+            public override void Finish()
+            {
+                this._File._WriteStream = false;
+            }
+
+            private FileData _File;
+        }
+
+        /// <summary>
+        /// Insures the filestream is at the given position in the file.
+        /// </summary>
+        private void _Seek(int Position)
+        {
+            if ((int)this._FileStream.Position != Position)
+            {
+                this._FileStream.Position = (long)Position;
+            }
+        }
+
+        public override bool Immutable
+        {
+            get
+            {
+                return !this._FileStream.CanWrite;
+            }
+        }
+
+        private int _ReadStreams;
+        private bool _WriteStream;
         private FileStream _FileStream;
     }
 

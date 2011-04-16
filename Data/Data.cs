@@ -5,14 +5,28 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// A data source that can be read with a stream. The data can be assumed to be immutable, and can have multiple streams reading it at once.
+    /// A data source that can be read with a stream.
     /// </summary>
     public abstract class Data
     {
         /// <summary>
-        /// Creates a stream to read the data.
+        /// Creates a stream to read the data or returns null if not possible.
         /// </summary>
-        public abstract InStream Read { get; }
+        public abstract InStream Read();
+
+        /// <summary>
+        /// Creates a stream to read this data, starting at the given position.
+        /// </summary>
+        public virtual InStream Read(int Start)
+        {
+            InStream r = this.Read();
+            if (r != null)
+            {
+                r.Advance(Start);
+                return r;
+            }
+            return null;
+        }
 
         /// <summary>
         /// Gets the length, in bytes, of the data.
@@ -21,7 +35,35 @@ namespace DUIP
         {
             get
             {
-                return this.Read.BytesAvailable;
+                return this.Read().BytesAvailable;
+            }
+        }
+
+        /// <summary>
+        /// Creates a stream to modify the data beginning at the given position. The modifing stream may not go over the
+        /// bounds of the data. Null is returned if the data can not be modified.
+        /// </summary>
+        public virtual OutStream Modify(int Start)
+        {
+            return null;
+        }
+
+        /// <summary>
+        /// Creates a stream to modify the data from the beginning.
+        /// </summary>
+        public OutStream Modify()
+        {
+            return Modify(0);
+        }
+
+        /// <summary>
+        /// Gets if this data is immutable. Immutable data can not be modified using the "Modify" method or by some external method.
+        /// </summary>
+        public virtual bool Immutable
+        {
+            get
+            {
+                return true;
             }
         }
     }

@@ -21,8 +21,24 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
+            Path work = Path.WorkingDirectory;
             Path data = Path.WorkingDirectory["Data"];
             FileStore<ID> fs = new FileStore<ID>(data, ID.Serialization, ID.Ordering);
+
+            Path testfile = work["test.dat"];
+            FileData fd = testfile.Create(1024);
+
+            OutStream os = fd.Modify(100);
+            os.Write(101);
+            os.Write(102);
+            os.Write(103);
+            os.Finish();
+
+            InStream s = fd.Read(100);
+            byte x = s.Read();
+            byte y = s.Read();
+            byte z = s.Read();
+            s.Finish();
 
             Console.Title = "DUIP";
             new RootInterface().Display();
