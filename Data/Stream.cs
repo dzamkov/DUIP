@@ -82,6 +82,14 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Called when reading is complete.
+        /// </summary>
+        public virtual void Finish()
+        {
+
+        }
+
+        /// <summary>
         /// Gets a formatted stream based on this stream.
         /// </summary>
         public F Format(StreamFormat Format)
@@ -183,6 +191,14 @@ namespace DUIP
             {
                 this.Write(Buffer[Offset++]);
             }
+        }
+
+        /// <summary>
+        /// Called when writing is complete.
+        /// </summary>
+        public virtual void Finish()
+        {
+
         }
 
         /// <summary>

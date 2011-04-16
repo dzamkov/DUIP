@@ -28,6 +28,17 @@ namespace DUIP
             }
         }
 
+        /// <summary>
+        /// Gets a serialization method for an ID.
+        /// </summary>
+        public static ISerialization<ID> Serialization
+        {
+            get
+            {
+                return IDType.Singleton;
+            }
+        }
+
         public override string ToString()
         {
             return
@@ -62,11 +73,28 @@ namespace DUIP
     /// <summary>
     /// A type for an id.
     /// </summary>
-    public class IDType : Type<ID>
+    public class IDType : Type<ID>, ISerialization<ID>
     {
         /// <summary>
         /// The only instance of this class.
         /// </summary>
         public static readonly IDType Singleton = new IDType();
+
+        public void Serialize(ID Object, OutStream.F Stream)
+        {
+            Stream.WriteInt(Object.A);
+            Stream.WriteInt(Object.B);
+            Stream.WriteInt(Object.C);
+            Stream.WriteInt(Object.D);
+        }
+
+        public ID Deserialize(InStream.F Stream)
+        {
+            return new ID(
+                Stream.ReadInt(),
+                Stream.ReadInt(),
+                Stream.ReadInt(),
+                Stream.ReadInt());
+        }
     }
 }

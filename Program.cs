@@ -21,6 +21,25 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
+            Path file = Path.WorkingDirectory["test.dat"];
+
+            FileOutStream fos = file.OpenWrite();
+            var ffos = fos.Format(StreamFormat.Default);
+            ffos.WriteInt(4);
+            ffos.WriteInt(8);
+            ffos.WriteBool(true);
+            ffos.Flush();
+            fos.Finish();
+
+            FileInStream fis = file.OpenRead();
+            var ffis = fis.Format(StreamFormat.Default);
+            int x = ffis.ReadInt();
+            int y = ffis.ReadInt();
+            bool z = ffis.ReadBool();
+            ffis.Flush();
+            fis.Finish();
+
+
             Console.Title = "DUIP";
             new RootInterface().Display();
         }
