@@ -13,6 +13,6 @@ namespace DUIP
         /// <summary>
         /// Looks up a datum with the given reference, or returns null if the datum is not found.
         /// </summary>
-        public abstract Query<Data> Lookup(T Reference);
+        public abstract Data Lookup(T Reference);
     }
 }

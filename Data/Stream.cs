@@ -183,6 +183,19 @@ namespace DUIP
         public abstract void Write(byte Data);
 
         /// <summary>
+        /// Copies data from a source stream into this stream.
+        /// </summary>
+        public virtual void Write(InStream Source)
+        {
+            int s = Source.BytesAvailable;
+            while (s > 0)
+            {
+                this.Write(Source.Read());
+                s--;
+            }
+        }
+
+        /// <summary>
         /// Writes data from the given buffer.
         /// </summary>
         public virtual void Write(byte[] Buffer, int Offset, int Length)

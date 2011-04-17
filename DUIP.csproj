@@ -47,6 +47,7 @@
     <Compile Include="Core\Type.cs" />
     <Compile Include="Core\Void.cs" />
     <Compile Include="Core\ID.cs" />
+    <Compile Include="Data\Allocator.cs" />
     <Compile Include="Data\Data.cs" />
     <Compile Include="Data\File.cs" />
     <Compile Include="Data\FileStore.cs" />

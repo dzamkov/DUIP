@@ -124,11 +124,11 @@ namespace DUIP
         /// <summary>
         /// Opens the file at this path as data. If no file exists, null will be returned.
         /// </summary>
-        public FileData Open(bool AllowRead, bool AllowWrite)
+        public FileData Open()
         {
             try
             {
-                return new FileData(File.Open(this, FileMode.Open, _GetAccess(AllowRead, AllowWrite)));
+                return new FileData(this);
             }
             catch
             {
@@ -145,7 +145,7 @@ namespace DUIP
             {
                 FileStream fs = File.Open(this, FileMode.Create, FileAccess.ReadWrite);
                 fs.SetLength((long)Size);
-                return new FileData(fs);
+                return new FileData(this, fs);
             }
             catch
             {
@@ -229,23 +229,58 @@ namespace DUIP
     /// </summary>
     public class FileData : Data
     {
-        public FileData(FileStream Stream)
+        public FileData(Path Path)
         {
-            this._FileStream = Stream;
+            this._Path = Path;
+        }
+
+        public FileData(Path Path, FileStream FileStream)
+        {
+            this._Path = Path;
+            this._FileStream = FileStream;
+            _CloseFiles(_MaxOpenFiles);
+            _OpenFiles[this._Path] = this;
         }
 
         /// <summary>
-        /// Closes the data, releases resources required for reading the file and preventing further use of this data. This must also be
-        /// called before writing to the file.
+        /// Insures the file is available for reading or writing. This does not need to be called manually. Returns true
+        /// if any action is taken.
         /// </summary>
-        public void Close()
+        public bool Open()
         {
-            this._FileStream.Close();
+            if (this._FileStream == null)
+            {
+                _CloseFiles(_MaxOpenFiles);
+                this._FileStream = File.Open(this._Path, FileMode.Open, FileAccess.ReadWrite);
+                _OpenFiles[this._Path] = this;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Tires closing the native file stream associated with the file. The file will be reopened when needed. Returns true
+        /// if any action is taken.
+        /// </summary>
+        public bool Close()
+        {
+            if (this._FileStream != null)
+            {
+                if (!this._WriteStream && this._ReadStreams == 0)
+                {
+                    _OpenFiles.Remove(this._Path);
+                    this._FileStream.Close();
+                    this._FileStream = null;
+                    return true;
+                }
+            }
+            return false;
         }
 
         public override InStream Read()
         {
-            if (this._WriteStream || !this._FileStream.CanRead)
+            this.Open();
+            if (this._WriteStream)
             {
                 return null;
             }
@@ -257,7 +292,8 @@ namespace DUIP
 
         public override OutStream Modify(int Start)
         {
-            if (this._ReadStreams > 0 || !this._FileStream.CanWrite)
+            this.Open();
+            if (this._ReadStreams > 0)
             {
                 return null;
             }
@@ -272,6 +308,7 @@ namespace DUIP
         {
             get
             {
+                this.Open();
                 return (int)this._FileStream.Length;
             }
         }
@@ -368,12 +405,52 @@ namespace DUIP
         {
             get
             {
-                return !this._FileStream.CanWrite;
+                return false;
             }
         }
 
+        /// <summary>
+        /// Closes files so that the amount of open files is under the given maximum.
+        /// </summary>
+        private static void _CloseFiles(int Max)
+        {
+            bool m = true;
+            while (m && _OpenFiles.Count > Max)
+            {
+                m = false;
+                foreach (var kvp in _OpenFiles)
+                {
+                    if (kvp.Value.Close())
+                    {
+                        m = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the maximum amount of files to keep open at any time.
+        /// </summary>
+        public static int MaxOpenFiles
+        {
+            get
+            {
+                return _MaxOpenFiles;
+            }
+            set
+            {
+                _MaxOpenFiles = value;
+                _CloseFiles(_MaxOpenFiles);
+            }
+        }
+
+        private static int _MaxOpenFiles = 20;
+        private static Dictionary<string, FileData> _OpenFiles = new Dictionary<string, FileData>();
+
         private int _ReadStreams;
         private bool _WriteStream;
+        private Path _Path;
         private FileStream _FileStream;
     }
 

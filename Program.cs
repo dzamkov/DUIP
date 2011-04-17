@@ -23,22 +23,13 @@ namespace DUIP
         {
             Path work = Path.WorkingDirectory;
             Path data = Path.WorkingDirectory["Data"];
-            FileStore<ID> fs = new FileStore<ID>(data, ID.Serialization, ID.Ordering);
+            DirectoryAllocator alloc = new DirectoryAllocator(data);
 
-            Path testfile = work["test.dat"];
-            FileData fd = testfile.Create(1024);
-
-            OutStream os = fd.Modify(100);
-            os.Write(101);
-            os.Write(102);
-            os.Write(103);
-            os.Finish();
-
-            InStream s = fd.Read(100);
-            byte x = s.Read();
-            byte y = s.Read();
-            byte z = s.Read();
-            s.Finish();
+            for (int t = 0; t < 100; t++)
+            {
+                Data d;
+                alloc.Allocate(100, out d);
+            }
 
             Console.Title = "DUIP";
             new RootInterface().Display();

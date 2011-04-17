@@ -17,7 +17,7 @@ namespace DUIP
             Path.MakeDirectory();
         }
 
-        public override Query<Data> Lookup(T Reference)
+        public override Data Lookup(T Reference)
         {
             throw new NotImplementedException();
         }
