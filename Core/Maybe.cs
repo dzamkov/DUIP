@@ -58,6 +58,37 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Gets the nested value of the maybe value if there is one, or throws an exception. This should be used
+        /// when the value is known to not be nothing.
+        /// </summary>
+        public T OrExcept
+        {
+            get
+            {
+                if (!this.HasValue)
+                {
+                    throw new Exception();
+                }
+                return this.Value;
+            }
+        }
+
+        /// <summary>
+        /// Gets the nested value of the maybe value if there is one, or returns the given default value.
+        /// </summary>
+        public T OrDefault(T Default)
+        {
+            if (this.HasValue)
+            {
+                return this.Value;
+            }
+            else
+            {
+                return Default;
+            }
+        }
+
+        /// <summary>
         /// The nested value of this maybe value, if this maybe value has a nested value.
         /// </summary>
         public T Value;

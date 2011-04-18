@@ -19,5 +19,12 @@ namespace DUIP
         /// Deserializes an object from the stream.
         /// </summary>
         T Deserialize(InStream.F Stream);
+
+        /// <summary>
+        /// Gets the length in bytes of serialized objects, or nothing if the serialization does not
+        /// have a fixed size. Note that in order to insure that the stream does output this many bytes, Flush
+        /// should be called before and after serializing and deserializing the object.
+        /// </summary>
+        Maybe<int> Length { get; }
     }
 }

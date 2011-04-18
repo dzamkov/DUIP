@@ -49,9 +49,12 @@
     <Compile Include="Core\ID.cs" />
     <Compile Include="Data\Allocator.cs" />
     <Compile Include="Data\Data.cs" />
+    <Compile Include="Util\Equality.cs" />
     <Compile Include="Data\File.cs" />
     <Compile Include="Data\FileStore.cs" />
     <Compile Include="Data\Memory.cs" />
+    <Compile Include="Data\Map.cs" />
+    <Compile Include="Util\Math\BigInt.cs" />
     <Compile Include="Util\Ordering.cs" />
     <Compile Include="Util\Serialization.cs" />
     <Compile Include="Data\Stream.cs" />
