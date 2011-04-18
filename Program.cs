@@ -21,6 +21,10 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
+            BigInt a = new BigInt(uint.MaxValue);
+            BigInt b = new BigInt(uint.MaxValue);
+            BigInt c = a + b;
+
             Path work = Path.WorkingDirectory;
             Path data = Path.WorkingDirectory["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
