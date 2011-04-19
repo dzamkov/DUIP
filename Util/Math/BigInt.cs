@@ -47,9 +47,9 @@ namespace DUIP
         {
             int cur = 0;
             uint carry = 0;
-            while (Offset < this.Digits.Length)
+            while (Offset < this.Size)
             {
-                if (cur < Int.Digits.Length)
+                if (cur < Int.Size)
                 {
                     uint ncarry;
                     Add(this.Digits[Offset], carry, out this.Digits[Offset], out ncarry);
@@ -85,9 +85,9 @@ namespace DUIP
         {
             int cur = 0;
             uint carry = 0;
-            while (Offset < this.Digits.Length)
+            while (Offset < this.Size)
             {
-                if (cur < Int.Digits.Length)
+                if (cur < Int.Size)
                 {
                     uint ncarry;
                     Subtract(this.Digits[Offset], carry, out this.Digits[Offset], out ncarry);
@@ -121,7 +121,7 @@ namespace DUIP
         public void Multiply(uint Multiplier)
         {
             uint carry = 0;
-            for(int offset = 0; offset < this.Digits.Length; offset++)
+            for(int offset = 0; offset < this.Size; offset++)
             {
                 uint acarry, bcarry;
                 Multiply(this.Digits[offset], Multiplier, out this.Digits[offset], out acarry);
@@ -136,7 +136,7 @@ namespace DUIP
         public void Copy(BigInt Int, int Offset)
         {
             int cur = 0;
-            while (Offset < this.Digits.Length && cur < Int.Digits.Length)
+            while (Offset < this.Size && cur < Int.Size)
             {
                 this.Digits[Offset] = Int.Digits[cur];
                 cur++; Offset++;
@@ -152,14 +152,14 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Trims excess zero digits from the integer. Returns itself.
+        /// Trims excess zero digits from the integer.
         /// </summary>
         public BigInt Reduce
         {
             get
             {
                 int nl = 0;
-                for (int t = this.Digits.Length - 1; t >= 0; t--)
+                for (int t = this.Size - 1; t >= 0; t--)
                 {
                     if (this.Digits[t] > 0)
                     {
@@ -167,14 +167,11 @@ namespace DUIP
                         break;
                     }
                 }
-                if (nl < this.Digits.Length)
+                if (nl < this.Size)
                 {
-                    uint[] ndigs = new uint[nl];
-                    for (int t = 0; t < nl; t++)
-                    {
-                        ndigs[t] = this.Digits[t];
-                    }
-                    this.Digits = ndigs;
+                    BigInt x = this;
+                    x.Resize(nl);
+                    return x;
                 }
                 return this;
             }
@@ -188,7 +185,7 @@ namespace DUIP
             get
             {
                 int l = Bit / 32;
-                if (l >= this.Digits.Length)
+                if (l >= this.Size)
                 {
                     return false;
                 }
@@ -197,15 +194,10 @@ namespace DUIP
             set
             {
                 int l = Bit / 32;
-                if (l >= this.Digits.Length)
+                if (l >= this.Size)
                 {
                     int nl = l + 1;
-                    uint[] ndigs = new uint[nl];
-                    for (int t = 0; t < nl; t++)
-                    {
-                        ndigs[t] = this.Digits[t];
-                    }
-                    this.Digits = ndigs;
+                    this.Resize(nl);
                 }
                 this.Digits[l] = this.Digits[l] | ((uint)1 << (Bit % 32));
             }
@@ -218,7 +210,7 @@ namespace DUIP
         {
             get
             {
-                for (int t = this.Digits.Length - 1; t >= 0; t--)
+                for (int t = this.Size - 1; t >= 0; t--)
                 {
                     uint d = this.Digits[t];
                     if (d > 0)
@@ -236,12 +228,81 @@ namespace DUIP
             }
         }
 
+        public override string ToString()
+        {
+            string x = "";
+            for (int t = 0; t < this.Magnitude; t++)
+            {
+                x = (this[t] ? "1" : "0") + x;
+            }
+            return x;
+        }
+
+        /// <summary>
+        /// Left-shifts the integer in-place by the specified amount. This increases the magnitude by the amount.
+        /// </summary>
+        public void Shift(int Amount)
+        {
+            if (Amount > 0)
+            {
+                int l = Amount / 32;
+                Amount %= 32;
+                for (int t = this.Size - 1; t >= 0; t--)
+                {
+                    int ai = t - l;
+                    int bi = t - l - 1;
+                    uint a = ai >= 0 ? (this.Digits[ai] << Amount) : 0;
+                    uint b = bi >= 0 ? (this.Digits[bi] >> (32 - Amount)) : 0;
+                    this.Digits[t] = a | b;
+                }
+            }
+            if (Amount < 0)
+            {
+                Amount = -Amount;
+                int l = Amount / 32;
+                Amount %= 32;
+                int m = this.Digits.Length;
+                for (int t = 0; t < this.Size; t++)
+                {
+                    int ai = t + l;
+                    int bi = t + l + 1;
+                    uint a = ai < m ? (this.Digits[ai] >> Amount) : 0;
+                    uint b = bi < m ? (this.Digits[bi] << (32 - Amount)) : 0;
+                    this.Digits[t] = a | b;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Resizes the integer to have the specified amount of digits. Newly created digits are zero-filled.
+        /// </summary>
+        public void Resize(int Digits)
+        {
+            uint[] ndigs = new uint[Digits];
+            for (int t = 0; t < Math.Min(Digits, this.Size); t++)
+            {
+                ndigs[t] = this.Digits[t];
+            }
+            this.Digits = ndigs;
+        }
+
+        /// <summary>
+        /// Gets the amount of digits this integer has.
+        /// </summary>
+        public int Size
+        {
+            get
+            {
+                return this.Digits.Length;
+            }
+        }
+
         /// <summary>
         /// Adds two integers together.
         /// </summary>
         public static BigInt Add(BigInt A, BigInt B)
         {
-            BigInt res = BigInt.Empty(Math.Max(A.Digits.Length, B.Digits.Length) + 1);
+            BigInt res = BigInt.Empty(Math.Max(A.Size, B.Size) + 1);
             res.Copy(A);
             res.Add(B);
             return res;
@@ -253,7 +314,7 @@ namespace DUIP
         /// </summary>
         public static BigInt Subtract(BigInt A, BigInt B)
         {
-            BigInt res = BigInt.Empty(Math.Max(A.Digits.Length, B.Digits.Length) + 1);
+            BigInt res = BigInt.Empty(Math.Max(A.Size, B.Size) + 1);
             res.Copy(A);
             res.Subtract(B);
             return res;
@@ -264,9 +325,9 @@ namespace DUIP
         /// </summary>
         public static BigInt Multiply(BigInt A, BigInt B)
         {
-            BigInt res = BigInt.Empty(A.Digits.Length + B.Digits.Length);
-            BigInt temp = BigInt.Empty(A.Digits.Length + 1);
-            for (int t = 0; t < B.Digits.Length; t++)
+            BigInt res = BigInt.Empty(A.Size + B.Size);
+            BigInt temp = BigInt.Empty(A.Size + 1);
+            for (int t = 0; t < B.Size; t++)
             {
                 temp.Copy(A);
                 temp.Multiply(B.Digits[t]);
@@ -276,11 +337,75 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Gets wether A has a lesser value than B.
+        /// </summary>
+        public static bool Lesser(BigInt A, BigInt B)
+        {
+            int c = Math.Max(A.Digits.Length, B.Digits.Length);
+            while (c >= 0)
+            {
+                uint a = c < A.Digits.Length ? A.Digits[c] : 0;
+                uint b = c < B.Digits.Length ? B.Digits[c] : 0;
+                if (a < b)
+                {
+                    return true;
+                }
+                if (a > b)
+                {
+                    return false;
+                }
+                c--;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Gets wether A has a value equal to B's.
+        /// </summary>
+        public static bool Equal(BigInt A, BigInt B)
+        {
+            int c = Math.Max(A.Digits.Length, B.Digits.Length);
+            while (c >= 0)
+            {
+                uint a = c < A.Digits.Length ? A.Digits[c] : 0;
+                uint b = c < B.Digits.Length ? B.Digits[c] : 0;
+                if (a != b)
+                {
+                    return false;
+                }
+                c--;
+            }
+            return true;
+        }
+
+        /// <summary>
         /// Finds the quotient and remainder for the division of A by B.
         /// </summary>
         public static void Divide(BigInt A, BigInt B, out BigInt Quotient, out BigInt Remainder)
         {
-            throw new NotImplementedException();
+            if (B > A)
+            {
+                Remainder = A;
+                Quotient = Zero;
+            }
+            Remainder = BigInt.Empty(A.Size);
+            Remainder.Copy(A);
+            BigInt btemp = BigInt.Empty(A.Size);
+            btemp.Copy(B);
+            int bitoff = A.Magnitude - B.Magnitude;
+            btemp.Shift(bitoff);
+            Quotient = BigInt.Empty(bitoff/ 32 + 1);
+            
+            while (bitoff >= 0)
+            {
+                if (btemp <= Remainder)
+                {
+                    Remainder.Subtract(btemp);
+                    Quotient[bitoff] = true;
+                }
+                btemp.Shift(-1);
+                bitoff--;
+            }
         }
 
         /// <summary>
@@ -352,6 +477,36 @@ namespace DUIP
             BigInt quo, rem;
             Divide(A, B, out quo, out rem);
             return rem.Reduce;
+        }
+
+        public static bool operator <(BigInt A, BigInt B)
+        {
+            return Lesser(A, B);
+        }
+
+        public static bool operator >(BigInt A, BigInt B)
+        {
+            return Lesser(B, A);
+        }
+
+        public static bool operator <=(BigInt A, BigInt B)
+        {
+            return !Lesser(B, A);
+        }
+
+        public static bool operator >=(BigInt A, BigInt B)
+        {
+            return !Lesser(A, B);
+        }
+
+        public static bool operator ==(BigInt A, BigInt B)
+        {
+            return Equal(A, B);
+        }
+
+        public static bool operator !=(BigInt A, BigInt B)
+        {
+            return !Equal(A, B);
         }
 
         /// <summary>

@@ -21,8 +21,8 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
-            BigInt a = new BigInt(101);
-            BigInt b = new BigInt(4);
+            BigInt a = new BigInt(1345651);
+            BigInt b = new BigInt(1234321);
 
             Path work = Path.WorkingDirectory;
             Path data = Path.WorkingDirectory["Data"];
