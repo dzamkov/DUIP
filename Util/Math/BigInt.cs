@@ -152,6 +152,91 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Trims excess zero digits from the integer. Returns itself.
+        /// </summary>
+        public BigInt Reduce
+        {
+            get
+            {
+                int nl = 0;
+                for (int t = this.Digits.Length - 1; t >= 0; t--)
+                {
+                    if (this.Digits[t] > 0)
+                    {
+                        nl = t + 1;
+                        break;
+                    }
+                }
+                if (nl < this.Digits.Length)
+                {
+                    uint[] ndigs = new uint[nl];
+                    for (int t = 0; t < nl; t++)
+                    {
+                        ndigs[t] = this.Digits[t];
+                    }
+                    this.Digits = ndigs;
+                }
+                return this;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the value of a bit in the integer.
+        /// </summary>
+        public bool this[int Bit]
+        {
+            get
+            {
+                int l = Bit / 32;
+                if (l >= this.Digits.Length)
+                {
+                    return false;
+                }
+                return (this.Digits[l] & ((uint)1 << (Bit % 32))) > 0;
+            }
+            set
+            {
+                int l = Bit / 32;
+                if (l >= this.Digits.Length)
+                {
+                    int nl = l + 1;
+                    uint[] ndigs = new uint[nl];
+                    for (int t = 0; t < nl; t++)
+                    {
+                        ndigs[t] = this.Digits[t];
+                    }
+                    this.Digits = ndigs;
+                }
+                this.Digits[l] = this.Digits[l] | ((uint)1 << (Bit % 32));
+            }
+        }
+
+        /// <summary>
+        /// Gets the one more than the index of the highest set bit in the integer or 0 if the value is 0.
+        /// </summary>
+        public int Magnitude
+        {
+            get
+            {
+                for (int t = this.Digits.Length - 1; t >= 0; t--)
+                {
+                    uint d = this.Digits[t];
+                    if (d > 0)
+                    {
+                        int m = 32 * t;
+                        while (d > 0)
+                        {
+                            d = d >> 1;
+                            m++;
+                        }
+                        return m;
+                    }
+                }
+                return 0;
+            }
+        }
+
+        /// <summary>
         /// Adds two integers together.
         /// </summary>
         public static BigInt Add(BigInt A, BigInt B)
@@ -191,6 +276,14 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Finds the quotient and remainder for the division of A by B.
+        /// </summary>
+        public static void Divide(BigInt A, BigInt B, out BigInt Quotient, out BigInt Remainder)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Adds together two integers, giving the result and the carry value.
         /// </summary>
         public static void Add(uint A, uint B, out uint Result, out uint Carry)
@@ -203,7 +296,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Adds together two integers, giving the result and the carry value. Note that the carry value is to be
+        /// Subtracts two integers, giving the result and the carry value. Note that the carry value is to be
         /// subtracted from the next highest digit.
         /// </summary>
         public static void Subtract(uint A, uint B, out uint Result, out uint Carry)
@@ -234,17 +327,31 @@ namespace DUIP
 
         public static BigInt operator +(BigInt A, BigInt B)
         {
-            return Add(A, B);
+            return Add(A, B).Reduce;
         }
 
         public static BigInt operator -(BigInt A, BigInt B)
         {
-            return Subtract(A, B);
+            return Subtract(A, B).Reduce;
         }
 
         public static BigInt operator *(BigInt A, BigInt B)
         {
-            return Multiply(A, B);
+            return Multiply(A, B).Reduce;
+        }
+
+        public static BigInt operator /(BigInt A, BigInt B)
+        {
+            BigInt quo, rem;
+            Divide(A, B, out quo, out rem);
+            return quo.Reduce;
+        }
+
+        public static BigInt operator %(BigInt A, BigInt B)
+        {
+            BigInt quo, rem;
+            Divide(A, B, out quo, out rem);
+            return rem.Reduce;
         }
 
         /// <summary>
