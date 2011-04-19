@@ -14,6 +14,11 @@ namespace DUIP
             this.Digits = new uint[] { Value };
         }
 
+        public BigInt(ulong Value)
+        {
+            this.Digits = new uint[] { (uint)Value, (uint)(Value >> 32) };
+        }
+
         public BigInt(uint[] Digits)
         {
             this.Digits = Digits;
@@ -132,7 +137,8 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Copies a BigInt in-place to this value, starting at the given offset in this value's digits.
+        /// Copies a BigInt in-place to this value, starting at the given offset in this value's digits. Note that if this integer has a larger
+        /// size than the given integer, the higher digits of this integer will remain unchanged.
         /// </summary>
         public void Copy(BigInt Int, int Offset)
         {
@@ -150,6 +156,17 @@ namespace DUIP
         public void Copy(BigInt Int)
         {
             this.Copy(Int, 0);
+        }
+
+        /// <summary>
+        /// Fills this integer with 0's on all digits.
+        /// </summary>
+        public void ZeroFill()
+        {
+            for (int t = 0; t < this.Digits.Length; t++)
+            {
+                this.Digits[t] = 0;
+            }
         }
 
         /// <summary>
@@ -200,7 +217,14 @@ namespace DUIP
                     int nl = l + 1;
                     this.Resize(nl);
                 }
-                this.Digits[l] = this.Digits[l] | ((uint)1 << (Bit % 32));
+                if (value)
+                {
+                    this.Digits[l] = this.Digits[l] | ((uint)1 << (Bit % 32));
+                }
+                else
+                {
+                    this.Digits[l] = this.Digits[l] ^ ((uint)1 << (Bit % 32));
+                }
             }
         }
 
@@ -232,11 +256,41 @@ namespace DUIP
         public override string ToString()
         {
             string x = "";
-            for (int t = 0; t < this.Magnitude; t++)
+
+            // This is probably very inefficent
+            BigInt t = this;
+            while (t > 0)
             {
-                x = (this[t] ? "1" : "0") + x;
+                BigInt q, r; BigInt.Divide(t, 10, out q, out r);
+                r.Resize(1);
+                t = q;
+                x = r.Digits[0].ToString() + x;
             }
+
+            if (x.Length == 0)
+            {
+                return "0";
+            }
+
             return x;
+        }
+
+        public override bool Equals(object obj)
+        {
+            BigInt? bi = obj as BigInt?;
+            if (bi != null)
+            {
+                return bi.Value == this;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -330,11 +384,45 @@ namespace DUIP
             BigInt temp = BigInt.Empty(A.Size + 1);
             for (int t = 0; t < B.Size; t++)
             {
+                temp.ZeroFill();
                 temp.Copy(A);
                 temp.Multiply(B.Digits[t]);
                 res.Add(temp, t);
             }
             return res;
+        }
+
+        /// <summary>
+        /// Performs (Base ^ Exponent) % Modulus in an efficent way.
+        /// </summary>
+        public static BigInt PowMod(BigInt Base, BigInt Exponent, BigInt Modulus)
+        {
+            BigInt tempexp = BigInt.Empty(Exponent.Size);
+            tempexp.Copy(Exponent);
+            return _PowMod(Base, tempexp, Modulus);
+        }
+
+        private static BigInt _PowMod(BigInt Base, BigInt TempExponent, BigInt Modulus)
+        {
+            if (TempExponent == 0)
+            {
+                return 1;
+            }
+            if (TempExponent == 1)
+            {
+                return Base % Modulus;
+            }
+            if (TempExponent[0])
+            {
+                TempExponent[0] = false;
+                return Multiply(_PowMod(Base, TempExponent, Modulus), Base) % Modulus;
+            }
+            else
+            {
+                TempExponent.Shift(-1);
+                BigInt hp = _PowMod(Base, TempExponent, Modulus);
+                return Multiply(hp, hp) % Modulus;
+            }
         }
 
         /// <summary>
@@ -451,9 +539,19 @@ namespace DUIP
             return new BigInt(Int);
         }
 
+        public static implicit operator BigInt(ulong Int)
+        {
+            return new BigInt(Int);
+        }
+
         public static BigInt operator +(BigInt A, BigInt B)
         {
             return Add(A, B).Reduce;
+        }
+
+        public static BigInt operator +(BigInt A, uint B)
+        {
+            return A + (BigInt)B;
         }
 
         public static BigInt operator -(BigInt A, BigInt B)
@@ -461,9 +559,22 @@ namespace DUIP
             return Subtract(A, B).Reduce;
         }
 
+        public static BigInt operator -(BigInt A, uint B)
+        {
+            return A - (BigInt)B;
+        }
+
         public static BigInt operator *(BigInt A, BigInt B)
         {
             return Multiply(A, B).Reduce;
+        }
+
+        public static BigInt operator *(BigInt A, uint B)
+        {
+            BigInt c = BigInt.Empty(A.Size + 1);
+            c.Copy(A);
+            c.Multiply(B);
+            return c.Reduce;
         }
 
         public static BigInt operator /(BigInt A, BigInt B)

@@ -21,17 +21,8 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
-            BigInt a = new BigInt(1345651412);
-            BigInt b = new BigInt(1234321431);
-            BigInt c = a;
-            c *= b;
-            c += b;
-            c *= a;
-            c *= a + b;
-            c /= a + b;
-            c /= a;
-            c -= b;
-            c /= b;
+            BigInt a = 9007199254740881;
+            BigInt b = BigInt.PowMod(2, a, a);
 
             Path work = Path.WorkingDirectory;
             Path data = Path.WorkingDirectory["Data"];
