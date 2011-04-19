@@ -64,6 +64,7 @@ namespace DUIP
                     {
                         return;
                     }
+                    Offset++;
                 }
             }
         }
@@ -98,11 +99,11 @@ namespace DUIP
                 else
                 {
                     Subtract(this.Digits[Offset], carry, out this.Digits[Offset], out carry);
-                    if (carry > 0)
+                    if (carry == 0)
                     {
-                        Offset++;
-                        continue;
+                        return;
                     }
+                    Offset++;
                 }
             }
         }
