@@ -58,8 +58,6 @@
     <Compile Include="Util\Ordering.cs" />
     <Compile Include="Util\Serialization.cs" />
     <Compile Include="Data\Stream.cs" />
-    <Compile Include="Util\Cryptography.cs" />
-    <Compile Include="Util\Key.cs" />
     <Compile Include="Net\Network.cs" />
     <Compile Include="Data\Store.cs" />
     <Compile Include="Program.cs" />
