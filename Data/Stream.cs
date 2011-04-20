@@ -68,14 +68,22 @@ namespace DUIP
         /// <summary>
         /// Gets the amount of bytes available to read from the stream.
         /// </summary>
-        public abstract ulong BytesAvailable { get; }
+        public abstract long BytesAvailable { get; }
 
         /// <summary>
         /// Advances the stream by the given amount of bytes.
         /// </summary>
-        public virtual void Advance(ulong Amount)
+        public void Advance(int Amount)
         {
-            for (ulong t = 0; t < Amount; t++)
+            this.Advance((long)Amount);
+        }
+
+        /// <summary>
+        /// Advances the stream by the given amount of bytes.
+        /// </summary>
+        public virtual void Advance(long Amount)
+        {
+            for (long t = 0; t < Amount; t++)
             {
                 this.Read();
             }
@@ -187,7 +195,7 @@ namespace DUIP
         /// </summary>
         public virtual void Write(InStream Source)
         {
-            ulong s = Source.BytesAvailable;
+            long s = Source.BytesAvailable;
             while (s > 0)
             {
                 this.Write(Source.Read());

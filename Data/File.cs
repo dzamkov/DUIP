@@ -139,12 +139,12 @@ namespace DUIP
         /// <summary>
         /// Creates a file with this path. The file will be able to be read and modified.
         /// </summary>
-        public FileData Create(ulong Size)
+        public FileData Create(long Size)
         {
             try
             {
                 FileStream fs = File.Open(this, FileMode.Create, FileAccess.ReadWrite);
-                fs.SetLength((long)Size);
+                fs.SetLength(Size);
                 return new FileData(this, fs);
             }
             catch
@@ -290,7 +290,7 @@ namespace DUIP
             }
         }
 
-        public override OutStream Modify(ulong Start)
+        public override OutStream Modify(long Start)
         {
             this.Open();
             if (this._ReadStreams > 0)
@@ -299,17 +299,17 @@ namespace DUIP
             }
             else
             {
-                this._FileStream.Position = (long)Start;
+                this._FileStream.Position = Start;
                 return new _OutStream(this);
             }
         }
 
-        public override ulong Length
+        public override long Length
         {
             get
             {
                 this.Open();
-                return (ulong)this._FileStream.Length;
+                return this._FileStream.Length;
             }
         }
 
@@ -318,7 +318,7 @@ namespace DUIP
         /// </summary>
         private class _InStream : InStream
         {
-            public _InStream(ulong Position, FileData File)
+            public _InStream(long Position, FileData File)
             {
                 this._Position = Position;
                 this._File = File;
@@ -332,23 +332,23 @@ namespace DUIP
                 return (byte)this._File._FileStream.ReadByte();
             }
 
-            public override void Advance(ulong Amount)
+            public override void Advance(long Amount)
             {
                 this._Position += Amount;
             }
 
-            public override ulong BytesAvailable
+            public override long BytesAvailable
             {
                 get
                 {
-                    return (ulong)this._File._FileStream.Length - this._Position;
+                    return this._File._FileStream.Length - this._Position;
                 }
             }
 
             public override void Read(byte[] Buffer, int Offset, int Length)
             {
                 this._File._Seek(this._Position);
-                this._Position += (ulong)Length;
+                this._Position += (long)Length;
                 this._File._FileStream.Read(Buffer, Offset, Length);
             }
 
@@ -357,7 +357,7 @@ namespace DUIP
                 this._File._ReadStreams--;
             }
 
-            private ulong _Position;
+            private long _Position;
             private FileData _File;
         }
 
@@ -393,11 +393,11 @@ namespace DUIP
         /// <summary>
         /// Insures the filestream is at the given position in the file.
         /// </summary>
-        private void _Seek(ulong Position)
+        private void _Seek(long Position)
         {
-            if ((ulong)this._FileStream.Position != Position)
+            if (this._FileStream.Position != Position)
             {
-                this._FileStream.Position = (long)Position;
+                this._FileStream.Position = Position;
             }
         }
 
@@ -480,17 +480,17 @@ namespace DUIP
             return (byte)this._FileStream.ReadByte();
         }
 
-        public override ulong BytesAvailable
+        public override long BytesAvailable
         {
             get
             {
-                return (ulong)(this._FileStream.Length - this._FileStream.Position);
+                return this._FileStream.Length - this._FileStream.Position;
             }
         }
 
-        public override void Advance(ulong Amount)
+        public override void Advance(long Amount)
         {
-            this._FileStream.Position += (long)Amount;
+            this._FileStream.Position += Amount;
         }
 
         public override void Read(byte[] Buffer, int Offset, int Length)

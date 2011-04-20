@@ -92,16 +92,16 @@ namespace DUIP
             return this._Data[this._Index++];
         }
 
-        public override void Advance(ulong Amount)
+        public override void Advance(long Amount)
         {
             this._Index += (int)Amount;
         }
 
-        public override ulong BytesAvailable
+        public override long BytesAvailable
         {
             get
             {
-                return (ulong)(this._Data.Count - this._Index);
+                return (long)(this._Data.Count - this._Index);
             }
         }
 
@@ -135,16 +135,16 @@ namespace DUIP
             return new MemoryInStream(this._Source);
         }
 
-        public override InStream Read(ulong Start)
+        public override InStream Read(long Start)
         {
             return new MemoryInStream(this._Source, (int)Start);
         }
 
-        public override ulong Length
+        public override long Length
         {
             get
             {
-                return (ulong)this._Source.Count;
+                return (long)this._Source.Count;
             }
         }
 

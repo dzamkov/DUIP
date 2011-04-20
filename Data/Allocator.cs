@@ -14,7 +14,7 @@ namespace DUIP
         /// Allocates data with the given size. The resulting data will be null if there is no
         /// space for allocation available.
         /// </summary>
-        public abstract T Allocate(ulong Size, out Data Data);
+        public abstract T Allocate(long Size, out Data Data);
 
         /// <summary>
         /// Stores the provided data somewhere in the allocator and gives a reference to the data in
@@ -82,7 +82,7 @@ namespace DUIP
             }
         }
 
-        public override int Allocate(ulong Size, out Data Data)
+        public override int Allocate(long Size, out Data Data)
         {
             int rand;
             Path fpath;

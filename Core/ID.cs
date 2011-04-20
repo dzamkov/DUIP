@@ -50,6 +50,28 @@ namespace DUIP
             }
         }
 
+        /// <summary>
+        /// Gets a hashing method for ID's.
+        /// </summary>
+        public static IHashing<ID> Hashing
+        {
+            get
+            {
+                return IDType.Singleton;
+            }
+        }
+
+        /// <summary>
+        /// Gets a method for comparing equality for ID's.
+        /// </summary>
+        public static IEquality<ID> Equality
+        {
+            get
+            {
+                return IDType.Singleton;
+            }
+        }
+
         public override string ToString()
         {
             return
@@ -108,7 +130,7 @@ namespace DUIP
     /// <summary>
     /// A type for an id.
     /// </summary>
-    public class IDType : Type<ID>, ISerialization<ID>, IOrdering<ID>
+    public class IDType : Type<ID>, ISerialization<ID>, IOrdering<ID>, IHashing<ID>
     {
         /// <summary>
         /// The only instance of this class.
@@ -143,6 +165,22 @@ namespace DUIP
         public Relation Compare(ID A, ID B)
         {
             return ID.Compare(A, B);
+        }
+
+        public BigInt Hash(ID Object)
+        {
+            return new BigInt(new uint[]
+            {
+                (uint)Object.A,
+                (uint)Object.B,
+                (uint)Object.C,
+                (uint)Object.D
+            });
+        }
+
+        public bool Equal(ID A, ID B)
+        {
+            return ID.Equal(A, B);
         }
     }
 }
