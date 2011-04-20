@@ -67,6 +67,49 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Creates a hashmap with the given allocator.
+        /// </summary>
+        /// <param name="Buckets">The maximum amount of items the hash map can store. Proportional to the size of the required data.</param>
+        /// <param name="CellarBuckets">The amount of buckets to be used exclusively in the case of hash collisions.</param>
+        public static HashMap<TKey, T> Create<TRef>(
+            Allocator<TRef> Allocator,
+            long Buckets,
+            long CellarBuckets,
+            ISerialization<TKey> KeySerialization, 
+            ISerialization<T> ValueSerialization, 
+            IHashing<TKey> KeyHashing,
+            out TRef Ref)
+        {
+
+        }
+
+        /// <summary>
+        /// Header for a hashmap in data.
+        /// </summary>
+        public struct Header
+        {
+            /// <summary>
+            /// The amount of buckets in the hashmap.
+            /// </summary>
+            public long Buckets;
+
+            /// <summary>
+            /// The amount of cellar buckets preceding the hashmap.
+            /// </summary>
+            public long CellarBuckets;
+
+            /// <summary>
+            /// The index of the first bucket with no contents.
+            /// </summary>
+            public long FirstFreeBucket;
+
+            /// <summary>
+            /// The amount of items in the hashmap.
+            /// </summary>
+            public long Items;
+        }
+
+        /// <summary>
         /// Gets the serialization method used for keys. This serialization must have
         /// a fixed size.
         /// </summary>

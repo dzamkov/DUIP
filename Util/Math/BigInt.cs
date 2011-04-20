@@ -25,6 +25,43 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Converts this BigInt into an unsigned 32-bit integer.
+        /// </summary>
+        public uint ToUInt()
+        {
+            if (this.Digits.Length > 0)
+            {
+                return this.Digits[0];
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Converts this BigInt into an unsigned 64-bit integer.
+        /// </summary>
+        public ulong ToULong()
+        {
+            if (this.Digits.Length > 0)
+            {
+                if (this.Digits.Length > 1)
+                {
+                    return (ulong)this.Digits[0] | ((ulong)this.Digits[1] << 32);
+                }
+                else
+                {
+                    return (ulong)this.Digits[0];
+                }
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
         /// Gets the big-int representation of zero.
         /// </summary>
         public static BigInt Zero
@@ -544,6 +581,26 @@ namespace DUIP
             return new BigInt(Int);
         }
 
+        public static explicit operator uint(BigInt Int)
+        {
+            return Int.ToUInt();
+        }
+
+        public static explicit operator ulong(BigInt Int)
+        {
+            return Int.ToULong();
+        }
+
+        public static explicit operator int(BigInt Int)
+        {
+            return (int)Int.ToUInt();
+        }
+
+        public static explicit operator long(BigInt Int)
+        {
+            return (long)Int.ToULong();
+        }
+
         public static BigInt operator +(BigInt A, BigInt B)
         {
             return Add(A, B).Reduce;
@@ -552,6 +609,36 @@ namespace DUIP
         public static BigInt operator +(BigInt A, uint B)
         {
             return A + (BigInt)B;
+        }
+
+        public static BigInt operator ++(BigInt A)
+        {
+            for (int t = 0; t < A.Digits.Length; t++)
+            {
+                uint cur = A.Digits[t];
+                cur++;
+                A.Digits[t] = cur;
+                if (cur > 0)
+                {
+                    break;
+                }
+            }
+            return A;
+        }
+
+        public static BigInt operator --(BigInt A)
+        {
+            for (int t = 0; t < A.Digits.Length; t++)
+            {
+                uint cur = A.Digits[t];
+                cur--;
+                A.Digits[t] = cur;
+                if (cur < uint.MaxValue)
+                {
+                    break;
+                }
+            }
+            return A;
         }
 
         public static BigInt operator -(BigInt A, BigInt B)
