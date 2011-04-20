@@ -17,7 +17,7 @@ namespace DUIP
         /// <summary>
         /// Creates a stream to read this data, starting at the given position.
         /// </summary>
-        public virtual InStream Read(int Start)
+        public virtual InStream Read(ulong Start)
         {
             InStream r = this.Read();
             if (r != null)
@@ -31,7 +31,7 @@ namespace DUIP
         /// <summary>
         /// Gets the length, in bytes, of the data.
         /// </summary>
-        public virtual int Length
+        public virtual ulong Length
         {
             get
             {
@@ -43,7 +43,7 @@ namespace DUIP
         /// Creates a stream to modify the data beginning at the given position. The modifing stream may not go over the
         /// bounds of the data. Null is returned if the data can not be modified.
         /// </summary>
-        public virtual OutStream Modify(int Start)
+        public virtual OutStream Modify(ulong Start)
         {
             return null;
         }

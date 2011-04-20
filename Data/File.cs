@@ -139,7 +139,7 @@ namespace DUIP
         /// <summary>
         /// Creates a file with this path. The file will be able to be read and modified.
         /// </summary>
-        public FileData Create(int Size)
+        public FileData Create(ulong Size)
         {
             try
             {
@@ -290,7 +290,7 @@ namespace DUIP
             }
         }
 
-        public override OutStream Modify(int Start)
+        public override OutStream Modify(ulong Start)
         {
             this.Open();
             if (this._ReadStreams > 0)
@@ -304,12 +304,12 @@ namespace DUIP
             }
         }
 
-        public override int Length
+        public override ulong Length
         {
             get
             {
                 this.Open();
-                return (int)this._FileStream.Length;
+                return (ulong)this._FileStream.Length;
             }
         }
 
@@ -318,7 +318,7 @@ namespace DUIP
         /// </summary>
         private class _InStream : InStream
         {
-            public _InStream(int Position, FileData File)
+            public _InStream(ulong Position, FileData File)
             {
                 this._Position = Position;
                 this._File = File;
@@ -332,23 +332,23 @@ namespace DUIP
                 return (byte)this._File._FileStream.ReadByte();
             }
 
-            public override void Advance(int Amount)
+            public override void Advance(ulong Amount)
             {
                 this._Position += Amount;
             }
 
-            public override int BytesAvailable
+            public override ulong BytesAvailable
             {
                 get
                 {
-                    return (int)this._File._FileStream.Length - this._Position;
+                    return (ulong)this._File._FileStream.Length - this._Position;
                 }
             }
 
             public override void Read(byte[] Buffer, int Offset, int Length)
             {
                 this._File._Seek(this._Position);
-                this._Position += Length;
+                this._Position += (ulong)Length;
                 this._File._FileStream.Read(Buffer, Offset, Length);
             }
 
@@ -356,8 +356,8 @@ namespace DUIP
             {
                 this._File._ReadStreams--;
             }
-                    
-            private int _Position;
+
+            private ulong _Position;
             private FileData _File;
         }
 
@@ -393,9 +393,9 @@ namespace DUIP
         /// <summary>
         /// Insures the filestream is at the given position in the file.
         /// </summary>
-        private void _Seek(int Position)
+        private void _Seek(ulong Position)
         {
-            if ((int)this._FileStream.Position != Position)
+            if ((ulong)this._FileStream.Position != Position)
             {
                 this._FileStream.Position = (long)Position;
             }
@@ -480,17 +480,17 @@ namespace DUIP
             return (byte)this._FileStream.ReadByte();
         }
 
-        public override int BytesAvailable
+        public override ulong BytesAvailable
         {
             get
             {
-                return (int)(this._FileStream.Length - this._FileStream.Position);
+                return (ulong)(this._FileStream.Length - this._FileStream.Position);
             }
         }
 
-        public override void Advance(int Amount)
+        public override void Advance(ulong Amount)
         {
-            this._FileStream.Position += Amount;
+            this._FileStream.Position += (long)Amount;
         }
 
         public override void Read(byte[] Buffer, int Offset, int Length)
