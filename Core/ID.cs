@@ -137,7 +137,7 @@ namespace DUIP
         /// </summary>
         public static readonly IDType Singleton = new IDType();
 
-        public void Serialize(ID Object, OutStream.F Stream)
+        public void Serialize(ID Object, OutStream Stream)
         {
             Stream.WriteInt(Object.A);
             Stream.WriteInt(Object.B);
@@ -145,7 +145,7 @@ namespace DUIP
             Stream.WriteInt(Object.D);
         }
 
-        public ID Deserialize(InStream.F Stream)
+        public ID Deserialize(InStream Stream)
         {
             return new ID(
                 Stream.ReadInt(),
@@ -154,9 +154,12 @@ namespace DUIP
                 Stream.ReadInt());
         }
 
-        Maybe<long> ISerialization<ID>.GetLength(StreamFormat Format)
+        Maybe<long> ISerialization<ID>.Size
         {
-            return 16;
+            get
+            {
+                return 16;
+            }
         }
 
         public Relation Compare(ID A, ID B)

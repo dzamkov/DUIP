@@ -13,17 +13,16 @@ namespace DUIP
         /// <summary>
         /// Serializes an object to a stream.
         /// </summary>
-        void Serialize(T Object, OutStream.F Stream);
+        void Serialize(T Object, OutStream Stream);
 
         /// <summary>
         /// Deserializes an object from the stream.
         /// </summary>
-        T Deserialize(InStream.F Stream);
+        T Deserialize(InStream Stream);
 
         /// <summary>
-        /// Gets the upper bound of the length in bytes of this serializable object for all values, or nothing if the size is unbounded. The length
-        /// is measured in between calls to "Flush" on the stream and depends on the format used for the stream.
+        /// Gets the upper bound of the length in bytes of this serializable object for all values, or nothing if the size is unbounded.
         /// </summary>
-        Maybe<long> GetLength(StreamFormat Format);
+        Maybe<long> Size { get; }
     }
 }

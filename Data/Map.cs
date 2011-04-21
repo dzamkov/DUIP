@@ -75,7 +75,6 @@ namespace DUIP
             Allocator<TRef> Allocator,
             long Buckets,
             long CellarBuckets,
-            StreamFormat Format,
             ISerialization<TKey> KeySerialization, 
             ISerialization<T> ValueSerialization, 
             IHashing<TKey> KeyHashing,
@@ -128,17 +127,26 @@ namespace DUIP
             /// <summary>
             /// Writes the header to a stream.
             /// </summary>
-            public void Write(OutStream.F Stream)
+            public void Write(OutStream Stream)
             {
-                Stream.write
+                Stream.WriteLong(this.Buckets);
+                Stream.WriteLong(this.CellarBuckets);
+                Stream.WriteLong(this.FirstFreeBucket);
+                Stream.WriteLong(this.Items);
             }
 
             /// <summary>
             /// Reads a header from a stream.
             /// </summary>
-            public static Header Read(OutStream.F Stream)
+            public static Header Read(InStream Stream)
             {
-
+                return new Header()
+                {
+                    Buckets = Stream.ReadLong(),
+                    CellarBuckets = Stream.ReadLong(),
+                    FirstFreeBucket = Stream.ReadLong(),
+                    Items = Stream.ReadLong()
+                };
             }
         }
 
