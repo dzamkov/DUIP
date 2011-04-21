@@ -75,11 +75,28 @@ namespace DUIP
             Allocator<TRef> Allocator,
             long Buckets,
             long CellarBuckets,
+            StreamFormat Format,
             ISerialization<TKey> KeySerialization, 
             ISerialization<T> ValueSerialization, 
             IHashing<TKey> KeyHashing,
             out TRef Ref)
         {
+            Header h = new Header()
+            {
+                Buckets = Buckets,
+                CellarBuckets = CellarBuckets,
+                Items = 0,
+                FirstFreeBucket = 0
+            };
+            Alignment a = new Alignment()
+            {
+
+            };
+
+
+
+
+
             throw new NotImplementedException();
         }
 
@@ -107,6 +124,53 @@ namespace DUIP
             /// The amount of items in the hashmap.
             /// </summary>
             public long Items;
+
+            /// <summary>
+            /// Writes the header to a stream.
+            /// </summary>
+            public void Write(OutStream.F Stream)
+            {
+                Stream.write
+            }
+
+            /// <summary>
+            /// Reads a header from a stream.
+            /// </summary>
+            public static Header Read(OutStream.F Stream)
+            {
+
+            }
+        }
+
+        /// <summary>
+        /// Gives information about the alignment of values in data containing a hashmap.
+        /// </summary>
+        public struct Alignment
+        {
+            /// <summary>
+            /// The offset in bytes, of the first bucket from the start of the data.
+            /// </summary>
+            public long FirstBucketOffset;
+
+            /// <summary>
+            /// The size of a bucket in bytes.
+            /// </summary>
+            public long BucketSize;
+
+            /// <summary>
+            /// The size of a key in bytes.
+            /// </summary>
+            public long KeySize;
+
+            /// <summary>
+            /// The size of a value in bytes.
+            /// </summary>
+            public long ValueSize;
+
+            /// <summary>
+            /// The size of an indirection (pointer to another bucket) in bytes.
+            /// </summary>
+            public long IndirectionSize;
         }
 
         /// <summary>
@@ -144,6 +208,9 @@ namespace DUIP
             }
         }
 
+        private Data _Data;
+        private Header _Header;
+        private Alignment _Alignment;
         private ISerialization<TKey> _KeySerialization;
         private ISerialization<T> _ValueSerialization;
         private IHashing<TKey> _KeyHashing;

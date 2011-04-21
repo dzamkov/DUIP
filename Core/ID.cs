@@ -154,12 +154,9 @@ namespace DUIP
                 Stream.ReadInt());
         }
 
-        Maybe<int> ISerialization<ID>.Length
+        Maybe<long> ISerialization<ID>.GetLength(StreamFormat Format)
         {
-            get
-            {
-                return 4 * 4;
-            }
+            return 16;
         }
 
         public Relation Compare(ID A, ID B)

@@ -167,6 +167,37 @@ namespace DUIP
             }
 
             /// <summary>
+            /// Reads a 64-bit integer from the source stream.
+            /// </summary>
+            public long ReadLong()
+            {
+                if (this._LittleEndian)
+                {
+                    return
+                        this._Source.Read() |
+                        this._Source.Read() << 8 |
+                        this._Source.Read() << 16 |
+                        this._Source.Read() << 24 |
+                        this._Source.Read() << 32 |
+                        this._Source.Read() << 40 |
+                        this._Source.Read() << 48 |
+                        this._Source.Read() << 56;
+                }
+                else
+                {
+                    return
+                        this._Source.Read() << 56 |
+                        this._Source.Read() << 48 |
+                        this._Source.Read() << 40 |
+                        this._Source.Read() << 32 |
+                        this._Source.Read() << 24 |
+                        this._Source.Read() << 16 |
+                        this._Source.Read() << 8 |
+                        this._Source.Read();
+                }
+            }
+
+            /// <summary>
             /// Reads a bigint with the given size in bytes.
             /// </summary>
             public BigInt ReadBigInt(int Size)
@@ -344,6 +375,35 @@ namespace DUIP
             }
 
             /// <summary>
+            /// Writes a 64-bit integer to the source stream.
+            /// </summary>
+            public void WriteLong(long Value)
+            {
+                if (this._LittleEndian)
+                {
+                    this._Source.Write((byte)(Value));
+                    this._Source.Write((byte)(Value >> 8));
+                    this._Source.Write((byte)(Value >> 16));
+                    this._Source.Write((byte)(Value >> 24));
+                    this._Source.Write((byte)(Value >> 32));
+                    this._Source.Write((byte)(Value >> 40));
+                    this._Source.Write((byte)(Value >> 48));
+                    this._Source.Write((byte)(Value >> 56));
+                }
+                else
+                {
+                    this._Source.Write((byte)(Value >> 56));
+                    this._Source.Write((byte)(Value >> 48));
+                    this._Source.Write((byte)(Value >> 40));
+                    this._Source.Write((byte)(Value >> 32));
+                    this._Source.Write((byte)(Value >> 24));
+                    this._Source.Write((byte)(Value >> 16));
+                    this._Source.Write((byte)(Value >> 8));
+                    this._Source.Write((byte)(Value));
+                }
+            }
+
+            /// <summary>
             /// Writes a bigint value to the stream, truncating the value to the given size in bytes.
             /// </summary>
             public void WriteBigInt(BigInt Value, int Size)
@@ -404,5 +464,53 @@ namespace DUIP
             private OutStream _Source;
             private bool _LittleEndian;
         }
+    }
+
+    /// <summary>
+    /// A stream that does not store written values, but instead counts the amount of bytes that have been written.
+    /// </summary>
+    public class CounterOutStream : OutStream
+    {
+        public CounterOutStream()
+        {
+
+        }
+
+        public CounterOutStream(long Initial)
+        {
+            this._Count = Initial;
+        }
+
+        public override void Write(byte Data)
+        {
+            this._Count++;
+        }
+
+        public override void Write(byte[] Buffer, int Offset, int Length)
+        {
+            this._Count += Length;
+        }
+
+        public override void Write(InStream Source)
+        {
+            this._Count += Source.BytesAvailable;
+        }
+
+        /// <summary>
+        /// Gets or sets the current byte count for the stream.
+        /// </summary>
+        public long Count
+        {
+            get
+            {
+                return this._Count;
+            }
+            set
+            {
+                this._Count = value;
+            }
+        }
+
+        private long _Count;
     }
 }

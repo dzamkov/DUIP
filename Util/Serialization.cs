@@ -21,10 +21,9 @@ namespace DUIP
         T Deserialize(InStream.F Stream);
 
         /// <summary>
-        /// Gets the length in bytes of serialized objects, or nothing if the serialization does not
-        /// have a fixed size. Note that in order to insure that the stream does output this many bytes, Flush
-        /// should be called before and after serializing and deserializing the object.
+        /// Gets the upper bound of the length in bytes of this serializable object for all values, or nothing if the size is unbounded. The length
+        /// is measured in between calls to "Flush" on the stream and depends on the format used for the stream.
         /// </summary>
-        Maybe<int> Length { get; }
+        Maybe<long> GetLength(StreamFormat Format);
     }
 }
