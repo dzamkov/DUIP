@@ -62,6 +62,29 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Gets the amount of bytes needed to store this integer.
+        /// </summary>
+        public int ByteSize
+        {
+            get
+            {
+                for (int t = this.Digits.Length - 1; t >= 0; t--)
+                {
+                    uint val = this.Digits[t];
+                    if (val > 0)
+                    {
+                        int m = t * 4;
+                        if ((byte)(val >> 24) > 0) return m + 4;
+                        if ((byte)(val >> 16) > 0) return m + 3;
+                        if ((byte)(val >> 8) > 0) return m + 2;
+                        return m + 1;
+                    }
+                }
+                return 0;
+            }
+        }
+
+        /// <summary>
         /// Gets the big-int representation of zero.
         /// </summary>
         public static BigInt Zero

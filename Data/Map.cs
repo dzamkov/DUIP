@@ -80,7 +80,7 @@ namespace DUIP
             IHashing<TKey> KeyHashing,
             out TRef Ref)
         {
-
+            throw new NotImplementedException();
         }
 
         /// <summary>

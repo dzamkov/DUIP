@@ -113,7 +113,7 @@ namespace DUIP
             public F(InStream Source, StreamFormat Format)
             {
                 this._Source = Source;
-                this._NativeEndian = Format.NativeEndian;
+                this._LittleEndian = Format.Endian == Endian.Little;
             }
 
             /// <summary>
@@ -148,7 +148,7 @@ namespace DUIP
             /// </summary>
             public int ReadInt()
             {
-                if (this._NativeEndian)
+                if (this._LittleEndian)
                 {
                     return
                         this._Source.Read() |
@@ -167,6 +167,60 @@ namespace DUIP
             }
 
             /// <summary>
+            /// Reads a bigint with the given size in bytes.
+            /// </summary>
+            public BigInt ReadBigInt(int Size)
+            {
+                uint[] digs = new uint[(Size + 3) / 4];
+                int cur = 0;
+                while (Size > 0)
+                {
+                    if (Size >= 4)
+                    {
+                        digs[cur] =
+                            (uint)this._Source.Read() |
+                            (uint)this._Source.Read() << 8 |
+                            (uint)this._Source.Read() << 16 |
+                            (uint)this._Source.Read() << 24;
+                        cur++;
+                        Size -= 4;
+                        continue;
+                    }
+                    if (Size == 3)
+                    {
+                        digs[cur] =
+                            (uint)this._Source.Read() |
+                            (uint)this._Source.Read() << 8 |
+                            (uint)this._Source.Read() << 16;
+                        break;
+                    }
+                    if (Size == 2)
+                    {
+                        digs[cur] =
+                            (uint)this._Source.Read() |
+                            (uint)this._Source.Read() << 8;
+                        break;
+                    }
+                    if (Size == 1)
+                    {
+                        digs[cur] =
+                            (uint)this._Source.Read();
+                        break;
+                    }
+                }
+                return new BigInt(digs);
+            }
+
+            /// <summary>
+            /// Reads a bigint value from the stream.
+            /// </summary>
+            public BigInt ReadBigInt()
+            {
+                int size = this.ReadInt();
+                return this.ReadBigInt(size);
+            }
+
+            /// <summary>
             /// Insures pre-fetched data from the stream is destroyed. Calls to this method should correspond to calls to Flush
             /// in the writing stream. This method should be called before directly accessing the source stream.
             /// </summary>
@@ -176,7 +230,7 @@ namespace DUIP
             }
 
             private InStream _Source;
-            private bool _NativeEndian;
+            private bool _LittleEndian;
         }
     }
 
@@ -238,7 +292,7 @@ namespace DUIP
             public F(OutStream Source, StreamFormat Format)
             {
                 this._Source = Source;
-                this._NativeEndian = Format.NativeEndian;
+                this._LittleEndian = Format.Endian == Endian.Little;
             }
 
             /// <summary>
@@ -273,7 +327,7 @@ namespace DUIP
             /// </summary>
             public void WriteInt(int Value)
             {
-                if (this._NativeEndian)
+                if (this._LittleEndian)
                 {
                     this._Source.Write((byte)(Value));
                     this._Source.Write((byte)(Value >> 8));
@@ -290,6 +344,55 @@ namespace DUIP
             }
 
             /// <summary>
+            /// Writes a bigint value to the stream, truncating the value to the given size in bytes.
+            /// </summary>
+            public void WriteBigInt(BigInt Value, int Size)
+            {
+                for (int t = 0; t < Value.Digits.Length; t++)
+                {
+                    uint dig = Value.Digits[t];
+                    if (Size >= 4)
+                    {
+                        this._Source.Write((byte)(dig));
+                        this._Source.Write((byte)(dig >> 8));
+                        this._Source.Write((byte)(dig >> 16));
+                        this._Source.Write((byte)(dig >> 24));
+                        Size -= 4;
+                        continue;
+                    }
+                    if (Size == 3)
+                    {
+                        this._Source.Write((byte)(dig));
+                        this._Source.Write((byte)(dig >> 8));
+                        this._Source.Write((byte)(dig >> 16));
+                        break;
+                    }
+                    if (Size == 2)
+                    {
+                        this._Source.Write((byte)(dig));
+                        this._Source.Write((byte)(dig >> 8));
+                        break;
+                    }
+                    if (Size == 1)
+                    {
+                        this._Source.Write((byte)(dig));
+                        break;
+                    }
+                    break;
+                }
+            }
+
+            /// <summary>
+            /// Writes a bigint value to the stream.
+            /// </summary>
+            public void WriteBigInt(BigInt Value)
+            {
+                int bs = Value.ByteSize;
+                this.WriteInt(bs);
+                this.WriteBigInt(Value, bs);
+            }
+
+            /// <summary>
             /// Insures data queued to be written to the source stream is written. Calls to this method should correspond to calls to Flush
             /// in the reading stream. This method should be called before directly accessing the source stream.
             /// </summary>
@@ -299,7 +402,7 @@ namespace DUIP
             }
 
             private OutStream _Source;
-            private bool _NativeEndian;
+            private bool _LittleEndian;
         }
     }
 }
