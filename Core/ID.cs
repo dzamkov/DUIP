@@ -75,10 +75,10 @@ namespace DUIP
         public override string ToString()
         {
             return
-                this.A.ToString("{0:X2}") + "-" +
-                this.B.ToString("{0:X2}") + "-" +
-                this.C.ToString("{0:X2}") + "-" +
-                this.D.ToString("{0:X2}");
+                this.A.ToString("X8") + "-" +
+                this.B.ToString("X8") + "-" +
+                this.C.ToString("X8") + "-" +
+                this.D.ToString("X8");
         }
 
         /// <summary>
@@ -105,6 +105,14 @@ namespace DUIP
             return Relation.Equal;
         }
 
+        /// <summary>
+        /// Gets if two ID's are equal.
+        /// </summary>
+        public static bool Equal(ID A, ID B)
+        {
+            return A.A == B.A && A.B == B.B && A.C == B.C && A.D == B.D;
+        }
+
         public override int GetHashCode()
         {
             return this.A ^ this.B ^ this.C ^ this.D;
@@ -116,7 +124,7 @@ namespace DUIP
             if (id != null)
             {
                 ID i = id.Value;
-                return this.A == i.A && this.B == i.B && this.C == i.C && this.D == i.D;
+                return Equal(this, i);
             }
             return false;
         }
@@ -164,7 +172,7 @@ namespace DUIP
 
         public Relation Compare(ID A, ID B)
         {
-            return ID.Compare(A, B);
+            return DUIP.ID.Compare(A, B);
         }
 
         public BigInt Hash(ID Object)
@@ -180,7 +188,7 @@ namespace DUIP
 
         public bool Equal(ID A, ID B)
         {
-            return ID.Equal(A, B);
+            return DUIP.ID.Equal(A, B);
         }
     }
 }

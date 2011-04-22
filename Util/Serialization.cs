@@ -21,7 +21,7 @@ namespace DUIP
         T Deserialize(InStream Stream);
 
         /// <summary>
-        /// Gets the upper bound of the length in bytes of this serializable object for all values, or nothing if the size is unbounded.
+        /// Gets the length in bytes of this serializable object for all values, or nothing if the size is variable or unbounded.
         /// </summary>
         Maybe<long> Size { get; }
     }

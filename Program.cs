@@ -21,18 +21,20 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
-            BigInt a = 9007199254740881;
-            BigInt b = BigInt.PowMod(2, a, a);
-
             Path work = Path.WorkingDirectory;
             Path data = Path.WorkingDirectory["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
 
+            int r;
+            HashMap<ID, ID> hm = HashMap<ID, ID>.Create(alloc, 100, 10, 
+                HashMap<ID, ID>.Bucket.CreateSerialization(ID.Serialization, ID.Serialization),
+                ID.Hashing, out r);
+
             for (int t = 0; t < 100; t++)
             {
-                Data d;
-                alloc.Allocate(100, out d);
+                hm.Set(new ID(0, 0, 0, t), new ID(97, 98, 99, t));
             }
+            ID id = hm.Lookup(new ID(0, 0, 0, 49)).OrExcept;
 
             Console.Title = "DUIP";
             new RootInterface().Display();

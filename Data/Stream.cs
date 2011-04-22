@@ -191,6 +191,25 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Advances the stream by the given amount of bytes. The data that is written is undefined.
+        /// </summary>
+        public void Advance(int Amount)
+        {
+            this.Advance((long)Amount);
+        }
+
+        /// <summary>
+        /// Advances the stream by the given amount of bytes. The data that is written is undefined.
+        /// </summary>
+        public virtual void Advance(long Amount)
+        {
+            for (long t = 0; t < Amount; t++)
+            {
+                this.Write(0);
+            }
+        }
+
+        /// <summary>
         /// Called when writing is complete.
         /// </summary>
         public virtual void Finish()

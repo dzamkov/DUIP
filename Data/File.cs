@@ -382,6 +382,11 @@ namespace DUIP
                 this._File._FileStream.Write(Buffer, Offset, Length);
             }
 
+            public override void Advance(long Amount)
+            {
+                this._File._FileStream.Position += Amount;
+            }
+
             public override void Finish()
             {
                 this._File._WriteStream = false;
@@ -535,6 +540,11 @@ namespace DUIP
         public override void Write(byte[] Buffer, int Offset, int Length)
         {
             this._FileStream.Write(Buffer, Offset, Length);    
+        }
+
+        public override void Advance(long Amount)
+        {
+            this._FileStream.Position += Amount;
         }
 
         public override void Finish()
