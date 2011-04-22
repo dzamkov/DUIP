@@ -56,7 +56,7 @@ namespace DUIP
                                 Free = false,
                                 Key = Key,
                                 Value = Value.Value,
-                                Reference = ind
+                                Reference = b.Reference
                             });
 
                             this._Header.Items++;
@@ -68,11 +68,6 @@ namespace DUIP
                             return true;
                         }
                         return false;
-                    }
-                    else
-                    {
-                        // Removing an item that doesn't exist
-                        return true;
                     }
                 }
                 else
@@ -94,7 +89,11 @@ namespace DUIP
                         else
                         {
                             // Removing an item
-                            this.Set(ind, Bucket.MakeFree());
+                            this.Set(ind, new Bucket()
+                            {
+                                Free = true,
+                                Reference = b.Reference
+                            });
 
                             // Make sure to close the reference from the previous bucket, if any
                             if (pind.HasValue)
@@ -109,40 +108,45 @@ namespace DUIP
                         }
                         return true;
                     }
+                }
 
-                    // Traverse the bucket chain
-                    if (b.Reference == ind)
+                // Traverse the bucket chain
+                if (b.Reference == ind)
+                {
+                    // Bucket chain ended
+                    if (add)
                     {
-                        // Bucket chain ended
-                        if (add)
+                        // Add anywhere
+                        if (this._Header.Items < this._Header.Buckets)
                         {
-                            // Add anywhere
+                            long nind = this._Header.FirstFreeBucket;
+                            this.Set(nind, new Bucket()
+                            {
+                                Free = false,
+                                Key = Key,
+                                Value = Value.Value,
+                                Reference = nind
+                            });
+
+                            // Make sure the previous bucket knows about this
+                            b.Reference = nind;
+                            this.Set(ind, b);
+
+                            this._Header.Items++;
                             if (this._Header.Items < this._Header.Buckets)
                             {
-                                ind = this._Header.FirstFreeBucket;
-                                this.Set(ind, new Bucket()
-                                {
-                                    Free = false,
-                                    Key = Key,
-                                    Value = Value.Value,
-                                    Reference = ind
-                                });
-                                this._Header.Items++;
-                                if (this._Header.Items < this._Header.Buckets)
-                                {
-                                    this._Header.FirstFreeBucket = this.SearchFree(ind);
-                                }
-                                this._UpdateHeader();
-                                return true;
+                                this._Header.FirstFreeBucket = this.SearchFree(nind);
                             }
-                            return false;
+                            this._UpdateHeader();
+                            return true;
                         }
-                        return true;
+                        return false;
                     }
-
-                    pind = ind;
-                    ind = b.Reference;
+                    return true;
                 }
+
+                pind = ind;
+                ind = b.Reference;
             }
         }
 
@@ -298,12 +302,15 @@ namespace DUIP
                 Items = 0,
                 FirstFreeBucket = 0
             };
-            Bucket free = Bucket.MakeFree();
             OutStream os = data.Modify();
             h.Write(os);
             for (long t = 0; t < Buckets; t++)
             {
-                BucketSerialization.Serialize(free, os);
+                BucketSerialization.Serialize(new Bucket()
+                    {
+                        Free = true,
+                        Reference = t
+                    }, os);
             }
             os.Finish();
 
@@ -380,17 +387,6 @@ namespace DUIP
         public struct Bucket
         {
             /// <summary>
-            /// Creates a bucket with no item.
-            /// </summary>
-            public static Bucket MakeFree()
-            {
-                return new Bucket()
-                {
-                    Free = true
-                };
-            }
-
-            /// <summary>
             /// The current key for the bucket.
             /// </summary>
             public TKey Key;
@@ -402,13 +398,13 @@ namespace DUIP
 
             /// <summary>
             /// A reference to another bucket used if this bucket has a key that was not searched for. If this is
-            /// self-referential, there are no more possible places to look for the searched key.
+            /// self-referential, there are no more possible places to look for the searched key (although the converse is false).
             /// </summary>
             public long Reference;
 
             /// <summary>
             /// Indicates wether this bucket is free. A free bucket should be interpreted as not having an item and can be assigned
-            /// one if needed. If this is true, the other values in this struct are undefined and should be disregarded.
+            /// one if needed. If this is true, the key and the value in this struct are undefined and should be disregarded.
             /// </summary>
             public bool Free;
 
@@ -433,13 +429,13 @@ namespace DUIP
                 public void Serialize(Bucket Object, OutStream Stream)
                 {
                     Stream.WriteBool(Object.Free);
+                    Stream.WriteLong(Object.Reference);
                     if (Object.Free)
                     {
-                        Stream.Advance(this._Size - 1);
+                        Stream.Advance(this._Size - 1 - 8);
                     }
                     else
                     {
-                        Stream.WriteLong(Object.Reference);
                         this._KeySerialization.Serialize(Object.Key, Stream);
                         this._ValueSerialization.Serialize(Object.Value, Stream);
                     }
@@ -449,8 +445,13 @@ namespace DUIP
                 {
                     if (Stream.ReadBool())
                     {
-                        Stream.Advance(this._Size - 1);
-                        return Bucket.MakeFree();
+                        Bucket b = new Bucket()
+                        {
+                            Free = true,
+                            Reference = Stream.ReadLong()
+                        };
+                        Stream.Advance(this._Size - 1 - 8);
+                        return b;
                     }
                     else
                     {
