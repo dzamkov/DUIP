@@ -41,6 +41,13 @@ namespace DUIP
     /// </summary>
     public abstract class PartialMap<TKey, T> : Map<TKey, Maybe<T>>
     {
-
+        /// <summary>
+        /// Tries removing the value associated with a key. Returns true on success (Looking up the key will return
+        /// nothing) or false on failure.
+        /// </summary>
+        public bool Remove(TKey Key)
+        {
+            return this.Set(Key, Maybe<T>.Nothing);
+        }
     }
 }

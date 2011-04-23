@@ -16,144 +16,210 @@ namespace DUIP
 
         public override Maybe<T> Lookup(TKey Key)
         {
-            long ind = this.GetBucket(Key);
+            long bi; Bucket b;
+            return this.Lookup(this._KeyHashing.Hash(Key), Key, out bi, out b);
+        }
+
+        /// <summary>
+        /// Looks up an item in the map.
+        /// </summary>
+        /// <param name="Hash">The hash of the key using the key hashing method for the hashmap.</param>
+        /// <param name="BucketIndex">The index of the bucket in which the item was found.</param>
+        /// <param name="Bucket">The contents for the bucket in which the item was found.</param>
+        public Maybe<T> Lookup(BigInt Hash, TKey Key, out long BucketIndex, out Bucket Bucket)
+        {
+            BucketIndex = this.GetBucketIndex(Hash);
             while (true)
             {
-                Bucket b = this.Get(ind);
-                if (b.Free)
+                Bucket = this.GetBucket(BucketIndex);
+                if (!Bucket.Free && this._KeyHashing.Equal(Bucket.Key, Key))
+                {
+                    return Bucket.Value;
+                }
+                if (Bucket.Reference == BucketIndex)
                 {
                     return Maybe<T>.Nothing;
                 }
-                if (this._KeyHashing.Equal(b.Key, Key))
-                {
-                    return b.Value;
-                }
-                if (b.Reference == ind)
-                {
-                    return Maybe<T>.Nothing;
-                }
-                ind = b.Reference;
+                BucketIndex = Bucket.Reference;
             }
         }
 
         public override bool Set(TKey Key, Maybe<T> Value)
         {
-            bool add = Value.HasValue;
-            Maybe<long> pind = Maybe<long>.Nothing;
-            long ind = this.GetBucket(Key);
+            long bi; Bucket b;
+            return this.Set(this._KeyHashing.Hash(Key), Key, Value, out bi, out b);
+        }
+
+        /// <summary>
+        /// Sets, creates, or removes an item with the given key and value.
+        /// </summary>
+        /// <param name="Hash">The hash of the key using the key hashing method for the hashmap.</param>
+        /// <param name="BucketIndex">The index of the bucket in which the item was set. This is undefined if the item was removed.</param>
+        /// <param name="Bucket">The contents for the bucket in which the item was set. This is undefined if the item was removed.</param>
+        public bool Set(BigInt Hash, TKey Key, Maybe<T> Value, out long BucketIndex, out Bucket Bucket)
+        {
+            BucketIndex = this.GetBucketIndex(Hash);
+            Maybe<long> pbi = Maybe<long>.Nothing; // Index of the previous bucket in the chain
+
             while (true)
             {
-                Bucket b = this.Get(ind);
-                if (b.Free)
-                {
-                    if (add)
-                    {
-                        // Adding an item
-                        if (this._Header.Items < this._Header.Buckets)
-                        {
-                            this.Set(ind, new Bucket()
-                            {
-                                Free = false,
-                                Key = Key,
-                                Value = Value.Value,
-                                Reference = b.Reference
-                            });
+                Bucket = this.GetBucket(BucketIndex);
 
-                            this._Header.Items++;
-                            if (ind == this._Header.FirstFreeBucket && this._Header.Items < this._Header.Buckets)
-                            {
-                                this._Header.FirstFreeBucket = this.SearchFree(ind);
-                            }
+                // Is this bucket the end of a chain?
+                if (Bucket.Reference == BucketIndex)
+                {
+                    // Is it free?
+                    if (Bucket.Free)
+                    {
+                        if (Value.HasValue)
+                        {
+                            // Add item to this bucket
+                            Bucket.Free = false;
+                            Bucket.Key = Key;
+                            Bucket.Value = Value.Value;
+                            this.SetBucket(BucketIndex, Bucket);
+                            this._Add(BucketIndex);
                             this._UpdateHeader();
                             return true;
                         }
-                        return false;
+                        else
+                        {
+                            if (pbi.HasValue)
+                            {
+                                // There is no reason for this item to remain in a chain
+                                Bucket pb = this.GetBucket(pbi.Value);
+                                pb.Reference = pbi.Value;
+                                this.SetBucket(pbi.Value, pb);
+                            }
+
+                            // Removing a nonexistant item
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        if (this._KeyHashing.Equal(Bucket.Key, Key))
+                        {
+                            if (Value.HasValue)
+                            {
+                                // Modify the item
+                                Bucket.Value = Value.Value;
+                                this.SetBucket(BucketIndex, Bucket);
+                                return true;
+                            }
+                            else
+                            {
+                                // Remove the item
+                                Bucket.Free = true;
+                                this.SetBucket(BucketIndex, Bucket);
+                                this._Remove(BucketIndex);
+                                this._UpdateHeader();
+
+                                // Remove from chain
+                                if (pbi.HasValue)
+                                {
+                                    Bucket pb = this.GetBucket(pbi.Value);
+                                    pb.Reference = pbi.Value;
+                                    this.SetBucket(pbi.Value, pb);
+                                }
+                                return true;
+                            }
+                        }
+                        else
+                        {
+                            if (Value.HasValue)
+                            {
+                                // There is no item with this key in the hashmap, add one anywhere
+                                if (this._CanAdd)
+                                {
+                                    long ni = Bucket.Reference = this._Add();
+                                    Bucket nb = new Bucket()
+                                    {
+                                        Free = false,
+                                        Key = Key,
+                                        Value = Value.Value,
+                                        Reference = ni
+                                    };
+                                    this.SetBucket(ni, nb);
+                                    this.SetBucket(BucketIndex, Bucket); // Make sure to add this item to the chain
+                                    Bucket = nb;
+                                    BucketIndex = ni;
+                                    this._UpdateHeader();
+                                    return true;
+                                }
+                                return false;
+                            }
+                            else
+                            {
+                                // Removing a nonexistant item
+                                return true;
+                            }
+                        }
                     }
                 }
                 else
                 {
-                    // Is this the right bucket?
-                    if (this._KeyHashing.Equal(b.Key, Key))
+                    // Not at the end of a chain
+                    if (Bucket.Free)
                     {
-                        if (add)
+                        // Free buckets should not be in chains
+                        if (pbi.HasValue)
                         {
-                            // Replacing an item
-                            this.Set(ind, new Bucket()
-                            {
-                                Free = false,
-                                Key = Key,
-                                Value = Value.Value,
-                                Reference = b.Reference
-                            });
-                        }
-                        else
-                        {
-                            // Removing an item
-                            this.Set(ind, new Bucket()
-                            {
-                                Free = true,
-                                Reference = b.Reference
-                            });
+                            Bucket pb = this.GetBucket(pbi.Value);
+                            long next = pb.Reference = Bucket.Reference;
+                            this.SetBucket(pbi.Value, pb);
 
-                            // Make sure to close the reference from the previous bucket, if any
-                            if (pind.HasValue)
-                            {
-                                Bucket pb = this.Get(pind.Value);
-                                pb.Reference = b.Reference == ind ? pind.Value : b.Reference;
-                                this.Set(pind.Value, pb);
-                            }
+                            Bucket.Reference = BucketIndex;
+                            this.SetBucket(BucketIndex, Bucket);
 
-                            this._Header.Items--;
-                            this._UpdateHeader();
+                            // Continue on in the chain
+                            BucketIndex = next;
+                            continue;
                         }
-                        return true;
                     }
-                }
-
-                // Traverse the bucket chain
-                if (b.Reference == ind)
-                {
-                    // Bucket chain ended
-                    if (add)
+                    else
                     {
-                        // Add anywhere
-                        if (this._Header.Items < this._Header.Buckets)
+                        // Is this what we are looking for?
+                        if (this._KeyHashing.Equal(Bucket.Key, Key))
                         {
-                            long nind = this._Header.FirstFreeBucket;
-                            this.Set(nind, new Bucket()
+                            if (Value.HasValue)
                             {
-                                Free = false,
-                                Key = Key,
-                                Value = Value.Value,
-                                Reference = nind
-                            });
-
-                            // Make sure the previous bucket knows about this
-                            b.Reference = nind;
-                            this.Set(ind, b);
-
-                            this._Header.Items++;
-                            if (this._Header.Items < this._Header.Buckets)
-                            {
-                                this._Header.FirstFreeBucket = this.SearchFree(nind);
+                                // Modify the item
+                                Bucket.Value = Value.Value;
+                                this.SetBucket(BucketIndex, Bucket);
+                                return true;
                             }
-                            this._UpdateHeader();
-                            return true;
-                        }
-                        return false;
-                    }
-                    return true;
-                }
+                            else
+                            {
+                                // Remove the item
+                                Bucket.Free = true;
+                                this.SetBucket(BucketIndex, Bucket);
+                                this._Remove(BucketIndex);
+                                this._UpdateHeader();
 
-                pind = ind;
-                ind = b.Reference;
+                                // Remove from chain
+                                if (pbi.HasValue)
+                                {
+                                    Bucket pb = this.GetBucket(pbi.Value);
+                                    pb.Reference = Bucket.Reference;
+                                    this.SetBucket(pbi.Value, pb);
+                                }
+                                return true;
+                            }
+                        }
+                    }
+
+                    // Advance to the next item in the chain
+                    BucketIndex = Bucket.Reference;
+                    continue;
+                }
             }
         }
 
         /// <summary>
         /// Gets the bucket that corresponds to the given hash.
         /// </summary>
-        public long GetBucket(BigInt Hash)
+        public long GetBucketIndex(BigInt Hash)
         {
             Header h = this._Header;
             long hashbuckets = h.Buckets - h.CellarBuckets;
@@ -163,17 +229,17 @@ namespace DUIP
         /// <summary>
         /// Gets the bucket whose hash corresponds with the given key.
         /// </summary>
-        public long GetBucket(TKey Key)
+        public long GetBucketIndex(TKey Key)
         {
-            return this.GetBucket(this._KeyHashing.Hash(Key));
+            return this.GetBucketIndex(this._KeyHashing.Hash(Key));
         }
 
         /// <summary>
         /// Retrieves the given bucket.
         /// </summary>
-        public Bucket Get(long Bucket)
+        public Bucket GetBucket(long Bucket)
         {
-            InStream str = this._Data.Read(this.GetOffset(Bucket));
+            InStream str = this._Data.Read(this.GetBucketOffset(Bucket));
             Bucket b = this._BucketSerialization.Deserialize(str);
             str.Finish();
             return b;
@@ -182,18 +248,18 @@ namespace DUIP
         /// <summary>
         /// Sets the given bucket.
         /// </summary>
-        public void Set(long Bucket, Bucket Value)
+        public void SetBucket(long Bucket, Bucket Value)
         {
-            OutStream str = this._Data.Modify(this.GetOffset(Bucket));
+            OutStream str = this._Data.Modify(this.GetBucketOffset(Bucket));
             this._BucketSerialization.Serialize(Value, str);
             str.Finish();
         }
 
         /// <summary>
-        /// Searches for the first free bucket after the given bucket. The search will wrap around to the beginning of the hashmap if needed. This
-        /// method will not exit unless a free bucket is found.
+        /// Searches for the first free or filled (depending on the Free parameter) bucket after the given bucket. The search 
+        /// will wrap around to the beginning of the hashmap if needed. This method will not exit unless a suitable bucket is found.
         /// </summary>
-        public long SearchFree(long Start)
+        public long SearchBucketIndex(long Start, bool Free)
         {
             Start++;
             long tb = this._Header.Buckets;
@@ -204,11 +270,11 @@ namespace DUIP
                 {
                     Start = 0;
                 }
-                InStream str = this._Data.Read(this.GetOffset(Start));
+                InStream str = this._Data.Read(this.GetBucketOffset(Start));
                 while (Start < tb)
                 {
                     Bucket b = this._BucketSerialization.Deserialize(str);
-                    if (b.Free)
+                    if (b.Free == Free)
                     {
                         str.Finish();
                         return Start;
@@ -223,9 +289,55 @@ namespace DUIP
         /// <summary>
         /// Gets the location of the given bucket in the data for the map.
         /// </summary>
-        public long GetOffset(long Bucket)
+        public long GetBucketOffset(long Bucket)
         {
             return Header.Size + this._BucketSerialization.Size.OrExcept * Bucket;
+        }
+
+        /// <summary>
+        /// Gets if a new item can be added.
+        /// </summary>
+        private bool _CanAdd
+        {
+            get
+            {
+                return this._Header.Items < this._Header.Buckets;
+            }
+        }
+
+        /// <summary>
+        /// Gets a free bucket that can be used to add an item. Modifies (but does not update) the header to reflect
+        /// this bucket as used.
+        /// </summary>
+        private long _Add()
+        {
+            this._Header.Items++;
+            long ind = this._Header.FirstFreeBucket;
+            if (this._Header.Items < this._Header.Buckets)
+            {
+                this._Header.FirstFreeBucket = this.SearchBucketIndex(ind, true);
+            }
+            return ind;
+        }
+
+        /// <summary>
+        /// Modifies (but does not update) the header to reflect the given bucket as used.
+        /// </summary>
+        private void _Add(long Bucket)
+        {
+            this._Header.Items++;
+            if (Bucket == this._Header.FirstFreeBucket && this._Header.Items < this._Header.Buckets)
+            {
+                this._Header.FirstFreeBucket = this.SearchBucketIndex(Bucket, true);
+            }
+        }
+
+        /// <summary>
+        /// Modifies (but does not update) the header to reflect the given bucket as free.
+        /// </summary>
+        private void _Remove(long Bucket)
+        {
+            this._Header.Items--;
         }
 
         /// <summary>
@@ -341,9 +453,16 @@ namespace DUIP
             public long CellarBuckets;
 
             /// <summary>
-            /// The index of the first bucket with no contents.
+            /// If the hashmap is not entirely full, this is an index to a free bucket which is likely the start of a cluster of
+            /// free buckets. 
             /// </summary>
             public long FirstFreeBucket;
+
+            /// <summary>
+            /// If the hashmap is not entirely empty, this is an index to a filled bucket which is likely the start of a cluster of
+            /// filled buckets. 
+            /// </summary>
+            public long FirstFilledBucket;
 
             /// <summary>
             /// The amount of items in the hashmap.
@@ -358,6 +477,7 @@ namespace DUIP
                 Stream.WriteLong(this.Buckets);
                 Stream.WriteLong(this.CellarBuckets);
                 Stream.WriteLong(this.FirstFreeBucket);
+                Stream.WriteLong(this.FirstFilledBucket);
                 Stream.WriteLong(this.Items);
             }
 
@@ -371,6 +491,7 @@ namespace DUIP
                     Buckets = Stream.ReadLong(),
                     CellarBuckets = Stream.ReadLong(),
                     FirstFreeBucket = Stream.ReadLong(),
+                    FirstFilledBucket = Stream.ReadLong(),
                     Items = Stream.ReadLong()
                 };
             }
@@ -378,7 +499,7 @@ namespace DUIP
             /// <summary>
             /// The size in bytes of the header.
             /// </summary>
-            public const long Size = 8 * 4;
+            public const long Size = 8 * 5;
         }
 
         /// <summary>
