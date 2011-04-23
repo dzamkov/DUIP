@@ -18,7 +18,10 @@ namespace DUIP
         /// Tries setting the value associated with a key. Returns true on success (Looking up the key will return
         /// the new value) or false on failure.
         /// </summary>
-        public abstract bool Modify(TKey Key, T Value);
+        public virtual bool Modify(TKey Key, T Value)
+        {
+            return false;
+        }
 
         /// <summary>
         /// Gets if this map is immutable, immutable maps can not have the values for their keys changed.
@@ -32,7 +35,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Gets or sets the value for a key.
+        /// Gets or tries setting the value for a key.
         /// </summary>
         public T this[TKey Key]
         {
@@ -45,6 +48,45 @@ namespace DUIP
                 this.Modify(Key, value);
             }
         }
+
+        /// <summary>
+        /// Applies a mapping to all items in an enumerable sequence.
+        /// </summary>
+        public IEnumerable<T> Apply(IEnumerable<TKey> Source)
+        {
+            return
+                from k in Source
+                select this.Lookup(k);
+        }
+    }
+
+    /// <summary>
+    /// A map created from a function delegate.
+    /// </summary>
+    public sealed class FuncMap<TKey, T> : Map<TKey, T>
+    {
+        public FuncMap(Func<TKey, T> Func)
+        {
+            this._Func = Func;
+        }
+
+        /// <summary>
+        /// Gets the mapping function used.
+        /// </summary>
+        public Func<TKey, T> Func
+        {
+            get
+            {
+                return this._Func;
+            }
+        }
+
+        public override T Lookup(TKey Key)
+        {
+            return this._Func(Key);
+        }
+
+        private Func<TKey, T> _Func;
     }
 
     /// <summary>
@@ -65,7 +107,7 @@ namespace DUIP
         /// Tries getting an iterator for the non-nothing values in this map, or returns null
         /// if this is not possible. The items may be given in any order.
         /// </summary>
-        public virtual IIterator<KeyValuePair<TKey, T>> Items
+        public virtual IEnumerable<KeyValuePair<TKey, T>> Items
         {
             get
             {

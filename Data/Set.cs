@@ -30,7 +30,7 @@ namespace DUIP
         /// Tries getting an iterator for the items in the set, or returns null if this is not
         /// possible. The items may be given in any order.
         /// </summary>
-        public virtual IIterator<T> Items
+        public virtual IEnumerable<T> Items
         {
             get
             {

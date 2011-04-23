@@ -384,7 +384,7 @@ namespace DUIP
         /// <summary>
         /// Gets the amount of items in the map.
         /// </summary>
-        public long Items
+        public long ItemCount
         {
             get
             {
@@ -395,7 +395,7 @@ namespace DUIP
         /// <summary>
         /// Gets the amount of buckets for the map. The amount of items can never exceed this number.
         /// </summary>
-        public long Buckets
+        public long BucketCount
         {
             get
             {
@@ -617,6 +617,104 @@ namespace DUIP
                 private ISerialization<TKey> _KeySerialization;
                 private ISerialization<T> _ValueSerialization;
                 private long _Size;
+            }
+        }
+
+        /// <summary>
+        /// An item used for iteration.
+        /// </summary>
+        public struct Item
+        {
+            /// <summary>
+            /// Gets the key for the item.
+            /// </summary>
+            public TKey Key
+            {
+                get
+                {
+                    return Bucket.Key;
+                }
+            }
+
+            /// <summary>
+            /// Gets the value for the item.
+            /// </summary>
+            public T Value
+            {
+                get
+                {
+                    return Bucket.Value;
+                }
+            }
+
+            /// <summary>
+            /// The index of the bucket this item is in.
+            /// </summary>
+            public long BucketIndex;
+
+            /// <summary>
+            /// The data for the bucket this item is in.
+            /// </summary>
+            public Bucket Bucket;
+        }
+
+        /// <summary>
+        /// Gets the items (with associated bucket information) in this hashmap.
+        /// </summary>
+        public IEnumerable<Item> BucketItems
+        {
+            get
+            {
+                long cur = this._Header.FirstFilledBucket;
+                long end = cur;
+                InStream str = this._Data.Read(this.GetBucketOffset(cur));
+
+                try
+                {
+                    while (true)
+                    {
+                        // Get bucket
+                        long bi = cur;
+                        Bucket b = this._BucketSerialization.Deserialize(str);
+                        if (!b.Free)
+                        {
+                            yield return new Item()
+                            {
+                                BucketIndex = bi,
+                                Bucket = b
+                            };
+                        }
+
+                        // Prepare for reading next bucket
+                        cur++;
+                        if (cur == this.BucketCount)
+                        {
+                            cur = 0;
+                            str.Finish();
+                            str = this._Data.Read(this.GetBucketOffset(cur));
+                        }
+
+                        // Exit if needed
+                        if (cur == end)
+                        {
+                            yield break;
+                        }
+                    }
+                }
+                finally
+                {
+                    str.Finish();
+                }
+            }
+        }
+
+        public override IEnumerable<KeyValuePair<TKey, T>> Items
+        {
+            get
+            {
+                return
+                    from i in this.BucketItems
+                    select new KeyValuePair<TKey, T>(i.Key, i.Value);
             }
         }
 

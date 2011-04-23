@@ -50,7 +50,6 @@
     <Compile Include="Data\Allocator.cs" />
     <Compile Include="Data\Data.cs" />
     <Compile Include="Data\HashMap.cs" />
-    <Compile Include="Data\Iterator.cs" />
     <Compile Include="Data\Set.cs" />
     <Compile Include="Util\Equality.cs" />
     <Compile Include="Data\File.cs" />
