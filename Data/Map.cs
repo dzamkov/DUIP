@@ -18,7 +18,18 @@ namespace DUIP
         /// Tries setting the value associated with a key. Returns true on success (Looking up the key will return
         /// the new value) or false on failure.
         /// </summary>
-        public abstract bool Set(TKey Key, T Value);
+        public abstract bool Modify(TKey Key, T Value);
+
+        /// <summary>
+        /// Gets if this map is immutable, immutable maps can not have the values for their keys changed.
+        /// </summary>
+        public virtual bool Immutable
+        {
+            get
+            {
+                return true;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the value for a key.
@@ -31,7 +42,7 @@ namespace DUIP
             }
             set
             {
-                this.Set(Key, value);
+                this.Modify(Key, value);
             }
         }
     }
@@ -47,7 +58,19 @@ namespace DUIP
         /// </summary>
         public bool Remove(TKey Key)
         {
-            return this.Set(Key, Maybe<T>.Nothing);
+            return this.Modify(Key, Maybe<T>.Nothing);
+        }
+
+        /// <summary>
+        /// Tries getting an iterator for the non-nothing values in this map, or returns null
+        /// if this is not possible. The items may be given in any order.
+        /// </summary>
+        public virtual IIterator<KeyValuePair<TKey, T>> Items
+        {
+            get
+            {
+                return null;
+            }
         }
     }
 }

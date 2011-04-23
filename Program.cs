@@ -32,7 +32,7 @@ namespace DUIP
 
             for (int t = 0; t < 100; t++)
             {
-                hm.Set(new ID(0, 0, 0, t), new ID(97, 98, 99, t));
+                hm.Modify(new ID(0, 0, 0, t), new ID(97, 98, 99, t));
             }
             ID id = hm.Lookup(new ID(0, 0, 0, 49)).OrExcept;
 

@@ -14,6 +14,14 @@ namespace DUIP
 
         }
 
+        public override bool Immutable
+        {
+            get
+            {
+                return false;
+            }
+        }
+
         public override Maybe<T> Lookup(TKey Key)
         {
             long bi; Bucket b;
@@ -44,10 +52,10 @@ namespace DUIP
             }
         }
 
-        public override bool Set(TKey Key, Maybe<T> Value)
+        public override bool Modify(TKey Key, Maybe<T> Value)
         {
             long bi; Bucket b;
-            return this.Set(this._KeyHashing.Hash(Key), Key, Value, out bi, out b);
+            return this.Modify(this._KeyHashing.Hash(Key), Key, Value, out bi, out b);
         }
 
         /// <summary>
@@ -56,7 +64,7 @@ namespace DUIP
         /// <param name="Hash">The hash of the key using the key hashing method for the hashmap.</param>
         /// <param name="BucketIndex">The index of the bucket in which the item was set. This is undefined if the item was removed.</param>
         /// <param name="Bucket">The contents for the bucket in which the item was set. This is undefined if the item was removed.</param>
-        public bool Set(BigInt Hash, TKey Key, Maybe<T> Value, out long BucketIndex, out Bucket Bucket)
+        public bool Modify(BigInt Hash, TKey Key, Maybe<T> Value, out long BucketIndex, out Bucket Bucket)
         {
             BucketIndex = this.GetBucketIndex(Hash);
             Maybe<long> pbi = Maybe<long>.Nothing; // Index of the previous bucket in the chain
@@ -217,6 +225,18 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Removes the item at the bucket with the given bucket index.
+        /// </summary>
+        public void RemoveBucket(long BucketIndex, Bucket Bucket)
+        {
+            Bucket.Free = true;
+            this.SetBucket(BucketIndex, Bucket);
+
+            this._Remove(BucketIndex);
+            this._UpdateHeader();
+        }
+
+        /// <summary>
         /// Gets the bucket that corresponds to the given hash.
         /// </summary>
         public long GetBucketIndex(BigInt Hash)
@@ -237,9 +257,9 @@ namespace DUIP
         /// <summary>
         /// Retrieves the given bucket.
         /// </summary>
-        public Bucket GetBucket(long Bucket)
+        public Bucket GetBucket(long BucketIndex)
         {
-            InStream str = this._Data.Read(this.GetBucketOffset(Bucket));
+            InStream str = this._Data.Read(this.GetBucketOffset(BucketIndex));
             Bucket b = this._BucketSerialization.Deserialize(str);
             str.Finish();
             return b;
@@ -248,9 +268,9 @@ namespace DUIP
         /// <summary>
         /// Sets the given bucket.
         /// </summary>
-        public void SetBucket(long Bucket, Bucket Value)
+        public void SetBucket(long BucketIndex, Bucket Value)
         {
-            OutStream str = this._Data.Modify(this.GetBucketOffset(Bucket));
+            OutStream str = this._Data.Modify(this.GetBucketOffset(BucketIndex));
             this._BucketSerialization.Serialize(Value, str);
             str.Finish();
         }
@@ -627,5 +647,91 @@ namespace DUIP
         private Header _Header;
         private ISerialization<Bucket> _BucketSerialization;
         private IHashing<TKey> _KeyHashing;
+    }
+
+    /// <summary>
+    /// A map that uses two hashmaps while transferings items from the Secondary hashmap
+    /// to the Primary hashmap. The hashing method used for the two maps should be identical.
+    /// </summary>
+    public class TransferHashMap<TKey, T> : PartialMap<TKey, T>
+    {
+        public TransferHashMap(HashMap<TKey, T> Primary, HashMap<TKey, T> Secondary)
+        {
+            this._Primary = Primary;
+            this._Secondary = Secondary;
+        }
+
+        public override bool Immutable
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        public override Maybe<T> Lookup(TKey Key)
+        {
+            BigInt hash = this._Primary.KeyHashing.Hash(Key);
+
+            long sbi, pbi; HashMap<TKey, T>.Bucket sb, pb;
+            Maybe<T> sec = this._Secondary.Lookup(hash, Key, out sbi, out sb);
+            Maybe<T> pri = this._Primary.Lookup(hash, Key, out pbi, out pb);
+
+            if (!sec.HasValue)
+            {
+                return pri;
+            }
+            if (!pri.HasValue)
+            {
+                if (this._Primary.Modify(hash, Key, sec, out pbi, out pb))
+                {
+                    pri = sec;
+                    this._Secondary.RemoveBucket(sbi, sb);
+                }
+            }
+            else
+            {
+                this._Secondary.RemoveBucket(sbi, sb);
+            }
+            
+            return pri;
+        }
+
+        public override bool Modify(TKey Key, Maybe<T> Value)
+        {
+            BigInt hash = this._Primary.KeyHashing.Hash(Key);
+
+            long sbi, pbi; HashMap<TKey, T>.Bucket sb, pb;
+            this._Secondary.Modify(hash, Key, Maybe<T>.Nothing, out sbi, out sb);
+            return this._Primary.Modify(hash, Key, Value, out pbi, out pb);
+        }
+
+        /// <summary>
+        /// Gets the primary hashmap. Overtime, items will transfered from the secondary hashmap
+        /// to this hashmap. New items will be created with this hashmap.
+        /// </summary>
+        public HashMap<TKey, T> Primary
+        {
+            get
+            {
+                return this._Primary;
+            }
+        }
+
+        /// <summary>
+        /// Gets the secondary hashmap. Overtime, items will be removed from this hashmap and added
+        /// to the primary hashmap. No new items will be added to this hashmap unless it is explicitly
+        /// used.
+        /// </summary>
+        public HashMap<TKey, T> Secondary
+        {
+            get
+            {
+                return this._Secondary;
+            }
+        }
+
+        private HashMap<TKey, T> _Primary;
+        private HashMap<TKey, T> _Secondary;
     }
 }
