@@ -14,7 +14,7 @@ namespace DUIP
         /// Allocates data with the given size. The resulting data will be null if there is no
         /// space for allocation available.
         /// </summary>
-        public abstract T Allocate(long Size, out Data Data);
+        public abstract Data Allocate(long Size, out T Pointer);
 
         /// <summary>
         /// Gets the maximum size for which an allocation can succeed.
@@ -33,16 +33,16 @@ namespace DUIP
         /// </summary>
         public virtual T Store(ref Data Data)
         {
-            Data k;
-            T r = this.Allocate(Data.Length, out k);
+            T ptr;
+            Data k = this.Allocate(Data.Length, out ptr);
             if (k != null)
             {
                 k.Modify().Write(Data.Read());
                 Data = k;
-                return r;
+                return ptr;
             }
             Data = null;
-            return r;
+            return ptr;
         }
 
         /// <summary>
@@ -99,18 +99,16 @@ namespace DUIP
             }
         }
 
-        public override int Allocate(long Size, out Data Data)
+        public override Data Allocate(long Size, out int Pointer)
         {
-            int rand;
             Path fpath;
             do
             {
-                rand = this._Random.Next(int.MinValue, int.MaxValue);
-                fpath = this._GetFile(rand);
+                Pointer = this._Random.Next(int.MinValue, int.MaxValue);
+                fpath = this._GetFile(Pointer);
             }
             while (fpath.FileExists);
-            Data = fpath.Create(Size);
-            return rand;
+            return fpath.Create(Size);
         }
 
         public override Data Lookup(int Pointer)

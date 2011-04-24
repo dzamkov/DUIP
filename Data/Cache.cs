@@ -16,6 +16,16 @@ namespace DUIP
             throw new NotImplementedException();
         }
 
+        public override bool Immutable
+        {
+            get
+            {
+                return false;
+            }
+        }
+
         private Allocator<TPtr> _Allocator;
+        private ISerialization<TPtr> _PointerSerialization;
+        private ISerialization<TRef> _ReferenceSerialization;
     }
 }

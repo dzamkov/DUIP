@@ -32,7 +32,8 @@ namespace DUIP
                 BucketSerialization = HashMap<ID, ID>.Bucket.CreateSerialization(ID.Serialization, ID.Serialization),
                 KeyHashing = ID.Hashing
             };
-            Data hmdata; int r = alloc.Allocate(hmplan.TotalSize, out hmdata);
+            int hmptr;
+            Data hmdata = alloc.Allocate(hmplan.TotalSize, out hmptr);
 
             HashMap<ID, ID> hm = HashMap<ID, ID>.Create(hmdata, hmplan);
 

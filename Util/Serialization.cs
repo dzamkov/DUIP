@@ -25,4 +25,124 @@ namespace DUIP
         /// </summary>
         Maybe<long> Size { get; }
     }
+
+    /// <summary>
+    /// Serialization method for primitive types.
+    /// </summary>
+    public class PrimitiveSerialization : 
+        ISerialization<bool>,
+        ISerialization<byte>,
+        ISerialization<int>,
+        ISerialization<uint>,
+        ISerialization<long>,
+        ISerialization<ulong>
+    {
+        void ISerialization<bool>.Serialize(bool Object, OutStream Stream)
+        {
+            Stream.WriteBool(Object);
+        }
+
+        bool ISerialization<bool>.Deserialize(InStream Stream)
+        {
+            return Stream.ReadBool();
+        }
+
+        Maybe<long> ISerialization<bool>.Size
+        {
+            get
+            {
+                return 1;
+            }
+        }
+
+        void ISerialization<byte>.Serialize(byte Object, OutStream Stream)
+        {
+            Stream.WriteByte(Object);
+        }
+
+        byte ISerialization<byte>.Deserialize(InStream Stream)
+        {
+            return Stream.ReadByte();
+        }
+
+        Maybe<long> ISerialization<byte>.Size
+        {
+            get
+            {
+                return 1;
+            }
+        }
+
+        void ISerialization<int>.Serialize(int Object, OutStream Stream)
+        {
+            Stream.WriteInt(Object);
+        }
+
+        int ISerialization<int>.Deserialize(InStream Stream)
+        {
+            return Stream.ReadInt();
+        }
+
+        Maybe<long> ISerialization<int>.Size
+        {
+            get
+            {
+                return 4;
+            }
+        }
+
+        void ISerialization<uint>.Serialize(uint Object, OutStream Stream)
+        {
+            Stream.WriteInt((int)Object);
+        }
+
+        uint ISerialization<uint>.Deserialize(InStream Stream)
+        {
+            return (uint)Stream.ReadInt();
+        }
+
+        Maybe<long> ISerialization<uint>.Size
+        {
+            get
+            {
+                return 4;
+            }
+        }
+
+        void ISerialization<long>.Serialize(long Object, OutStream Stream)
+        {
+            Stream.WriteLong(Object);
+        }
+
+        long ISerialization<long>.Deserialize(InStream Stream)
+        {
+            return Stream.ReadLong();
+        }
+
+        Maybe<long> ISerialization<long>.Size
+        {
+            get
+            {
+                return 8;
+            }
+        }
+
+        void ISerialization<ulong>.Serialize(ulong Object, OutStream Stream)
+        {
+            Stream.WriteLong((long)Object);
+        }
+
+        ulong ISerialization<ulong>.Deserialize(InStream Stream)
+        {
+            return (ulong)Stream.ReadLong();
+        }
+
+        Maybe<long> ISerialization<ulong>.Size
+        {
+            get
+            {
+                return 8;
+            }
+        }
+    }
 }
