@@ -25,16 +25,21 @@ namespace DUIP
             Path data = Path.WorkingDirectory["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
 
-            int r;
-            HashMap<ID, ID> hm = HashMap<ID, ID>.Create(alloc, 100, 10, 
-                HashMap<ID, ID>.Bucket.CreateSerialization(ID.Serialization, ID.Serialization),
-                ID.Hashing, out r);
+            HashMap<ID, ID>.Plan hmplan = new HashMap<ID, ID>.Plan()
+            {
+                Buckets = 100,
+                CellarBuckets = 10,
+                BucketSerialization = HashMap<ID, ID>.Bucket.CreateSerialization(ID.Serialization, ID.Serialization),
+                KeyHashing = ID.Hashing
+            };
+            Data hmdata; int r = alloc.Allocate(hmplan.TotalSize, out hmdata);
+
+            HashMap<ID, ID> hm = HashMap<ID, ID>.Create(hmdata, hmplan);
 
             for (int t = 0; t < 100; t++)
             {
                 hm.Modify(new ID(0, 0, 0, t), new ID(97, 98, 99, t));
             }
-            ID id = hm.Lookup(new ID(0, 0, 0, 49)).OrExcept;
 
             Console.Title = "DUIP";
             new RootInterface().Display();

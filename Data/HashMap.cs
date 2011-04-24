@@ -416,41 +416,24 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Creates an empty hashmap with the given allocator.
+        /// Initializes an empty hashmap in the given data. The size of the data should be at or greater than the required
+        /// size for the hashmap as computed by the plan.
         /// </summary>
-        /// <param name="Buckets">The maximum amount of items the hash map can store. Proportional to the size of the required data.</param>
-        /// <param name="CellarBuckets">The amount of buckets to be used exclusively in the case of hash collisions.</param>
-        public static HashMap<TKey, T> Create<TRef>(
-            Allocator<TRef> Allocator,
-            long Buckets,
-            long CellarBuckets,
-            ISerialization<Bucket> BucketSerialization,
-            IHashing<TKey> KeyHashing,
-            out TRef Ref)
+        public static HashMap<TKey, T> Create(Data Data, Plan Plan)
         {
-            // Allocate required data
-            long headersize = Header.Size;
-            long bucketsize = BucketSerialization.Size.OrExcept;
-            long totalsize = headersize + Buckets * bucketsize;
-            Data data; Ref = Allocator.Allocate(totalsize, out data);
-            if (data == null)
-            {
-                return null;
-            }
-
             // Fill data with an empty map
             Header h = new Header()
             {
-                Buckets = Buckets,
-                CellarBuckets = CellarBuckets,
+                Buckets = Plan.Buckets,
+                CellarBuckets = Plan.CellarBuckets,
                 Items = 0,
                 FirstFreeBucket = 0
             };
-            OutStream os = data.Modify();
+            OutStream os = Data.Modify();
             h.Write(os);
-            for (long t = 0; t < Buckets; t++)
+            for (long t = 0; t < Plan.Buckets; t++)
             {
-                BucketSerialization.Serialize(new Bucket()
+                Plan.BucketSerialization.Serialize(new Bucket()
                     {
                         Free = true,
                         Reference = t
@@ -461,12 +444,52 @@ namespace DUIP
             // Create an interface to the map
             HashMap<TKey, T> map = new HashMap<TKey, T>()
             {
-                _BucketSerialization = BucketSerialization,
-                _Data = data,
+                _BucketSerialization = Plan.BucketSerialization,
+                _Data = Data,
                 _Header = h,
-                _KeyHashing = KeyHashing
+                _KeyHashing = Plan.KeyHashing
             };
             return map;
+        }
+
+        /// <summary>
+        /// Details needed for the creation of a hashmap.
+        /// </summary>
+        public struct Plan
+        {
+            /// <summary>
+            /// The amount of buckets to be used for the hashmap. This is the maximum amount of items
+            /// the hashmap can contain.
+            /// </summary>
+            public long Buckets;
+
+            /// <summary>
+            /// The amount of buckets to be used exclusively for collision resolution. With the coalesced hashing
+            /// scheme, it is useful to reserve some buckets in the cellar if there is expected to be a high load factor
+            /// to reduce the chances of chains coalescing.
+            /// </summary>
+            public long CellarBuckets;
+
+            /// <summary>
+            /// Method used to serialize a bucket in the hashmap. This must have a fixed size.
+            /// </summary>
+            public ISerialization<Bucket> BucketSerialization;
+
+            /// <summary>
+            /// Method used to hash and equate keys.
+            /// </summary>
+            public IHashing<TKey> KeyHashing;
+
+            /// <summary>
+            /// Gets the total size of the data needed by the hashmap described with this plan.
+            /// </summary>
+            public long TotalSize
+            {
+                get
+                {
+                    return Header.Size + this.BucketSerialization.Size.OrExcept * this.Buckets;
+                }
+            }
         }
 
         /// <summary>

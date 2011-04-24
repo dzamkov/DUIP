@@ -9,8 +9,12 @@ namespace DUIP
     /// </summary>
     /// <typeparam name="TRef">A reference to data in the cache.</typeparam>
     /// <typeparam name="TPtr">A pointer to data in the allocator.</typeparam>
-    public class Cache<TRef, TPtr> : Map<TRef, Data>
+    public class Cache<TRef, TPtr> : PartialMap<TRef, Data>
     {
+        public override Maybe<Data> Lookup(TRef Key)
+        {
+            throw new NotImplementedException();
+        }
 
         private Allocator<TPtr> _Allocator;
     }

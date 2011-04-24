@@ -17,6 +17,17 @@ namespace DUIP
         public abstract T Allocate(long Size, out Data Data);
 
         /// <summary>
+        /// Gets the maximum size for which an allocation can succeed.
+        /// </summary>
+        public virtual long MaxSize
+        {
+            get
+            {
+                return long.MaxValue;
+            }
+        }
+
+        /// <summary>
         /// Stores the provided data somewhere in the allocator and gives a pointer to the data in
         /// the allocator. The resulting data will be null if there is no space for allocation available.
         /// </summary>
@@ -35,7 +46,8 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Gets the data at the given pointer.
+        /// Gets the data at the given pointer. The size of the returned data may be larger than the size of the allocated
+        /// data, in which case, the extra bytes are safe to use.
         /// </summary>
         public abstract Data Lookup(T Pointer);
 
@@ -103,7 +115,7 @@ namespace DUIP
 
         public override Data Lookup(int Pointer)
         {
-            this._GetFile(Pointer).Open();
+            return this._GetFile(Pointer).Open();
         }
 
         public override void Deallocate(int Pointer)
