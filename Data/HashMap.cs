@@ -337,27 +337,39 @@ namespace DUIP
             {
                 this._Header.FirstFreeBucket = this.SearchBucketIndex(ind, true);
             }
+            if (this._Header.Items == 0)
+            {
+                this._Header.FirstFilledBucket = ind;
+            }
             return ind;
         }
 
         /// <summary>
         /// Modifies (but does not update) the header to reflect the given bucket as used.
         /// </summary>
-        private void _Add(long Bucket)
+        private void _Add(long BucketIndex)
         {
             this._Header.Items++;
-            if (Bucket == this._Header.FirstFreeBucket && this._Header.Items < this._Header.Buckets)
+            if (BucketIndex == this._Header.FirstFreeBucket && this._Header.Items < this._Header.Buckets)
             {
-                this._Header.FirstFreeBucket = this.SearchBucketIndex(Bucket, true);
+                this._Header.FirstFreeBucket = this.SearchBucketIndex(BucketIndex, true);
+            }
+            if (this._Header.Items == 0)
+            {
+                this._Header.FirstFilledBucket = BucketIndex;
             }
         }
 
         /// <summary>
         /// Modifies (but does not update) the header to reflect the given bucket as free.
         /// </summary>
-        private void _Remove(long Bucket)
+        private void _Remove(long BucketIndex)
         {
             this._Header.Items--;
+            if (this._Header.FirstFilledBucket == BucketIndex && this._Header.Items > 0)
+            {
+                this._Header.FirstFilledBucket = this.SearchBucketIndex(BucketIndex, false);
+            }
         }
 
         /// <summary>

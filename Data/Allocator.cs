@@ -7,8 +7,8 @@ namespace DUIP
     /// <summary>
     /// A representation of storage space that allows the allocation and deallocation of fixed-size mutable data.
     /// </summary>
-    /// <typeparam name="T">A reference to allocated data in the allocator.</typeparam>
-    public abstract class Allocator<T> : Store<T>
+    /// <typeparam name="T">A pointer to allocated data in the allocator.</typeparam>
+    public abstract class Allocator<T>
     {
         /// <summary>
         /// Allocates data with the given size. The resulting data will be null if there is no
@@ -17,7 +17,7 @@ namespace DUIP
         public abstract T Allocate(long Size, out Data Data);
 
         /// <summary>
-        /// Stores the provided data somewhere in the allocator and gives a reference to the data in
+        /// Stores the provided data somewhere in the allocator and gives a pointer to the data in
         /// the allocator. The resulting data will be null if there is no space for allocation available.
         /// </summary>
         public virtual T Store(ref Data Data)
@@ -35,10 +35,15 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Deallocates the data with the given reference. After this is called, the corresponding data
+        /// Gets the data at the given pointer.
+        /// </summary>
+        public abstract Data Lookup(T Pointer);
+
+        /// <summary>
+        /// Deallocates the data with the given pointer. After this is called, the corresponding data
         /// may no longer be used.
         /// </summary>
-        public abstract void Deallocate(T Reference);
+        public abstract void Deallocate(T Pointer);
     }
 
     /// <summary>
@@ -96,14 +101,14 @@ namespace DUIP
             return rand;
         }
 
-        public override Data Lookup(int Reference)
+        public override Data Lookup(int Pointer)
         {
-            return this._GetFile(Reference).Open();
+            this._GetFile(Pointer).Open();
         }
 
-        public override void Deallocate(int Reference)
+        public override void Deallocate(int Pointer)
         {
-            this._GetFile(Reference).Delete();
+            this._GetFile(Pointer).Delete();
         }
 
         /// <summary>

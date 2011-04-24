@@ -163,6 +163,17 @@ namespace DUIP
             return this._Primary.Modify(Key, Value);
         }
 
+        public override IEnumerable<KeyValuePair<TKey, T>> Items
+        {
+            get
+            {
+                return this._Primary.Items.Concat(
+                    from skvp in this._Secondary.Items
+                    where this._Primary.Lookup(skvp.Key).IsNothing
+                    select skvp);
+            }
+        }
+
         /// <summary>
         /// Gets the primary map, the map to which items are transfered. All new items will be added to
         /// this map.

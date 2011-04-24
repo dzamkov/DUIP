@@ -48,12 +48,12 @@
     <Compile Include="Core\Void.cs" />
     <Compile Include="Core\ID.cs" />
     <Compile Include="Data\Allocator.cs" />
+    <Compile Include="Data\Cache.cs" />
     <Compile Include="Data\Data.cs" />
     <Compile Include="Data\HashMap.cs" />
     <Compile Include="Data\Set.cs" />
     <Compile Include="Util\Equality.cs" />
     <Compile Include="Data\File.cs" />
-    <Compile Include="Data\FileStore.cs" />
     <Compile Include="Data\Memory.cs" />
     <Compile Include="Data\Map.cs" />
     <Compile Include="Util\Math\BigInt.cs" />
@@ -61,7 +61,6 @@
     <Compile Include="Util\Serialization.cs" />
     <Compile Include="Data\Stream.cs" />
     <Compile Include="Net\Network.cs" />
-    <Compile Include="Data\Store.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Util\Query.cs" />
     <Compile Include="Net\UDP.cs" />
