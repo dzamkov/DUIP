@@ -7,22 +7,17 @@ namespace DUIP
     /// <summary>
     /// An implementation of a hashed map contained within mutable data.
     /// </summary>
-    public class HashMap<TKey, T> : PartialMap<TKey, T>
+    public class HashMap<TKey, T>
     {
         private HashMap()
         {
 
         }
 
-        public override bool Immutable
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        public override Maybe<T> Lookup(TKey Key)
+        /// <summary>
+        /// Looks up an item in the map.
+        /// </summary>
+        public Maybe<T> Lookup(TKey Key)
         {
             long bi; Bucket b;
             return this.Lookup(this._KeyHashing.Hash(Key), Key, out bi, out b);
@@ -52,7 +47,10 @@ namespace DUIP
             }
         }
 
-        public override bool Modify(TKey Key, Maybe<T> Value)
+        /// <summary>
+        /// Sets, creates, or removes an item with the given key and value.
+        /// </summary>
+        public bool Modify(TKey Key, Maybe<T> Value)
         {
             long bi; Bucket b;
             return this.Modify(this._KeyHashing.Hash(Key), Key, Value, out bi, out b);
@@ -696,7 +694,7 @@ namespace DUIP
         /// <summary>
         /// Gets the items (with associated bucket information) in this hashmap.
         /// </summary>
-        public IEnumerable<Item> BucketItems
+        public IEnumerable<Item> Items
         {
             get
             {
@@ -740,16 +738,6 @@ namespace DUIP
                 {
                     str.Finish();
                 }
-            }
-        }
-
-        public override IEnumerable<KeyValuePair<TKey, T>> Items
-        {
-            get
-            {
-                return
-                    from i in this.BucketItems
-                    select new KeyValuePair<TKey, T>(i.Key, i.Value);
             }
         }
 
