@@ -232,6 +232,15 @@ namespace DUIP.Lang.Parse
             }
         }
 
+        /// <summary>
+        /// Creates a parser which requires an object from this and another parser immediately following in order to
+        /// accept text.
+        /// </summary>
+        public Parser<Tuple<T, TB>> Concat<TB>(Parser<TB> Other)
+        {
+            return new ConcatParser<T, TB>(this, Other);
+        }
+
         public static Parser<T> operator +(Parser<T> Primary, Parser<T> Secondary)
         {
             return new UnionParser<T>(Primary, Secondary);
@@ -488,6 +497,76 @@ namespace DUIP.Lang.Parse
 
         private Parser<T> _Primary;
         private Parser<T> _Secondary;
+    }
+
+    /// <summary>
+    /// A heterogeneous structure of two unnamed items.
+    /// </summary>
+    public struct Tuple<TA, TB>
+    {
+        public Tuple(TA A, TB B)
+        {
+            this.A = A;
+            this.B = B;
+        }
+
+        public TA A;
+        public TB B;
+    }
+
+    /// <summary>
+    /// A parser that accepts two parsed objects in series.
+    /// </summary>
+    public class ConcatParser<TA, TB> : Parser<Tuple<TA, TB>>
+    {
+        public ConcatParser(Parser<TA> A, Parser<TB> B)
+        {
+            this._A = A;
+            this._B = B;
+        }
+
+        /// <summary>
+        /// The parser used for the first part of this parser.
+        /// </summary>
+        public Parser<TA> A
+        {
+            get
+            {
+                return this._A;
+            }
+        }
+
+        /// <summary>
+        /// The parser used for the second part of this parser. Will be called only be called
+        /// if a match for A is found.
+        /// </summary>
+        public Parser<TB> B
+        {
+            get
+            {
+                return this._B;
+            }
+        }
+
+        public override bool Accept(ref Text Text, ref Tuple<TA, TB> Object)
+        {
+            Text o = Text;
+            TA obja = default(TA);
+            TB objb = default(TB);
+            if (this._A.Accept(ref Text, ref obja))
+            {
+                if (this._B.Accept(ref Text, ref objb))
+                {
+                    Object = new Tuple<TA, TB>(obja, objb);
+                    return true;
+                }
+            }
+            Text = o;
+            return false;
+        }
+
+        private Parser<TA> _A;
+        private Parser<TB> _B;
     }
 
     /// <summary>

@@ -22,9 +22,9 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
-            Parser<List<Void>> tp = Parser.Item("hello").Many + Parser.Item("world").Many;
-            Text test = "worldworldworld";
-            List<Void> res = null;
+            var tp = Parser.Item("hello").Many.Concat(Parser.Item("world").Many);
+            Text test = "helloworldworldworld";
+            var res = default(Tuple<List<Void>, List<Void>>);
             if (tp.Accept(ref test, ref res))
             {
 
