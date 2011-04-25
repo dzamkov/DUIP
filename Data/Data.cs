@@ -29,15 +29,9 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Gets the length, in bytes, of the data.
+        /// Gets the size, in bytes, of the data.
         /// </summary>
-        public virtual long Length
-        {
-            get
-            {
-                return this.Read().BytesAvailable;
-            }
-        }
+        public abstract long Size { get; }
 
         /// <summary>
         /// Creates a stream to modify the data beginning at the given position. The modifing stream may not go over the
@@ -66,5 +60,72 @@ namespace DUIP
                 return true;
             }
         }
+
+        /// <summary>
+        /// Gets a partion of this data.
+        /// </summary>-
+        public PartionData Partion(long Start, long Size)
+        {
+            return new PartionData(this, Start, Size);
+        }
+    }
+
+    /// <summary>
+    /// A data representation of a contiguous subset of some other data.
+    /// </summary>
+    public class PartionData : Data
+    {
+        public PartionData(Data Source, long Start, long Size)
+        {
+            this._Source = Source;
+            this._Start = Start;
+            this._Size = Size;
+        }
+
+        /// <summary>
+        /// Gets the source data for this partion.
+        /// </summary>
+        public Data Source
+        {
+            get
+            {
+                return this._Source;
+            }
+        }
+
+        public override InStream Read()
+        {
+            return this._Source.Read(this._Start);
+        }
+
+        public override InStream Read(long Start)
+        {
+            return this._Source.Read(this._Start + Start);    
+        }
+
+        public override bool Immutable
+        {
+            get
+            {
+                return this._Source.Immutable;
+            }
+        }
+
+        public override long Size
+        {
+            get
+            {
+                return this._Size;
+            }
+        }
+
+        public override OutStream Modify(long Start)
+        {
+            return this._Source.Modify(this._Start + Start);
+        }
+
+        private Data _Source;
+        private long _Start;
+        private long _Size;
     }
 }

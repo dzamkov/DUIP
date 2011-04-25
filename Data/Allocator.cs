@@ -34,10 +34,10 @@ namespace DUIP
         public virtual T Store(ref Data Data)
         {
             T ptr;
-            Data k = this.Allocate(Data.Length, out ptr);
+            Data k = this.Allocate(Data.Size, out ptr);
             if (k != null)
             {
-                k.Modify().Write(Data.Read());
+                k.Modify().Write(Data.Read(), Data.Size);
                 Data = k;
                 return ptr;
             }

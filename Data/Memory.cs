@@ -97,14 +97,6 @@ namespace DUIP
             this._Index += (int)Amount;
         }
 
-        public override long BytesAvailable
-        {
-            get
-            {
-                return (long)(this._Data.Count - this._Index);
-            }
-        }
-
         private List<byte> _Data;
         private int _Index;
     }
@@ -140,7 +132,7 @@ namespace DUIP
             return new MemoryInStream(this._Source, (int)Start);
         }
 
-        public override long Length
+        public override long Size
         {
             get
             {

@@ -304,7 +304,7 @@ namespace DUIP
             }
         }
 
-        public override long Length
+        public override long Size
         {
             get
             {
@@ -335,14 +335,6 @@ namespace DUIP
             public override void Advance(long Amount)
             {
                 this._Position += Amount;
-            }
-
-            public override long BytesAvailable
-            {
-                get
-                {
-                    return this._File._FileStream.Length - this._Position;
-                }
             }
 
             public override void Read(byte[] Buffer, int Offset, int Length)
@@ -483,14 +475,6 @@ namespace DUIP
         public override byte Read()
         {
             return (byte)this._FileStream.ReadByte();
-        }
-
-        public override long BytesAvailable
-        {
-            get
-            {
-                return this._FileStream.Length - this._FileStream.Position;
-            }
         }
 
         public override void Advance(long Amount)
