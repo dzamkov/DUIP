@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using DUIP.Terminal;
+using DUIP.Lang.Parse;
 
 namespace DUIP
 {
@@ -21,6 +22,14 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
+            Parser<List<Void>> tp = Parser.Item("hello").Many + Parser.Item("world").Many;
+            Text test = "worldworldworld";
+            List<Void> res = null;
+            if (tp.Accept(ref test, ref res))
+            {
+
+            }
+
             Path work = Path.WorkingDirectory;
             Path data = Path.WorkingDirectory["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);

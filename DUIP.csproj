@@ -39,6 +39,8 @@
   </Target>
   -->
   <ItemGroup>
+    <Compile Include="Core\Lang\Parse\Parser.cs" />
+    <Compile Include="Core\Lang\Parse\WhiteSpace.cs" />
     <Compile Include="Core\Maybe.cs" />
     <Compile Include="Core\Any.cs" />
     <Compile Include="Core\Bool.cs" />
