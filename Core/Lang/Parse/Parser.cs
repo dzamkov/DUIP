@@ -184,6 +184,15 @@ namespace DUIP.Lang.Parse
         public abstract bool Accept(ref Text Text, ref T Object);
 
         /// <summary>
+        /// Parses the given text, ignoring the result.
+        /// </summary>
+        public bool Accept(ref Text Text)
+        {
+            T dummy = default(T);
+            return this.Accept(ref Text, ref dummy);
+        }
+
+        /// <summary>
         /// Creates a decorated form of this parser that only accepts object that can pass through the given filter.
         /// </summary>
         public Parser<T> Filter(Func<T, bool> IsAllowed)
@@ -241,6 +250,23 @@ namespace DUIP.Lang.Parse
             return new ConcatParser<T, TB>(this, Other);
         }
 
+        /// <summary>
+        /// Creates a parser which requires an object from this and the given text immediately following.
+        /// </summary>
+        public Parser<T> ConcatItem(Text Item)
+        {
+            return this.ConcatIgnore(Parser.Item(Item));
+        }
+
+        /// <summary>
+        /// Creates a parser which requires an object from this and another parser immediately following in order to
+        /// accept text. The result of the second parser is ignored.
+        /// </summary>
+        public Parser<T> ConcatIgnore<TB>(Parser<TB> Other)
+        {
+            return new ConcatParser<T, TB>(this, Other).Map(x => x.A);
+        }
+
         public static Parser<T> operator +(Parser<T> Primary, Parser<T> Secondary)
         {
             return new UnionParser<T>(Primary, Secondary);
@@ -260,6 +286,39 @@ namespace DUIP.Lang.Parse
             get
             {
                 return WhiteSpaceParser.Singleton;
+            }
+        }
+
+        /// <summary>
+        /// Gets a parser for a expression.
+        /// </summary>
+        public static Parser<Expression> Expression
+        {
+            get
+            {
+                return DUIP.Lang.Parse.Expression.ExpressionParser;
+            }
+        }
+
+        /// <summary>
+        /// Gets a parser for a statement.
+        /// </summary>
+        public static Parser<Statement> Statement
+        {
+            get
+            {
+                return DUIP.Lang.Parse.Statement.StatementParser;
+            }
+        }
+
+        /// <summary>
+        /// Gets a parser for a word (valid variable or keyword).
+        /// </summary>
+        public static Parser<Text> Word
+        {
+            get
+            {
+                return WordParser.Singleton;
             }
         }
 

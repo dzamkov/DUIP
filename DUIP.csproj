@@ -39,8 +39,11 @@
   </Target>
   -->
   <ItemGroup>
+    <Compile Include="Core\Lang\Parse\Expression.cs" />
     <Compile Include="Core\Lang\Parse\Parser.cs" />
+    <Compile Include="Core\Lang\Parse\Statement.cs" />
     <Compile Include="Core\Lang\Parse\WhiteSpace.cs" />
+    <Compile Include="Core\Lang\Parse\Word.cs" />
     <Compile Include="Core\Maybe.cs" />
     <Compile Include="Core\Any.cs" />
     <Compile Include="Core\Bool.cs" />

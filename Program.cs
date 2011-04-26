@@ -22,34 +22,9 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
-            var tp = Parser.Item("hello").Many.Concat(Parser.Item("world").Many);
-            Text test = "helloworldworldworld";
-            var res = default(Tuple<List<Void>, List<Void>>);
-            if (tp.Accept(ref test, ref res))
-            {
-
-            }
-
             Path work = Path.WorkingDirectory;
             Path data = Path.WorkingDirectory["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
-
-            HashMap<ID, ID>.Plan hmplan = new HashMap<ID, ID>.Plan()
-            {
-                Buckets = 100,
-                CellarBuckets = 10,
-                BucketSerialization = HashMap<ID, ID>.Bucket.CreateSerialization(ID.Serialization, ID.Serialization),
-                KeyHashing = ID.Hashing
-            };
-            int hmptr;
-            Data hmdata = alloc.Allocate(hmplan.TotalSize, out hmptr);
-
-            HashMap<ID, ID> hm = HashMap<ID, ID>.Create(hmdata, hmplan);
-
-            for (int t = 0; t < 100; t++)
-            {
-                hm.Modify(new ID(0, 0, 0, t), new ID(97, 98, 99, t));
-            }
 
             Console.Title = "DUIP";
             new RootInterface().Display();
@@ -76,7 +51,17 @@ namespace DUIP
 
         protected override void Receive(string Message)
         {
-            this.Send("You said, " + Message + "?");
+            Parser<Expression> p = Parser.Expression;
+            Expression e = null;
+            Text t = Message;
+            if (p.Accept(ref t, ref e))
+            {
+
+            }
+            else
+            {
+                this.Send("Syntax error somewhere");
+            }
         }
 
         protected override void Enter()
