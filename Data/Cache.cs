@@ -10,7 +10,7 @@ namespace DUIP
     /// </summary>
     /// <typeparam name="TRef">A reference to data in the cache.</typeparam>
     /// <typeparam name="TPtr">A pointer to data in the allocator.</typeparam>
-    public class Cache<TRef, TPtr>
+    public class Cache<TRef, TPtr> : IHandle
     {
         private Cache()
         {
@@ -25,6 +25,7 @@ namespace DUIP
             Allocator<TPtr> Allocator, 
             ISerialization<TPtr> PointerSerialization, 
             ISerialization<TRef> ReferenceSerialization,
+            IHashing<TRef> ReferenceHashing,
             long InitialSize)
         {
             throw new NotImplementedException();
@@ -37,39 +38,44 @@ namespace DUIP
         {
             get
             {
-                return this._Allocator;
+                return this._Scheme.Allocator;
             }
         }
 
-        /// <summary>
-        /// Gets the pointer serialization method this cache uses. This serialization
-        /// must have a fixed size.
-        /// </summary>
-        public ISerialization<TPtr> PointerSerialization
+        public Data Source
         {
             get
             {
-                return this._PointerSerialization;
+                return this._Source;
             }
         }
 
-        /// <summary>
-        /// Gets the reference serialization method this cache uses. This serialization
-        /// must have a fixed size.
-        /// </summary>
-        public ISerialization<TRef> ReferenceSerialization
+        public CacheScheme<TRef, TPtr> Scheme
         {
             get
             {
-                return this._ReferenceSerialization;
+                return this._Scheme;
             }
         }
 
-        private Allocator<TPtr> _Allocator;
-        private ISerialization<TPtr> _PointerSerialization;
-        private ISerialization<TRef> _ReferenceSerialization;
-        private TPtr _Primary;
-        private TPtr _Secondary;
+        private Data _Source;
+        private CacheScheme<TRef, TPtr> _Scheme;
+        private HashMap<TRef, TPtr> _PrimaryHashMap;
+        private HashMap<TRef, TPtr> _SecondaryHashMap;
+        private TPtr _PrimaryHashMapPtr;
+        private TPtr _SecondaryHashMapPtr;
         private TRef _Last;
+    }
+
+    /// <summary>
+    /// Scheme information for a cache.
+    /// </summary>
+    public class CacheScheme<TRef, TPtr>
+    {
+        /// <summary>
+        /// The allocator used to store and retreive data.
+        /// </summary>
+        public Allocator<TPtr> Allocator;
+
     }
 }

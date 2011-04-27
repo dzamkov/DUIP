@@ -7,7 +7,7 @@ namespace DUIP
     /// <summary>
     /// An implementation of a hashed map contained within mutable data.
     /// </summary>
-    public class HashMap<TKey, T>
+    public class HashMap<TKey, T> : IHandle
     {
         private HashMap()
         {
@@ -20,7 +20,7 @@ namespace DUIP
         public Maybe<T> Lookup(TKey Key)
         {
             long bi; Bucket b;
-            return this.Lookup(this._KeyHashing.Hash(Key), Key, out bi, out b);
+            return this.Lookup(this._Scheme.KeyHashing.Hash(Key), Key, out bi, out b);
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace DUIP
             while (true)
             {
                 Bucket = this.GetBucket(BucketIndex);
-                if (!Bucket.Free && this._KeyHashing.Equal(Bucket.Key, Key))
+                if (!Bucket.Free && this._Scheme.KeyHashing.Equal(Bucket.Key, Key))
                 {
                     return Bucket.Value;
                 }
@@ -53,7 +53,7 @@ namespace DUIP
         public bool Modify(TKey Key, Maybe<T> Value)
         {
             long bi; Bucket b;
-            return this.Modify(this._KeyHashing.Hash(Key), Key, Value, out bi, out b);
+            return this.Modify(this._Scheme.KeyHashing.Hash(Key), Key, Value, out bi, out b);
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace DUIP
                     }
                     else
                     {
-                        if (this._KeyHashing.Equal(Bucket.Key, Key))
+                        if (this._Scheme.KeyHashing.Equal(Bucket.Key, Key))
                         {
                             if (Value.HasValue)
                             {
@@ -186,7 +186,7 @@ namespace DUIP
                     else
                     {
                         // Is this what we are looking for?
-                        if (this._KeyHashing.Equal(Bucket.Key, Key))
+                        if (this._Scheme.KeyHashing.Equal(Bucket.Key, Key))
                         {
                             if (Value.HasValue)
                             {
@@ -249,7 +249,7 @@ namespace DUIP
         /// </summary>
         public long GetBucketIndex(TKey Key)
         {
-            return this.GetBucketIndex(this._KeyHashing.Hash(Key));
+            return this.GetBucketIndex(this._Scheme.KeyHashing.Hash(Key));
         }
 
         /// <summary>
@@ -257,8 +257,8 @@ namespace DUIP
         /// </summary>
         public Bucket GetBucket(long BucketIndex)
         {
-            InStream str = this._Data.Read(this.GetBucketOffset(BucketIndex));
-            Bucket b = this._BucketSerialization.Deserialize(str);
+            InStream str = this._Source.Read(this.GetBucketOffset(BucketIndex));
+            Bucket b = this._Scheme.BucketSerialization.Deserialize(str);
             str.Finish();
             return b;
         }
@@ -268,8 +268,8 @@ namespace DUIP
         /// </summary>
         public void SetBucket(long BucketIndex, Bucket Value)
         {
-            OutStream str = this._Data.Modify(this.GetBucketOffset(BucketIndex));
-            this._BucketSerialization.Serialize(Value, str);
+            OutStream str = this._Source.Modify(this.GetBucketOffset(BucketIndex));
+            this._Scheme.BucketSerialization.Serialize(Value, str);
             str.Finish();
         }
 
@@ -281,17 +281,17 @@ namespace DUIP
         {
             Start++;
             long tb = this._Header.Buckets;
-            long bs = this._BucketSerialization.Size.OrExcept;
+            long bs = this._Scheme.BucketSerialization.Size.OrExcept;
             while (true)
             {
                 if (Start == tb)
                 {
                     Start = 0;
                 }
-                InStream str = this._Data.Read(this.GetBucketOffset(Start));
+                InStream str = this._Source.Read(this.GetBucketOffset(Start));
                 while (Start < tb)
                 {
-                    Bucket b = this._BucketSerialization.Deserialize(str);
+                    Bucket b = this._Scheme.BucketSerialization.Deserialize(str);
                     if (b.Free == Free)
                     {
                         str.Finish();
@@ -309,7 +309,7 @@ namespace DUIP
         /// </summary>
         public long GetBucketOffset(long Bucket)
         {
-            return Header.Size + this._BucketSerialization.Size.OrExcept * Bucket;
+            return Header.Size + this._Scheme.BucketSerialization.Size.OrExcept * Bucket;
         }
 
         /// <summary>
@@ -375,19 +375,16 @@ namespace DUIP
         /// </summary>
         private void _UpdateHeader()
         {
-            OutStream str = this._Data.Modify();
+            OutStream str = this._Source.Modify();
             this._Header.Write(str);
             str.Finish();
         }
 
-        /// <summary>
-        /// Gets the data source for the hashmap.
-        /// </summary>
-        public Data Data
+        public Data Source
         {
             get
             {
-                return this._Data;
+                return this._Source;
             }
         }
 
@@ -417,7 +414,7 @@ namespace DUIP
         /// Initializes an empty hashmap in the given data. The size of the data should be at or greater than the required
         /// size for the hashmap as computed by the plan.
         /// </summary>
-        public static HashMap<TKey, T> Create(Data Data, Plan Plan)
+        public static HashMap<TKey, T> Create(Data Source, Plan Plan)
         {
             // Fill data with an empty map
             Header h = new Header()
@@ -427,11 +424,11 @@ namespace DUIP
                 Items = 0,
                 FirstFreeBucket = 0
             };
-            OutStream os = Data.Modify();
+            OutStream os = Source.Modify();
             h.Write(os);
             for (long t = 0; t < Plan.Buckets; t++)
             {
-                Plan.BucketSerialization.Serialize(new Bucket()
+                Plan.Scheme.BucketSerialization.Serialize(new Bucket()
                     {
                         Free = true,
                         Reference = t
@@ -440,18 +437,35 @@ namespace DUIP
             os.Finish();
 
             // Create an interface to the map
-            HashMap<TKey, T> map = new HashMap<TKey, T>()
+            return new HashMap<TKey, T>()
             {
-                _BucketSerialization = Plan.BucketSerialization,
-                _Data = Data,
+                _Scheme = Plan.Scheme,
+                _Source = Source,
                 _Header = h,
-                _KeyHashing = Plan.KeyHashing
             };
-            return map;
         }
 
         /// <summary>
-        /// Details needed for the creation of a hashmap.
+        /// Restores a hashmap from data given the data source and the scheme.
+        /// </summary>
+        public static HashMap<TKey, T> Restore(Data Source, Scheme Scheme)
+        {
+            // Get the header
+            InStream str = Source.Read();
+            Header h = Header.Read(str);
+            str.Finish();
+
+            // Return the map
+            return new HashMap<TKey, T>()
+            {
+                _Scheme = Scheme,
+                _Source = Source,
+                _Header = h
+            };
+        }
+
+        /// <summary>
+        /// Details needed for the creation of a hashmap in data.
         /// </summary>
         public struct Plan
         {
@@ -469,14 +483,9 @@ namespace DUIP
             public long CellarBuckets;
 
             /// <summary>
-            /// Method used to serialize a bucket in the hashmap. This must have a fixed size.
+            /// The scheme information needed by the hashmap.
             /// </summary>
-            public ISerialization<Bucket> BucketSerialization;
-
-            /// <summary>
-            /// Method used to hash and equate keys.
-            /// </summary>
-            public IHashing<TKey> KeyHashing;
+            public Scheme Scheme;
 
             /// <summary>
             /// Gets the total size of the data needed by the hashmap described with this plan.
@@ -485,9 +494,25 @@ namespace DUIP
             {
                 get
                 {
-                    return Header.Size + this.BucketSerialization.Size.OrExcept * this.Buckets;
+                    return Header.Size + this.Scheme.BucketSerialization.Size.OrExcept * this.Buckets;
                 }
             }
+        }
+
+        /// <summary>
+        /// Scheme information for a hashmap.
+        /// </summary>
+        public struct Scheme
+        {
+            /// <summary>
+            /// Method used to serialize a bucket in the hashmap. This must have a fixed size.
+            /// </summary>
+            public ISerialization<Bucket> BucketSerialization;
+
+            /// <summary>
+            /// Method used to hash and equate keys.
+            /// </summary>
+            public IHashing<TKey> KeyHashing;
         }
 
         /// <summary>
@@ -700,7 +725,7 @@ namespace DUIP
             {
                 long cur = this._Header.FirstFilledBucket;
                 long end = cur;
-                InStream str = this._Data.Read(this.GetBucketOffset(cur));
+                InStream str = this._Source.Read(this.GetBucketOffset(cur));
 
                 try
                 {
@@ -708,7 +733,7 @@ namespace DUIP
                     {
                         // Get bucket
                         long bi = cur;
-                        Bucket b = this._BucketSerialization.Deserialize(str);
+                        Bucket b = this._Scheme.BucketSerialization.Deserialize(str);
                         if (!b.Free)
                         {
                             yield return new Item()
@@ -724,7 +749,7 @@ namespace DUIP
                         {
                             cur = 0;
                             str.Finish();
-                            str = this._Data.Read(this.GetBucketOffset(cur));
+                            str = this._Source.Read(this.GetBucketOffset(cur));
                         }
 
                         // Exit if needed
@@ -741,32 +766,10 @@ namespace DUIP
             }
         }
 
-        /// <summary>
-        /// Gets the method used to serialize a bucket in this map. This serialization
-        /// must have a fixed size.
-        /// </summary>
-        public ISerialization<Bucket> BucketSerialization
-        {
-            get
-            {
-                return this._BucketSerialization;
-            }
-        }
-
-        /// <summary>
-        /// Gets the method used for comparing and hashing keys.
-        /// </summary>
-        public IHashing<TKey> KeyHashing
-        {
-            get
-            {
-                return this._KeyHashing;
-            }
-        }
-
-        private Data _Data;
+        private Data _Source;
         private Header _Header;
-        private ISerialization<Bucket> _BucketSerialization;
-        private IHashing<TKey> _KeyHashing;
+        private Scheme _Scheme;
     }
+
+    
 }

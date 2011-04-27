@@ -20,7 +20,7 @@ namespace DUIP
         public static void Main(string[] Args)
         {
             Path work = Path.WorkingDirectory;
-            Path data = Path.WorkingDirectory["Data"];
+            Path data = work["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
         }
     }
