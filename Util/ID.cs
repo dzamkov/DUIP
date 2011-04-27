@@ -136,9 +136,9 @@ namespace DUIP
     }
 
     /// <summary>
-    /// A type for an id.
+    /// Provides useful interfaces for an ID.
     /// </summary>
-    public class IDType : Type<ID>, ISerialization<ID>, IOrdering<ID>, IHashing<ID>
+    public class IDType : ISerialization<ID>, IOrdering<ID>, IHashing<ID>
     {
         /// <summary>
         /// The only instance of this class.

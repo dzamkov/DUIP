@@ -27,7 +27,7 @@ namespace DUIP
             ISerialization<TRef> ReferenceSerialization,
             long InitialSize)
         {
-
+            throw new NotImplementedException();
         }
 
         /// <summary>

@@ -39,19 +39,9 @@
   </Target>
   -->
   <ItemGroup>
-    <Compile Include="Core\Lang\Parse\Expression.cs" />
-    <Compile Include="Core\Lang\Parse\Parser.cs" />
-    <Compile Include="Core\Lang\Parse\Statement.cs" />
-    <Compile Include="Core\Lang\Parse\WhiteSpace.cs" />
-    <Compile Include="Core\Lang\Parse\Word.cs" />
-    <Compile Include="Core\Maybe.cs" />
-    <Compile Include="Core\Any.cs" />
-    <Compile Include="Core\Bool.cs" />
-    <Compile Include="Core\Function.cs" />
-    <Compile Include="Core\Tuple.cs" />
-    <Compile Include="Core\Type.cs" />
-    <Compile Include="Core\Void.cs" />
-    <Compile Include="Core\ID.cs" />
+    <Compile Include="Util\Maybe.cs" />
+    <Compile Include="Util\Void.cs" />
+    <Compile Include="Util\ID.cs" />
     <Compile Include="Data\Allocator.cs" />
     <Compile Include="Data\Cache.cs" />
     <Compile Include="Data\Data.cs" />
@@ -69,7 +59,6 @@
     <Compile Include="Program.cs" />
     <Compile Include="Util\Query.cs" />
     <Compile Include="Net\UDP.cs" />
-    <Compile Include="Terminal\Interface.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

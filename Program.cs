@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using DUIP.Terminal;
-using DUIP.Lang.Parse;
-
 namespace DUIP
 {
     /// <summary>
@@ -25,48 +22,6 @@ namespace DUIP
             Path work = Path.WorkingDirectory;
             Path data = Path.WorkingDirectory["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
-
-            Console.Title = "DUIP";
-            new RootInterface().Display();
-        }
-    }
-
-    /// <summary>
-    /// The primary interface started when the program starts.
-    /// </summary>
-    public class RootInterface : Interface
-    {
-        public RootInterface()
-        {
-
-        }
-
-        public override string Name
-        {
-            get
-            {
-                return "";
-            }
-        }
-
-        protected override void Receive(string Message)
-        {
-            Parser<Expression> p = Parser.Expression;
-            Expression e = null;
-            Text t = Message;
-            if (p.Accept(ref t, ref e))
-            {
-
-            }
-            else
-            {
-                this.Send("Syntax error somewhere");
-            }
-        }
-
-        protected override void Enter()
-        {
-            this.Send("Welcome to DUIP (Version " + Program.Version.ToString() + ")");
         }
     }
 }
