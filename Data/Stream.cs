@@ -156,6 +156,17 @@ namespace DUIP
     }
 
     /// <summary>
+    /// Contains the sizes of primitives in bytes.
+    /// </summary>
+    public static class StreamSize
+    {
+        public const long Bool = 1;
+        public const long Byte = 1;
+        public const long Int = 4;
+        public const long Long = 8;
+    }
+
+    /// <summary>
     /// A byte stream that can be written to.
     /// </summary>
     public abstract class OutStream

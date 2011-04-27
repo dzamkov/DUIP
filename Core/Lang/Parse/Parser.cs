@@ -249,9 +249,9 @@ namespace DUIP.Lang.Parse
         /// <summary>
         /// Creates a decorated form of this parser that accepts zero or more objects seperated by a delimiter.
         /// </summary>
-        public Parser<List<T>> Delimit(Parser<Void> Delimiter)
+        public Parser<List<T>> Delimit(Parser<Void> Delimiter, bool Trailing)
         {
-            return new DelimitedParser<T>(this, Delimiter);
+            return new DelimitedParser<T>(this, Delimiter, Trailing);
         }
 
         /// <summary>
@@ -520,7 +520,7 @@ namespace DUIP.Lang.Parse
     }
 
     /// <summary>
-    /// A parser that uses two parser for parsing text.
+    /// A parser that tries multiple parsers on the same text.
     /// </summary>
     public class UnionParser<T> : Parser<T>
     {
@@ -688,10 +688,11 @@ namespace DUIP.Lang.Parse
     /// </summary>
     public class DelimitedParser<T> : Parser<List<T>>
     {
-        public DelimitedParser(Parser<T> Item, Parser<Void> Delimiter)
+        public DelimitedParser(Parser<T> Item, Parser<Void> Delimiter, bool Trailing)
         {
             this._Item = Item;
             this._Delimiter = Delimiter;
+            this._Trailing = Trailing;
         }
 
         /// <summary>
@@ -716,6 +717,17 @@ namespace DUIP.Lang.Parse
             }
         }
 
+        /// <summary>
+        /// Gets if a trailing delimiter is allowed.
+        /// </summary>
+        public bool Trailing
+        {
+            get
+            {
+                return this._Trailing;
+            }
+        }
+
         public override bool Accept(ref Text Text, ref List<T> Object)
         {
             Object = new List<T>();
@@ -735,6 +747,11 @@ namespace DUIP.Lang.Parse
                             Object.Add(nobj);
                             continue;
                         }
+                        if (this._Trailing)
+                        {
+                            Text = o;
+                            break;
+                        }
                     }
                     break;
                 }
@@ -742,6 +759,7 @@ namespace DUIP.Lang.Parse
             return true;
         }
 
+        private bool _Trailing;
         private Parser<T> _Item;
         private Parser<Void> _Delimiter;
     }

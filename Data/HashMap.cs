@@ -597,7 +597,7 @@ namespace DUIP
                 {
                     this._KeySerialization = KeySerialization;
                     this._ValueSerialization = ValueSerialization;
-                    this._Size = KeySerialization.Size.OrExcept + ValueSerialization.Size.OrExcept + 1 + 8;
+                    this._Size = KeySerialization.Size.OrExcept + ValueSerialization.Size.OrExcept + StreamSize.Bool + StreamSize.Long;
                 }
 
                 public void Serialize(Bucket Object, OutStream Stream)
@@ -606,7 +606,7 @@ namespace DUIP
                     Stream.WriteLong(Object.Reference);
                     if (Object.Free)
                     {
-                        Stream.Advance(this._Size - 1 - 8);
+                        Stream.Advance(this._Size - StreamSize.Bool - StreamSize.Long);
                     }
                     else
                     {
@@ -624,7 +624,7 @@ namespace DUIP
                             Free = true,
                             Reference = Stream.ReadLong()
                         };
-                        Stream.Advance(this._Size - 1 - 8);
+                        Stream.Advance(this._Size - StreamSize.Bool - StreamSize.Long);
                         return b;
                     }
                     else

@@ -5,6 +5,26 @@ using System.Linq;
 namespace DUIP.Lang.Parse
 {
     /// <summary>
+    /// A reference to a constant value.
+    /// </summary>
+    public enum Constant
+    {
+        True,
+        False,
+        Not,
+        And,
+        Or,
+        Xor,
+
+        Plus,
+        Minus,
+        Times,
+        Divide,
+
+
+    }
+
+    /// <summary>
     /// A parsed expression that retains variable names. This provides an intermediate form of an expression between
     /// human readable text and executable and evaluatable expressions. Note that unlike evaluatable expressions, these
     /// expression may have side effects to the local block.
@@ -46,9 +66,37 @@ namespace DUIP.Lang.Parse
         {
             return Parser.Item(Start)
             .ConcatIgnore(Parser.WhiteSpace.Possible)
-            .Concat(Item.Delimit(CollectionDelimiter))
+            .Concat(Item.Delimit(CollectionDelimiter, true))
             .ConcatIgnore(Parser.WhiteSpace.Possible)
             .ConcatItem(End).Map(x => x.B);
+        }
+
+        /// <summary>
+        /// Given a list of expression (given by the user) creates an appropriate tuple collection to contain them.
+        /// </summary>
+        public static Expression MakeTuple(List<Expression> Items, bool Type)
+        {
+            if (Items.Count == 1)
+            {
+                return Items[0];
+            }
+            else
+            {
+                if (Type)
+                {
+                    return new TupleTypeExpression()
+                    {
+                        Parts = Items
+                    };
+                }
+                else
+                {
+                    return new TupleExpression()
+                    {
+                        Parts = Items
+                    };
+                }
+            }
         }
 
         /// <summary>
@@ -68,7 +116,11 @@ namespace DUIP.Lang.Parse
 
                         // Tuple or Expression in parentheses
                         CollectionParser("(", ")", ExpressionParser)
-                        .Map<Expression>(x => x.Count == 1 ? x[0] : new TupleExpression() { Parts = x }) +
+                        .Map<Expression>(x => MakeTuple(x, false)) +
+
+                        // Tuple type
+                        CollectionParser("<", ">", ExpressionParser)
+                        .Map<Expression>(x => MakeTuple(x, true)) +
 
                         // List
                         CollectionParser("[", "]", ExpressionParser)
@@ -131,9 +183,11 @@ namespace DUIP.Lang.Parse
                 // Look for accessors, calls or post-modifiers
                 while (true)
                 {
-                    // Accessor
                     Text o = Text;
-                    if (Parser.Item(".").Accept(ref o))
+                    Parser.WhiteSpace.Accept(ref o);
+
+                    // Accessor
+                    if (Parser.WhiteSpace.ConcatItem(".").Accept(ref o))
                     {
                         Text name = null;
                         if (Parser.Word.Accept(ref o, ref name))
@@ -149,11 +203,37 @@ namespace DUIP.Lang.Parse
                     }
 
                     // Bind modifier
-                    if (Parser.Item("?").Accept(ref Text))
+                    if (Parser.Item("?").Accept(ref o))
                     {
+                        Text = o;
                         Object = new BindExpression()
                         {
                             Source = Object
+                        };
+                        continue;
+                    }
+
+                    // Function call 
+                    List<Expression> pars = null;
+                    if (Expression.CollectionParser("(", ")", Expression.ExpressionParser).Accept(ref o, ref pars))
+                    {
+                        Text = o;
+                        Object = new FunctionCallExpression()
+                        {
+                            Function = Object,
+                            Argument = Expression.MakeTuple(pars, false)
+                        };
+                        continue;
+                    }
+
+                    // Function call with tuple type
+                    if (Expression.CollectionParser("<", ">", Expression.ExpressionParser).Accept(ref o, ref pars))
+                    {
+                        Text = o;
+                        Object = new FunctionCallExpression()
+                        {
+                            Function = Object,
+                            Argument = Expression.MakeTuple(pars, true)
                         };
                         continue;
                     }
@@ -176,6 +256,17 @@ namespace DUIP.Lang.Parse
         /// The name of the variable referenced.
         /// </summary>
         public Text Name;
+    }
+
+    /// <summary>
+    /// An expression that evaluates to a constant value.
+    /// </summary>
+    public class ConstantExpression : Expression
+    {
+        /// <summary>
+        /// The type of this constant.
+        /// </summary>
+        public Constant Constant;
     }
 
     /// <summary>
@@ -234,6 +325,17 @@ namespace DUIP.Lang.Parse
     {
         /// <summary>
         /// The expressions for the parts of the tuple.
+        /// </summary>
+        public List<Expression> Parts;
+    }
+
+    /// <summary>
+    /// An expression that builds a tuple type using a seperate expression for each part.
+    /// </summary>
+    public class TupleTypeExpression : Expression
+    {
+        /// <summary>
+        /// The expressions for the parts of the tuple type.
         /// </summary>
         public List<Expression> Parts;
     }

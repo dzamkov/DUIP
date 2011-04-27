@@ -51,7 +51,7 @@ namespace DUIP
         {
             get
             {
-                return 1;
+                return StreamSize.Bool;
             }
         }
 
@@ -69,7 +69,7 @@ namespace DUIP
         {
             get
             {
-                return 1;
+                return StreamSize.Byte;
             }
         }
 
@@ -87,7 +87,7 @@ namespace DUIP
         {
             get
             {
-                return 4;
+                return StreamSize.Int;
             }
         }
 
@@ -105,7 +105,7 @@ namespace DUIP
         {
             get
             {
-                return 4;
+                return StreamSize.Int;
             }
         }
 
@@ -123,7 +123,7 @@ namespace DUIP
         {
             get
             {
-                return 8;
+                return StreamSize.Long;
             }
         }
 
@@ -141,7 +141,7 @@ namespace DUIP
         {
             get
             {
-                return 8;
+                return StreamSize.Long;
             }
         }
     }

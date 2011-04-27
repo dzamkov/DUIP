@@ -1,17 +1,13 @@
 // A method of converting a string into a logical object of a certain type.
-type Parser(type Out) {
-	return class {
-	
-		// Tries interpreting the leftmost part of the given string as a target of the parser. Returns
-		// the remaining string and the parsed object on success or nothing to indicate that no object
-		// can be parsed.
-		(string -> maybe<string, Out>) Accept;
-	}
+class Parser<T> {
+	// Tries interpreting the leftmost part of the given string as a target of the parser. Returns
+	// the remaining string and the parsed object on success or nothing to indicate that no object
+	// can be parsed.
+	(string -> maybe<string, T>) Accept;
 }
 
 // A parser that accepts only a certain string.
-class ItemParser : Parser(void) {
-
+class ItemParser : Parser<void> {
 	// The target string this parser will accept.
 	string Target;
 
@@ -20,5 +16,22 @@ class ItemParser : Parser(void) {
 			return just(str.sub(this.Target.length), void);
 		else
 			return nothing;
+	}
+}
+
+// A parser that tries multiple parsers on the same text.
+class UnionParser<T> : Parser<T> {
+	// The parser that is tried first.
+	Parser<T> Primary;
+	
+	// The parser that is tried after the primary parser, if it fails.
+	Parser<T> Secondary;
+	
+	maybe<string, T> Accept(string str) {
+		case this.Primary.Accept(str) of just(res)
+			return res;
+		case this.Secondary.Accept(str) of just(res)
+			return res;
+		return nothing;
 	}
 }
