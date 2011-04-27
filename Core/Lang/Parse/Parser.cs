@@ -242,6 +242,14 @@ namespace DUIP.Lang.Parse
         }
 
         /// <summary>
+        /// Creates a decorated form of this parser that accepts zero or more objects seperated by a delimiter.
+        /// </summary>
+        public Parser<List<T>> Delimit(Parser<Void> Delimiter)
+        {
+            return new DelimitedParser<T>(this, Delimiter);
+        }
+
+        /// <summary>
         /// Creates a parser which requires an object from this and another parser immediately following in order to
         /// accept text.
         /// </summary>
@@ -668,5 +676,68 @@ namespace DUIP.Lang.Parse
         }
 
         private Text _Target;
+    }
+
+    /// <summary>
+    /// Parses zero or more objects seperated by a delimiter.
+    /// </summary>
+    public class DelimitedParser<T> : Parser<List<T>>
+    {
+        public DelimitedParser(Parser<T> Item, Parser<Void> Delimiter)
+        {
+            this._Item = Item;
+            this._Delimiter = Delimiter;
+        }
+
+        /// <summary>
+        /// The parser for an item.
+        /// </summary>
+        public Parser<T> Item
+        {
+            get
+            {
+                return this._Item;
+            }
+        }
+
+        /// <summary>
+        /// The parser for the delimiter.
+        /// </summary>
+        public Parser<Void> Delimiter
+        {
+            get
+            {
+                return this._Delimiter;
+            }
+        }
+
+        public override bool Accept(ref Text Text, ref List<T> Object)
+        {
+            Object = new List<T>();
+            T nobj = default(T);
+            if (this._Item.Accept(ref Text, ref nobj))
+            {
+                Object.Add(nobj);
+
+                while (true)
+                {
+                    Text o = Text;
+                    if (this._Delimiter.Accept(ref o))
+                    {
+                        if (this._Item.Accept(ref o, ref nobj))
+                        {
+                            Text = o;
+                            Object.Add(nobj);
+                            continue;
+                        }
+                    }
+                    break;
+                }
+            }
+            return true;
+        }
+
+        private Parser<T> _Item;
+        private Parser<Void> _Delimiter;
     }
 }
