@@ -23,6 +23,35 @@ namespace DUIP.Lang.Parse
         }
 
         /// <summary>
+        /// Gets the item delimiter for collections such as tuples, lists, sets and maps.
+        /// </summary>
+        public static Parser<Void> CollectionDelimiter
+        {
+            get
+            {
+                return _CollectionDelimiter ?? (_CollectionDelimiter =
+                        Parser.WhiteSpace.Possible
+                        .ConcatItem(",")
+                        .ConcatIgnore(Parser.WhiteSpace.Possible)
+                        .Map<Void>(x => Void.Value)
+                    );
+            }
+        }
+        private static Parser<Void> _CollectionDelimiter;
+
+        /// <summary>
+        /// A parser for a collection of items.
+        /// </summary>
+        public static Parser<List<T>> CollectionParser<T>(Text Start, Text End, Parser<T> Item)
+        {
+            return Parser.Item(Start)
+            .ConcatIgnore(Parser.WhiteSpace.Possible)
+            .Concat(Item.Delimit(CollectionDelimiter))
+            .ConcatIgnore(Parser.WhiteSpace.Possible)
+            .ConcatItem(End).Map(x => x.B);
+        }
+
+        /// <summary>
         /// Gets a parser for an atomic expression (a tight expression that does not contain any accessors, calls or post-modifiers on its top level).
         /// </summary>
         public static Parser<Expression> AtomicExpressionParser
@@ -30,21 +59,38 @@ namespace DUIP.Lang.Parse
             get
             {
                 return _AtomicExpressionParser ?? (_AtomicExpressionParser =
-                        // Variable
+                    // Variable
                         Parser.Word.
                         Map<Expression>(x => new VariableExpression()
                         {
                             Name = x
                         }) +
 
-                        // Expression in parentheses
-                        Parser.
-                        Item("(").
-                        ConcatIgnore(Parser.WhiteSpace).
-                        Concat(ExpressionParser).
-                        ConcatIgnore(Parser.WhiteSpace).
-                        ConcatItem(")").
-                        Map<Expression>(x => x.B)
+                        // Tuple or Expression in parentheses
+                        CollectionParser("(", ")", ExpressionParser)
+                        .Map<Expression>(x => x.Count == 1 ? x[0] : new TupleExpression() { Parts = x }) +
+
+                        // List
+                        CollectionParser("[", "]", ExpressionParser)
+                        .Map<Expression>(x => new ListExpression() { Items = x }) +
+
+                        // Set
+                        CollectionParser("{", "}", ExpressionParser)
+                        .Map<Expression>(x => new SetExpression() { Items = x }) +
+
+                        // Map
+                        CollectionParser("{", "}", ExpressionParser
+                            .ConcatIgnore(Parser.WhiteSpace)
+                            .ConcatItem(":")
+                            .ConcatIgnore(Parser.WhiteSpace)
+                            .Concat(ExpressionParser))
+                        .Map<Expression>(x => new MapExpression()
+                        {
+                            Items = new List<KeyValuePair<Expression, Expression>>(
+                                from p in x
+                                select new KeyValuePair<Expression, Expression>(p.A, p.B)
+                            )
+                        })
                     );
             }
         }

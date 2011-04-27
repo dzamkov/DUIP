@@ -24,6 +24,11 @@ namespace DUIP.Lang.Parse
         /// </summary>
         public abstract string String { get; }
 
+        public override string ToString()
+        {
+            return this.String;
+        }
+
         /// <summary>
         /// Gets a portion of this text.
         /// </summary>
