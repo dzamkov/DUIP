@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Drawing;
+using System.Reflection;
+
+using DUIP.GUI;
 
 namespace DUIP
 {
@@ -15,6 +19,25 @@ namespace DUIP
         public const int Version = 1;
 
         /// <summary>
+        /// Gets the icon for the program.
+        /// </summary>
+        public static Icon Icon
+        {
+            get
+            {
+                Assembly cur = Assembly.GetExecutingAssembly();
+                try
+                {
+                    return Icon.ExtractAssociatedIcon(cur.Location);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+        }
+
+        /// <summary>
         /// Program main entry point.
         /// </summary>
         public static void Main(string[] Args)
@@ -22,6 +45,9 @@ namespace DUIP
             Path work = Path.WorkingDirectory;
             Path data = work["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
+            
+            
+            new Window().Run();
         }
     }
 }

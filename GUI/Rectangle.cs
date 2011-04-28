@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Drawing;
 
-namespace DUIP.UI
+namespace DUIP.GUI
 {
     /// <summary>
     /// An axis-aligned rectangle in two-dimensional space.

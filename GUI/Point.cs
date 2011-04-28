@@ -5,7 +5,7 @@ using System.Drawing;
 
 using OpenTK;
 
-namespace DUIP.UI
+namespace DUIP.GUI
 {
     /// <summary>
     /// A two-dimensional floating point position or offset (vector).
