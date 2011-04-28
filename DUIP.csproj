@@ -52,11 +52,9 @@
     <Compile Include="Data\Cache.cs" />
     <Compile Include="Data\Data.cs" />
     <Compile Include="Data\HashMap.cs" />
-    <Compile Include="Util\Set.cs" />
     <Compile Include="Util\Equality.cs" />
     <Compile Include="Data\File.cs" />
     <Compile Include="Data\Memory.cs" />
-    <Compile Include="Util\Map.cs" />
     <Compile Include="Util\Math\BigInt.cs" />
     <Compile Include="Util\Ordering.cs" />
     <Compile Include="Util\Serialization.cs" />

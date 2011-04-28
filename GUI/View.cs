@@ -12,10 +12,9 @@ namespace DUIP.GUI
     /// </summary>
     public struct View
     {
-        public View(Point Center, double Angle, double Zoom)
+        public View(Point Center, double Zoom)
         {
             this.Center = Center;
-            this.Angle = Angle;
             this.Zoom = Zoom;
         }
 
@@ -23,6 +22,34 @@ namespace DUIP.GUI
         /// Sets this view as the current one for future rendering use.
         /// </summary>
         public void Setup(double AspectRatio)
+        {
+            Point scale = this._GetScaleFactor(AspectRatio);
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadIdentity();
+            GL.Scale(1.0, -1.0, 1.0);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+            GL.Scale(scale.X, scale.Y, 1.0);
+            GL.Translate(-this.Center.X, -this.Center.Y, 0.0);
+        }
+
+        /// <summary>
+        /// Gets the rectangular area this view can see (given the aspect ratio).
+        /// </summary>
+        public Rectangle GetBounds(double AspectRatio)
+        {
+            Point sf = this._GetScaleFactor(AspectRatio);
+            sf.X = 1.0 / sf.X;
+            sf.Y = 1.0 / sf.Y;
+            return new Rectangle(
+                this.Center - sf,
+                this.Center + sf);
+        }
+
+        /// <summary>
+        /// Gets the amount each axis is scaled by from viewspace to worldspace with the given aspect ratio.
+        /// </summary>
+        private Point _GetScaleFactor(double AspectRatio)
         {
             double vsw;
             double vsh;
@@ -36,12 +63,7 @@ namespace DUIP.GUI
                 vsh = AspectRatio;
                 vsw = 1.0;
             }
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadIdentity();
-            GL.Scale(vsw, vsh, 1.0);
-            GL.Rotate(this.Angle * 180 / Math.PI, 0.0, 0.0, 1.0);
-            GL.Scale(this.Zoom, this.Zoom, 1.0);
-            GL.Translate(-this.Center.X, -this.Center.Y, 0.0);
+            return new Point(vsw, vsh) * this.Zoom;
         }
 
         /// <summary>
@@ -50,12 +72,7 @@ namespace DUIP.GUI
         public Point Center;
 
         /// <summary>
-        /// The rotation of the view, in radians.
-        /// </summary>
-        public double Angle;
-
-        /// <summary>
-        /// The zoom level of the view.
+        /// The zoom level of the view. 
         /// </summary>
         public double Zoom;
     }
