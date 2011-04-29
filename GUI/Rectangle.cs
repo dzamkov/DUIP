@@ -34,6 +34,17 @@ namespace DUIP.GUI
         }
 
         /// <summary>
+        /// Gets the total area, in square units, of the rectangle.
+        /// </summary>
+        public double Area
+        {
+            get
+            {
+                return (this.BottomRight.X - this.TopLeft.X) * (this.BottomRight.Y - this.TopLeft.Y);
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the y-coordinate of the top edge of the rectangle.
         /// </summary>
         public double Top

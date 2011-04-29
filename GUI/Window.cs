@@ -21,7 +21,7 @@ namespace DUIP.GUI
         {
             this.Icon = Program.Icon;
 
-            this._View = new View(new Point(0.0, 0.0), 1.0);
+            this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
 
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Front);
@@ -47,7 +47,8 @@ namespace DUIP.GUI
         {
             GL.Clear(ClearBufferMask.ColorBufferBit);
 
-            this._View.Setup(this.AspectRatio);
+            View v = this._Camera.GetView(this.Width, this.Height);
+            v.Setup();
 
             GL.Begin(BeginMode.Quads);
             GL.Color4(Color.RGB(0.0, 0.0, 1.0));
@@ -87,12 +88,16 @@ namespace DUIP.GUI
             }
 
 
-            if (this.Keyboard[Key.W]) this._View.Center.Y -= updatetime;
-            if (this.Keyboard[Key.S]) this._View.Center.Y += updatetime;
-            if (this.Keyboard[Key.A]) this._View.Center.X -= updatetime;
-            if (this.Keyboard[Key.D]) this._View.Center.X += updatetime;
+            if (this.Keyboard[Key.W]) this._Camera.Center.Y -= updatetime;
+            if (this.Keyboard[Key.S]) this._Camera.Center.Y += updatetime;
+
+            if (this.Keyboard[Key.A]) this._Camera.Center.X -= updatetime;
+            if (this.Keyboard[Key.D]) this._Camera.Center.X += updatetime;
+
+            if (this.Keyboard[Key.Q]) this._Camera.Size *= Math.Pow(2.0, -updatetime);
+            if (this.Keyboard[Key.E]) this._Camera.Size *= Math.Pow(2.0, updatetime);
         }
 
-        private View _View;
+        private Camera _Camera;
     }
 }

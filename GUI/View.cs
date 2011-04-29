@@ -8,62 +8,62 @@ using OpenTK.Graphics.OpenGL;
 namespace DUIP.GUI
 {
     /// <summary>
-    /// Represents a view of a 2d area.
+    /// Stores the location and resolution of a view of a two-dimensional area.
     /// </summary>
     public struct View
     {
-        public View(Point Center, double Zoom)
+        public View(Rectangle Area, double Resolution)
         {
-            this.Center = Center;
-            this.Zoom = Zoom;
+            this.Area = Area;
+            this.Resolution = Resolution;
         }
 
         /// <summary>
         /// Sets this view as the current one for future rendering use.
         /// </summary>
-        public void Setup(double AspectRatio)
+        public void Setup()
         {
-            Point scale = this._GetScaleFactor(AspectRatio);
+            Point size = this.Area.Size;
+            Point center = this.Area.TopLeft + size * 0.5;
+
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
-            GL.Scale(1.0, -1.0, 1.0);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadIdentity();
-            GL.Scale(scale.X, scale.Y, 1.0);
-            GL.Translate(-this.Center.X, -this.Center.Y, 0.0);
+            GL.Scale(2.0 / size.X, -2.0 / size.Y, 1.0);
+            GL.Translate(-center.X, -center.Y, 0.0);
         }
 
         /// <summary>
-        /// Gets the rectangular area this view can see (given the aspect ratio).
+        /// The area visible by the view.
         /// </summary>
-        public Rectangle GetBounds(double AspectRatio)
+        public Rectangle Area;
+
+        /// <summary>
+        /// The amount of pixels for a 1.0 * 1.0 square area in the view.
+        /// </summary>
+        public double Resolution;
+    }
+
+    /// <summary>
+    /// Stores the location and zoom level of a viewer of a two-dimensional area.
+    /// </summary>
+    public struct Camera
+    {
+        public Camera(Point Center, double Zoom)
         {
-            Point sf = this._GetScaleFactor(AspectRatio);
-            sf.X = 1.0 / sf.X;
-            sf.Y = 1.0 / sf.Y;
-            return new Rectangle(
-                this.Center - sf,
-                this.Center + sf);
+            this.Center = Center;
+            this.Size = Zoom;
         }
 
         /// <summary>
-        /// Gets the amount each axis is scaled by from viewspace to worldspace with the given aspect ratio.
+        /// Gets the view for this camera using a viewport of the given size.
         /// </summary>
-        private Point _GetScaleFactor(double AspectRatio)
+        public View GetView(int Width, int Height)
         {
-            double vsw;
-            double vsh;
-            if (AspectRatio > 1.0)
-            {
-                vsw = 1.0 / AspectRatio;
-                vsh = 1.0;
-            }
-            else
-            {
-                vsh = AspectRatio;
-                vsw = 1.0;
-            }
-            return new Point(vsw, vsh) * this.Zoom;
+            double ar = (double)Width / Height; // Aspect ratio
+            Point off = ar > 1.0 ? new Point(this.Size * ar, this.Size) : new Point(this.Size, this.Size / ar);
+            Rectangle rect = new Rectangle(this.Center - off, this.Center + off);
+            double res = (double)Width / off.X * (double)Height / off.Y / 4.0;
+            return new View(rect, res);
         }
 
         /// <summary>
@@ -72,8 +72,8 @@ namespace DUIP.GUI
         public Point Center;
 
         /// <summary>
-        /// The zoom level of the view. 
+        /// The extent of the viewable area.
         /// </summary>
-        public double Zoom;
+        public double Size;
     }
 }
