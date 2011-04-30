@@ -7,20 +7,17 @@ namespace DUIP
     /// <summary>
     /// An implementation of a hashed map contained within mutable data.
     /// </summary>
-    public class HashMap<TKey, T> : IHandle
+    public class HashMap<TKey, T> : Map<TKey, Maybe<T>>, IHandle
     {
         private HashMap()
         {
 
         }
 
-        /// <summary>
-        /// Looks up an item in the map.
-        /// </summary>
-        public Maybe<T> Lookup(TKey Key)
+        public override Maybe<T> Get(TKey Key)
         {
             long bi; Bucket b;
-            return this.Lookup(this._Scheme.KeyHashing.Hash(Key), Key, out bi, out b);
+            return this.Get(this._Scheme.KeyHashing.Hash(Key), Key, out bi, out b);
         }
 
         /// <summary>
@@ -29,7 +26,7 @@ namespace DUIP
         /// <param name="Hash">The hash of the key using the key hashing method for the hashmap.</param>
         /// <param name="BucketIndex">The index of the bucket in which the item was found.</param>
         /// <param name="Bucket">The contents for the bucket in which the item was found.</param>
-        public Maybe<T> Lookup(BigInt Hash, TKey Key, out long BucketIndex, out Bucket Bucket)
+        public Maybe<T> Get(BigInt Hash, TKey Key, out long BucketIndex, out Bucket Bucket)
         {
             BucketIndex = this.GetBucketIndex(Hash);
             while (true)
@@ -47,13 +44,11 @@ namespace DUIP
             }
         }
 
-        /// <summary>
-        /// Sets, creates, or removes an item with the given key and value.
-        /// </summary>
-        public bool Modify(TKey Key, Maybe<T> Value)
+
+        public override bool Set(TKey Key, Maybe<T> Value)
         {
             long bi; Bucket b;
-            return this.Modify(this._Scheme.KeyHashing.Hash(Key), Key, Value, out bi, out b);
+            return this.Set(this._Scheme.KeyHashing.Hash(Key), Key, Value, out bi, out b);
         }
 
         /// <summary>
@@ -62,7 +57,7 @@ namespace DUIP
         /// <param name="Hash">The hash of the key using the key hashing method for the hashmap.</param>
         /// <param name="BucketIndex">The index of the bucket in which the item was set. This is undefined if the item was removed.</param>
         /// <param name="Bucket">The contents for the bucket in which the item was set. This is undefined if the item was removed.</param>
-        public bool Modify(BigInt Hash, TKey Key, Maybe<T> Value, out long BucketIndex, out Bucket Bucket)
+        public bool Set(BigInt Hash, TKey Key, Maybe<T> Value, out long BucketIndex, out Bucket Bucket)
         {
             BucketIndex = this.GetBucketIndex(Hash);
             Maybe<long> pbi = Maybe<long>.Nothing; // Index of the previous bucket in the chain

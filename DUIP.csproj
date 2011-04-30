@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{525DDE35-A006-4764-A1BE-5451E2F92FE7}</ProjectGuid>
     <OutputType>WinExe</OutputType>
@@ -40,6 +40,8 @@
   -->
   <ItemGroup>
     <Compile Include="Data\Handle.cs" />
+    <Compile Include="Data\Map.cs" />
+    <Compile Include="GUI\Background.cs" />
     <Compile Include="GUI\Color.cs" />
     <Compile Include="GUI\Point.cs" />
     <Compile Include="GUI\Rectangle.cs" />
@@ -65,7 +67,7 @@
     <Compile Include="Net\UDP.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="OpenTK, Version=1.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL" />
+    <Reference Include="OpenTK, Version=1.0.0.201, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
