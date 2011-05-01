@@ -57,12 +57,7 @@ namespace DUIP.GUI
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
             this._TestTex.Bind();
-            GL.Begin(BeginMode.Quads);
-            GL.TexCoord2(0.0, 0.0); GL.Vertex2(0.0, 0.0);
-            GL.TexCoord2(1.0, 0.0); GL.Vertex2(1.0, 0.0);
-            GL.TexCoord2(1.0, 1.0); GL.Vertex2(1.0, 1.0);
-            GL.TexCoord2(0.0, 1.0); GL.Vertex2(0.0, 1.0);
-            GL.End();
+            Texture.DrawQuad(new Rectangle(-1.0, -1.0, 1.0, 1.0));
 
             this.SwapBuffers();
         }

@@ -45,6 +45,61 @@ namespace DUIP.GUI
         }
 
         /// <summary>
+        /// Draws a textured quad using the current texture stretched across the destination area.
+        /// </summary>
+        public static void DrawQuad(Rectangle Destination)
+        {
+            DrawQuad(new Rectangle(0.0, 0.0, 1.0, 1.0), Destination);
+        }
+
+        /// <summary>
+        /// Draws a textured quad using the current texture.
+        /// </summary>
+        public static void DrawQuad(Rectangle Source, Rectangle Destination)
+        {
+            GL.Begin(BeginMode.Quads);
+            OutputQuad(Source, Destination);
+            GL.End();
+        }
+
+        /// <summary>
+        /// Outputs a texture-mapped quad to the current graphics context.
+        /// </summary>
+        public static void OutputQuad(Rectangle Source, Rectangle Destination)
+        {
+            double sl = Source.Left;
+            double st = Source.Top;
+            double sr = Source.Right;
+            double sb = Source.Bottom;
+            double dl = Destination.Left;
+            double dt = Destination.Top;
+            double dr = Destination.Right;
+            double db = Destination.Bottom;
+            GL.TexCoord2(sl, st); GL.Vertex2(dl, dt);
+            GL.TexCoord2(sr, st); GL.Vertex2(dr, dt);
+            GL.TexCoord2(sr, sb); GL.Vertex2(dr, db);
+            GL.TexCoord2(sl, sb); GL.Vertex2(dl, db);
+        }
+
+
+        /// <summary>
+        /// Creates a texture of the given size for a rectangular area on a figure.
+        /// </summary>
+        public static unsafe Texture Create(Figure Figure, Rectangle Area, int Width, int Height)
+        {
+            using (Bitmap bm = new Bitmap(Width, Height))
+            {
+                BitmapData bd = bm.LockBits(
+                    new System.Drawing.Rectangle(0, 0, Width, Height),
+                    ImageLockMode.ReadWrite, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                Figure.GetArea(Area, Width, Height, (byte*)bd.Scan0.ToPointer());
+                Texture t = Create(bd, Width, Height, true);
+                bm.UnlockBits(bd);
+                return t;
+            }
+        }
+
+        /// <summary>
         /// Creates a texture for the given bitmap.
         /// </summary>
         public static Texture Create(Bitmap Source)

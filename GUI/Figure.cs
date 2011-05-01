@@ -9,18 +9,6 @@ namespace DUIP.GUI
     /// </summary>
     public abstract class Figure
     {
-
-        /// <summary>
-        /// An operation or combination of operations that can be invoked on figures.
-        /// </summary>
-        [Flags]
-        public enum Operation
-        {
-            PointRead = 1,
-            AreaRead = 2,
-            Render = 4,
-        }
-
         /// <summary>
         /// Gets the color of a point on the figure.
         /// </summary>
@@ -60,11 +48,6 @@ namespace DUIP.GUI
         {
             throw new NotImplementedException();
         }
-
-        /// <summary>
-        /// Gets the valid operations for this figure.
-        /// </summary>
-        public abstract Operation Operations { get; }
 
         /// <summary>
         /// Gets a rectangle such that all points outside the rectangle are completely transparent (have an
