@@ -54,6 +54,14 @@ namespace DUIP.GUI
         }
 
         /// <summary>
+        /// Renders the figure to the current graphics context when the given view is used.
+        /// </summary>
+        public virtual void Render(View View)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Gets the valid operations for this figure.
         /// </summary>
         public abstract Operation Operations { get; }

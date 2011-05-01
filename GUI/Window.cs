@@ -22,7 +22,9 @@ namespace DUIP.GUI
             this.Icon = Program.Icon;
 
             this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
+            this._TestTex = Texture.Create(Program.Icon.ToBitmap());
 
+            GL.Enable(EnableCap.Texture2D);
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Front);
         }
@@ -45,17 +47,21 @@ namespace DUIP.GUI
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
+            GL.ClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit);
 
             View v = this._Camera.GetView(this.Width, this.Height);
             v.Setup();
 
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+
+            this._TestTex.Bind();
             GL.Begin(BeginMode.Quads);
-            GL.Color4(Color.RGB(0.0, 0.0, 1.0));
-            GL.Vertex2(0.0, 0.0);
-            GL.Vertex2(1.0, 0.0);
-            GL.Vertex2(1.0, 1.0);
-            GL.Vertex2(0.0, 1.0);
+            GL.TexCoord2(0.0, 0.0); GL.Vertex2(0.0, 0.0);
+            GL.TexCoord2(1.0, 0.0); GL.Vertex2(1.0, 0.0);
+            GL.TexCoord2(1.0, 1.0); GL.Vertex2(1.0, 1.0);
+            GL.TexCoord2(0.0, 1.0); GL.Vertex2(0.0, 1.0);
             GL.End();
 
             this.SwapBuffers();
@@ -98,6 +104,7 @@ namespace DUIP.GUI
             if (this.Keyboard[Key.E]) this._Camera.Size *= Math.Pow(2.0, updatetime);
         }
 
+        private Texture _TestTex;
         private Camera _Camera;
     }
 }

@@ -48,6 +48,7 @@
     <Compile Include="GUI\Figure.cs" />
     <Compile Include="GUI\Point.cs" />
     <Compile Include="GUI\Rectangle.cs" />
+    <Compile Include="GUI\Texture.cs" />
     <Compile Include="GUI\View.cs" />
     <Compile Include="GUI\Window.cs" />
     <Compile Include="Util\Maybe.cs" />
