@@ -18,13 +18,7 @@ namespace DUIP.GUI
             this._Multiplier = Multiplier;
             foreach (Point cen in CellCenters)
             {
-                for (int x = -1; x <= 1; x++)
-                {
-                    for (int y = -1; y <= 1; y++)
-                    {
-                        this._Centers.Add(cen + new Point(x, y));
-                    }
-                }
+                this._Centers.Add(cen);
             }
         }
 
@@ -121,7 +115,17 @@ namespace DUIP.GUI
             double mdis = double.PositiveInfinity;
             foreach (Point cen in this._Centers)
             {
-                double dis = (cen - Point).SquareLength;
+                double xdis = Math.Abs(Point.X - cen.X);
+                double ydis = Math.Abs(Point.Y - cen.Y);
+                if (xdis > 0.5)
+                {
+                    xdis = 1.0 - xdis;
+                }
+                if (ydis > 0.5)
+                {
+                    ydis = 1.0 - ydis;
+                }
+                double dis = xdis * xdis + ydis * ydis;
                 mdis = Math.Min(dis, mdis);
             }
 

@@ -22,7 +22,6 @@ namespace DUIP.GUI
             this.Icon = Program.Icon;
 
             this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
-            this._TestTex = Texture.Create(Program.Icon.ToBitmap());
             this._Background = new OceanBackground(new Random());
             
             GL.Enable(EnableCap.Texture2D);
@@ -54,8 +53,6 @@ namespace DUIP.GUI
             v.Setup();
 
             this._Background.Render(v);
-            this._TestTex.Bind();
-            Texture.DrawQuad(new Rectangle(-1.0, -1.0, 1.0, 1.0));
 
             this.SwapBuffers();
         }
@@ -99,7 +96,6 @@ namespace DUIP.GUI
         }
 
         private Background _Background;
-        private Texture _TestTex;
         private Camera _Camera;
     }
 }

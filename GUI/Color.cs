@@ -42,15 +42,22 @@ namespace DUIP.GUI
         /// </summary>
         public static Color Mix(Color A, Color B, double Amount)
         {
+            A.R *= A.A; B.R *= B.A;
+            A.G *= A.A; B.G *= B.A;
+            A.B *= A.A; B.B *= B.A;
+
             double rd = B.R - A.R;
             double gd = B.G - A.G;
             double bd = B.B - A.B;
             double ad = B.A - A.A;
+            double alpha = A.A + (ad * Amount);
+            double ialpha = 1.0 / alpha;
+
             return RGBA(
-                A.R + (rd * Amount),
-                A.G + (gd * Amount),
-                A.B + (bd * Amount),
-                A.A + (ad * Amount));
+                (A.R + (rd * Amount)) * ialpha,
+                (A.G + (gd * Amount)) * ialpha,
+                (A.B + (bd * Amount)) * ialpha,
+                alpha);
         }
 
         /// <summary>
@@ -126,6 +133,16 @@ namespace DUIP.GUI
         /// Gets a completely transparent color.
         /// </summary>
         public static readonly Color Transparent = RGBA(1.0, 1.0, 1.0, 0.0);
+
+        /// <summary>
+        /// Gets a white color.
+        /// </summary>
+        public static readonly Color White = RGBA(1.0, 1.0, 1.0, 1.0);
+
+        /// <summary>
+        /// Gets a black color.
+        /// </summary>
+        public static readonly Color Black = RGBA(0.0, 0.0, 0.0, 1.0);
 
         public double R;
         public double G;
