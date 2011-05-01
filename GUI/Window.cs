@@ -23,10 +23,13 @@ namespace DUIP.GUI
 
             this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
             this._TestTex = Texture.Create(Program.Icon.ToBitmap());
-
+            this._Background = new OceanBackground(new Random());
+            
             GL.Enable(EnableCap.Texture2D);
             GL.Enable(EnableCap.CullFace);
+            GL.Enable(EnableCap.Blend);
             GL.CullFace(CullFaceMode.Front);
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
         }
 
         /// <summary>
@@ -47,15 +50,10 @@ namespace DUIP.GUI
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            GL.ClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit);
-
             View v = this._Camera.GetView(this.Width, this.Height);
             v.Setup();
 
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-
+            this._Background.Render(v);
             this._TestTex.Bind();
             Texture.DrawQuad(new Rectangle(-1.0, -1.0, 1.0, 1.0));
 
@@ -70,6 +68,7 @@ namespace DUIP.GUI
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             double updatetime = e.Time;
+            this._Background.Update(updatetime);
 
             if (this.Keyboard[Key.Escape])
             {
@@ -99,6 +98,7 @@ namespace DUIP.GUI
             if (this.Keyboard[Key.E]) this._Camera.Size *= Math.Pow(2.0, updatetime);
         }
 
+        private Background _Background;
         private Texture _TestTex;
         private Camera _Camera;
     }

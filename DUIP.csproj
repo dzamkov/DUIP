@@ -44,8 +44,10 @@
     <Compile Include="Data\Handle.cs" />
     <Compile Include="Data\Map.cs" />
     <Compile Include="GUI\Background.cs" />
+    <Compile Include="GUI\CellularFigure.cs" />
     <Compile Include="GUI\Color.cs" />
     <Compile Include="GUI\Figure.cs" />
+    <Compile Include="GUI\OceanBackground.cs" />
     <Compile Include="GUI\Point.cs" />
     <Compile Include="GUI\Rectangle.cs" />
     <Compile Include="GUI\Texture.cs" />

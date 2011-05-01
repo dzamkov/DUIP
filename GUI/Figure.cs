@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using OpenTK;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
+
 namespace DUIP.GUI
 {
     /// <summary>
@@ -9,6 +13,14 @@ namespace DUIP.GUI
     /// </summary>
     public abstract class Figure
     {
+        /// <summary>
+        /// Gets a figure with a solid color at all points.
+        /// </summary>
+        public static SolidFigure Solid(Color Color)
+        {
+            return new SolidFigure(Color);
+        }
+
         /// <summary>
         /// Gets the color of a point on the figure.
         /// </summary>
@@ -60,5 +72,51 @@ namespace DUIP.GUI
                 return Rectangle.Unbound;
             }
         }
+    }
+
+    /// <summary>
+    /// A figure with a solid color at all points.
+    /// </summary>
+    public class SolidFigure : Figure
+    {
+        public SolidFigure(Color Color)
+        {
+            this._Color = Color;
+        }
+
+        /// <summary>
+        /// Gets the solid color used.
+        /// </summary>
+        public Color Color
+        {
+            get
+            {
+                return this._Color;
+            }
+        }
+
+        public override Color GetPoint(Point Point)
+        {
+            return this._Color;           
+        }
+
+        public override unsafe void GetArea(Rectangle Area, int Width, int Height, byte* Data)
+        {
+            byte a = (byte)(this._Color.A * 255.0);
+            byte r = (byte)(this._Color.R * 255.0);
+            byte g = (byte)(this._Color.G * 255.0);
+            byte b = (byte)(this._Color.B * 255.0);
+
+            int m = Width * Height;
+            for (int t = 0; t < m; t++)
+            {
+                Data[3] = a;
+                Data[2] = r;
+                Data[1] = g;
+                Data[0] = b;
+            }
+        }
+
+        private Color _Color;
     }
 }

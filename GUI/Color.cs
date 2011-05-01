@@ -125,7 +125,7 @@ namespace DUIP.GUI
         /// <summary>
         /// Gets a completely transparent color.
         /// </summary>
-        public static readonly Color Transparent = RGBA(0.0, 0.0, 0.0, 0.0);
+        public static readonly Color Transparent = RGBA(1.0, 1.0, 1.0, 0.0);
 
         public double R;
         public double G;
