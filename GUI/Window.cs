@@ -23,6 +23,8 @@ namespace DUIP.GUI
 
             this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
             this._Background = new OceanBackground(new Random());
+            this._World = new World();
+            this._MakeView();
             
             GL.Enable(EnableCap.Texture2D);
             GL.Enable(EnableCap.CullFace);
@@ -49,10 +51,9 @@ namespace DUIP.GUI
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            View v = this._Camera.GetView(this.Width, this.Height);
-            v.Setup();
-
-            this._Background.Render(v);
+            this._View.Setup();
+            this._Background.Render(this._World, this._View);
+            this._World.Render(this._View);
 
             this.SwapBuffers();
         }
@@ -65,7 +66,8 @@ namespace DUIP.GUI
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             double updatetime = e.Time;
-            this._Background.Update(updatetime);
+            this._World.Update(null, updatetime);
+            this._Background.Update(this._World, updatetime);
 
             if (this.Keyboard[Key.Escape])
             {
@@ -84,18 +86,33 @@ namespace DUIP.GUI
                 }
             }
 
+            double rate = 10.0;
+            double mrate = rate * this._Camera.Scale;
+            double zrate = rate;
+            if (this.Keyboard[Key.W]) this._Camera.Velocity.Y -= mrate * updatetime;
+            if (this.Keyboard[Key.S]) this._Camera.Velocity.Y += mrate * updatetime;
 
-            if (this.Keyboard[Key.W]) this._Camera.Center.Y -= updatetime;
-            if (this.Keyboard[Key.S]) this._Camera.Center.Y += updatetime;
+            if (this.Keyboard[Key.A]) this._Camera.Velocity.X -= mrate * updatetime;
+            if (this.Keyboard[Key.D]) this._Camera.Velocity.X += mrate * updatetime;
 
-            if (this.Keyboard[Key.A]) this._Camera.Center.X -= updatetime;
-            if (this.Keyboard[Key.D]) this._Camera.Center.X += updatetime;
+            if (this.Keyboard[Key.Q]) this._Camera.ZoomVelocity -= zrate * updatetime;
+            if (this.Keyboard[Key.E]) this._Camera.ZoomVelocity += zrate * updatetime;
 
-            if (this.Keyboard[Key.Q]) this._Camera.Size *= Math.Pow(2.0, -updatetime);
-            if (this.Keyboard[Key.E]) this._Camera.Size *= Math.Pow(2.0, updatetime);
+            this._Camera.Update(updatetime, 0.01);
+            this._MakeView();
+        }
+
+        /// <summary>
+        /// Creates the view for the current camera.
+        /// </summary>
+        private void _MakeView()
+        {
+            this._View = this._Camera.GetView(this.Width, this.Height);
         }
 
         private Background _Background;
+        private World _World;
         private Camera _Camera;
+        private View _View;
     }
 }

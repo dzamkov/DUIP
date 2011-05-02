@@ -6,7 +6,7 @@ using OpenTK.Graphics;
 namespace DUIP.GUI
 {
     /// <summary>
-    /// A dynamic object responsible for rendering the background of an infinite two-dimensional space. The main
+    /// A dynamic object responsible for rendering the background for a world. The main
     /// purpose of backgrounds is to allow the user to see when and how the camera moves when there are no 
     /// foreground objects.
     /// </summary>
@@ -15,7 +15,7 @@ namespace DUIP.GUI
         /// <summary>
         /// Renders the background to the current graphics context when the given view is used.
         /// </summary>
-        public virtual void Render(View View)
+        public virtual void Render(World World, View View)
         {
 
         }
@@ -23,7 +23,7 @@ namespace DUIP.GUI
         /// <summary>
         /// Updates the state of the background by the given amount of time in seconds.
         /// </summary>
-        public virtual void Update(double Time)
+        public virtual void Update(World World, double Time)
         {
 
         }

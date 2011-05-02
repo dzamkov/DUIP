@@ -23,7 +23,7 @@ namespace DUIP.GUI
                 new Rectangle(0.0, 0.0, 1.0, 1.0), 128, 128);
         }
 
-        public override void Render(View View)
+        public override void Render(World World, View View)
         {
             // Background gradient
             double l = View.Area.Left;
@@ -47,7 +47,7 @@ namespace DUIP.GUI
             Texture.DrawQuad(View.Area, View.Area);
         }
 
-        public override void Update(double Time)
+        public override void Update(World World, double Time)
         {
 
         }

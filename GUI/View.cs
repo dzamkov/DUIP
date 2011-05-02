@@ -44,14 +44,16 @@ namespace DUIP.GUI
     }
 
     /// <summary>
-    /// Stores the location and zoom level of a viewer of a two-dimensional area.
+    /// Stores the location, velocity and zoom level of a viewer of a two-dimensional area.
     /// </summary>
     public struct Camera
     {
         public Camera(Point Center, double Zoom)
         {
             this.Center = Center;
-            this.Size = Zoom;
+            this.Zoom = Zoom;
+            this.Velocity = new Point(0.0, 0.0);
+            this.ZoomVelocity = 0.0;
         }
 
         /// <summary>
@@ -60,10 +62,36 @@ namespace DUIP.GUI
         public View GetView(int Width, int Height)
         {
             double ar = (double)Width / Height; // Aspect ratio
-            Point off = ar > 1.0 ? new Point(this.Size * ar, this.Size) : new Point(this.Size, this.Size / ar);
+            double size = this.Scale;
+            Point off = ar > 1.0 ? new Point(size * ar, size) : new Point(size, size / ar);
             Rectangle rect = new Rectangle(this.Center - off, this.Center + off);
             double res = (double)Width / off.X * (double)Height / off.Y / 4.0;
             return new View(rect, res);
+        }
+
+        /// <summary>
+        /// Updates the state of the camera by the given amount of time.
+        /// </summary>
+        /// <param name="Damping">The relative amount of velocity that persists after a time unit.</param>
+        public void Update(double Time, double Damping)
+        {
+            this.Center += this.Velocity * Time;
+            this.Zoom += this.ZoomVelocity * Time;
+
+            Damping = Math.Pow(Damping, Time);
+            this.Velocity *= Damping;
+            this.ZoomVelocity *= Damping;
+        }
+
+        /// <summary>
+        /// Gets a relative indicator of the amount of space in one direction is visible by the camera.
+        /// </summary>
+        public double Scale
+        {
+            get
+            {
+                return Math.Pow(2.0, this.Zoom);
+            }
         }
 
         /// <summary>
@@ -72,8 +100,18 @@ namespace DUIP.GUI
         public Point Center;
 
         /// <summary>
-        /// The extent of the viewable area.
+        /// The zoom level of the camera.
         /// </summary>
-        public double Size;
+        public double Zoom;
+
+        /// <summary>
+        /// The velocity of the lateral movement of the camera.
+        /// </summary>
+        public Point Velocity;
+
+        /// <summary>
+        /// The velocity of the zoom level of the camera.
+        /// </summary>
+        public double ZoomVelocity;
     }
 }

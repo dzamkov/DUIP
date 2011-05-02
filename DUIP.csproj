@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{525DDE35-A006-4764-A1BE-5451E2F92FE7}</ProjectGuid>
     <OutputType>WinExe</OutputType>
@@ -43,16 +43,19 @@
   <ItemGroup>
     <Compile Include="Data\Handle.cs" />
     <Compile Include="Data\Map.cs" />
-    <Compile Include="GUI\Background.cs" />
-    <Compile Include="GUI\CellularFigure.cs" />
+    <Compile Include="GUI\Background\Background.cs" />
+    <Compile Include="GUI\Figure\CellularFigure.cs" />
     <Compile Include="GUI\Color.cs" />
-    <Compile Include="GUI\Figure.cs" />
-    <Compile Include="GUI\OceanBackground.cs" />
+    <Compile Include="GUI\Figure\Figure.cs" />
+    <Compile Include="GUI\World\Node.cs" />
+    <Compile Include="GUI\Background\OceanBackground.cs" />
     <Compile Include="GUI\Point.cs" />
+    <Compile Include="GUI\World\Probe.cs" />
     <Compile Include="GUI\Rectangle.cs" />
     <Compile Include="GUI\Texture.cs" />
     <Compile Include="GUI\View.cs" />
     <Compile Include="GUI\Window.cs" />
+    <Compile Include="GUI\World\World.cs" />
     <Compile Include="Util\Maybe.cs" />
     <Compile Include="Util\Void.cs" />
     <Compile Include="Util\ID.cs" />
@@ -73,7 +76,7 @@
     <Compile Include="Net\UDP.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="OpenTK, Version=1.0.0.201, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL" />
+    <Reference Include="OpenTK, Version=1.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
