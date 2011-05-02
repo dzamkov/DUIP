@@ -33,6 +33,14 @@ namespace DUIP.GUI
         }
 
         /// <summary>
+        /// Projections a point from view-space to world-space.
+        /// </summary>
+        public Point Project(Point View)
+        {
+            return this.Area.TopLeft + this.Area.Size.Scale(View);
+        }
+
+        /// <summary>
         /// The area visible by the view.
         /// </summary>
         public Rectangle Area;
@@ -75,12 +83,21 @@ namespace DUIP.GUI
         /// <param name="Damping">The relative amount of velocity that persists after a time unit.</param>
         public void Update(double Time, double Damping)
         {
-            this.Center += this.Velocity * Time;
+            this.Center += this.Velocity * this.Scale * Time;
             this.Zoom += this.ZoomVelocity * Time;
 
             Damping = Math.Pow(Damping, Time);
             this.Velocity *= Damping;
             this.ZoomVelocity *= Damping;
+        }
+
+        /// <summary>
+        /// Adjusts velocity to zoom while having the given target point remain stationary in the view of the camera.
+        /// </summary>
+        public void ZoomTo(Point Target, double Factor)
+        {
+            this.ZoomVelocity += Factor;
+            this.Velocity += (this.Center - Target) * (0.7 * Factor / this.Scale);
         }
 
         /// <summary>
@@ -105,7 +122,7 @@ namespace DUIP.GUI
         public double Zoom;
 
         /// <summary>
-        /// The velocity of the lateral movement of the camera.
+        /// The velocity of the lateral movement of the camera relative to the scale of the camera.
         /// </summary>
         public Point Velocity;
 

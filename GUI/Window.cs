@@ -87,7 +87,7 @@ namespace DUIP.GUI
             }
 
             double rate = 10.0;
-            double mrate = rate * this._Camera.Scale;
+            double mrate = rate;
             double zrate = rate;
             if (this.Keyboard[Key.W]) this._Camera.Velocity.Y -= mrate * updatetime;
             if (this.Keyboard[Key.S]) this._Camera.Velocity.Y += mrate * updatetime;
@@ -98,8 +98,25 @@ namespace DUIP.GUI
             if (this.Keyboard[Key.Q]) this._Camera.ZoomVelocity -= zrate * updatetime;
             if (this.Keyboard[Key.E]) this._Camera.ZoomVelocity += zrate * updatetime;
 
+            Point tar = this._View.Project(this.MousePosition);
+            this._Camera.ZoomTo(tar, zrate * 0.2 * (this._LastMouseWheel - (this._LastMouseWheel = this.Mouse.WheelPrecise)));
             this._Camera.Update(updatetime, 0.01);
+
             this._MakeView();
+        }
+
+        /// <summary>
+        /// Gets the relative position of the mouse on the window.
+        /// </summary>
+        public Point MousePosition
+        {
+            get
+            {
+                MouseDevice md = this.Mouse;
+                return new Point(
+                    (double)md.X / this.Width,
+                    (double)md.Y / this.Height);
+            }
         }
 
         /// <summary>
@@ -114,5 +131,6 @@ namespace DUIP.GUI
         private World _World;
         private Camera _Camera;
         private View _View;
+        private float _LastMouseWheel;
     }
 }
