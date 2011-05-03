@@ -49,6 +49,7 @@ namespace DUIP.GUI
         {
             foreach (Node n in this._Nodes)
             {
+                GL.Color3(Color.White);
                 GL.Disable(EnableCap.Texture2D);
                 Texture.DrawQuad(n.Area);
                 GL.Enable(EnableCap.Texture2D);

@@ -100,7 +100,7 @@ namespace DUIP.GUI
 
             Point tar = this._View.Project(this.MousePosition);
             this._Camera.ZoomTo(tar, zrate * 0.2 * (this._LastMouseWheel - (this._LastMouseWheel = this.Mouse.WheelPrecise)));
-            this._Camera.Update(updatetime, 0.01);
+            this._Camera.Update(updatetime, 0.01, -2.0, 8.0);
 
             this._MakeView();
         }

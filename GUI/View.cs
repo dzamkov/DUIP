@@ -12,10 +12,9 @@ namespace DUIP.GUI
     /// </summary>
     public struct View
     {
-        public View(Rectangle Area, double Resolution)
+        public View(Rectangle Area)
         {
             this.Area = Area;
-            this.Resolution = Resolution;
         }
 
         /// <summary>
@@ -41,14 +40,22 @@ namespace DUIP.GUI
         }
 
         /// <summary>
+        /// Estimates the zoom level of the view.
+        /// </summary>
+        public double Zoom
+        {
+            get
+            {
+                Point size = this.Area.Size;
+                double el = Math.Sqrt(size.X * size.Y);
+                return Math.Log(el, 2.0) - 1.0;
+            }
+        }
+
+        /// <summary>
         /// The area visible by the view.
         /// </summary>
         public Rectangle Area;
-
-        /// <summary>
-        /// The amount of pixels for a 1.0 * 1.0 square area in the view.
-        /// </summary>
-        public double Resolution;
     }
 
     /// <summary>
@@ -73,18 +80,29 @@ namespace DUIP.GUI
             double size = this.Scale;
             Point off = ar > 1.0 ? new Point(size * ar, size) : new Point(size, size / ar);
             Rectangle rect = new Rectangle(this.Center - off, this.Center + off);
-            double res = (double)Width / off.X * (double)Height / off.Y / 4.0;
-            return new View(rect, res);
+            return new View(rect);
         }
 
         /// <summary>
         /// Updates the state of the camera by the given amount of time.
         /// </summary>
         /// <param name="Damping">The relative amount of velocity that persists after a time unit.</param>
-        public void Update(double Time, double Damping)
+        public void Update(double Time, double Damping, double MinZoom, double MaxZoom)
         {
+            
             this.Center += this.Velocity * this.Scale * Time;
             this.Zoom += this.ZoomVelocity * Time;
+
+            if (this.Zoom < MinZoom)
+            {
+                this.Zoom = MinZoom;
+                this.ZoomVelocity = 0.0;
+            }
+            if (this.Zoom > MaxZoom)
+            {
+                this.Zoom = MaxZoom;
+                this.ZoomVelocity = 0.0;
+            }
 
             Damping = Math.Pow(Damping, Time);
             this.Velocity *= Damping;
