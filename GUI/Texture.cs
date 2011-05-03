@@ -87,15 +87,38 @@ namespace DUIP.GUI
         /// </summary>
         public static unsafe Texture Create(Figure Figure, Rectangle Area, int Width, int Height)
         {
-            using (Bitmap bm = new Bitmap(Width, Height))
+            using (Bitmap bm = Figure.GetArea(Area, Width, Height))
             {
-                BitmapData bd = bm.LockBits(
-                    new System.Drawing.Rectangle(0, 0, Width, Height),
-                    ImageLockMode.ReadWrite, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                Figure.GetArea(Area, Width, Height, (byte*)bd.Scan0.ToPointer());
-                Texture t = Create(bd, Width, Height, true);
-                bm.UnlockBits(bd);
-                return t;
+                return Create(bm);
+            }
+        }
+
+        /// <summary>
+        /// Creates and caches a texture or loads it from a path.
+        /// </summary>
+        public static Texture CreateOrLoad(Path Path, Func<Figure> Figure, Rectangle Area, int Width, int Height)
+        {
+            if (Path.FileExists)
+            {
+                return Load(Path);
+            }
+            else
+            {
+                Path.Parent.MakeDirectory();
+                Bitmap bm = Figure().GetArea(Area, Width, Height);
+                bm.Save(Path);
+                return Create(bm);
+            }
+        }
+
+        /// <summary>
+        /// Loads a texture from a file.
+        /// </summary>
+        public static Texture Load(Path Path)
+        {
+            using (Bitmap bm = new Bitmap(Path))
+            {
+                return Create(bm);
             }
         }
 

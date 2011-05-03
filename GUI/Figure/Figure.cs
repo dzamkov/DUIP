@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 using OpenTK;
 using OpenTK.Graphics;
@@ -30,27 +32,39 @@ namespace DUIP.GUI
         }
 
         /// <summary>
-        /// Writes the color data of an area on the figure sampled to a finite resolution in bgra format to
-        /// a pointer. The sampling method used is undefined.
+        /// Gets a bitmap representation of an area within the figure. The sampling method used is undefined.
         /// </summary>
-        public unsafe virtual void GetArea(Rectangle Area, int Width, int Height, byte* Data)
+        public virtual Bitmap GetArea(Rectangle Area, int Width, int Height)
         {
-            Point size = Area.Size;
-            Point delta = new Point(size.X / Width, size.Y / Height);
-            Point start = delta * 0.5 + Area.TopLeft;
-
-            for (int y = 0; y < Height; y++)
+            Bitmap bm = new Bitmap(Width, Height);
+            unsafe
             {
-                for (int x = 0; x < Width; x++)
+                BitmapData bmd = bm.LockBits(
+                    new System.Drawing.Rectangle(0, 0, Width, Height),
+                    ImageLockMode.WriteOnly,
+                    System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+                byte* data = (byte*)bmd.Scan0.ToPointer();
+                Point size = Area.Size;
+                Point delta = new Point(size.X / Width, size.Y / Height);
+                Point start = delta * 0.5 + Area.TopLeft;
+
+                for (int y = 0; y < Height; y++)
                 {
-                    Color col = this.GetPoint(start + new Point(x * delta.X, y * delta.Y));
-                    Data[3] = (byte)(col.A * 255.0);
-                    Data[2] = (byte)(col.R * 255.0);
-                    Data[1] = (byte)(col.G * 255.0);
-                    Data[0] = (byte)(col.B * 255.0);
-                    Data += 4;
+                    for (int x = 0; x < Width; x++)
+                    {
+                        Color col = this.GetPoint(start + new Point(x * delta.X, y * delta.Y));
+                        data[3] = (byte)(col.A * 255.0);
+                        data[2] = (byte)(col.R * 255.0);
+                        data[1] = (byte)(col.G * 255.0);
+                        data[0] = (byte)(col.B * 255.0);
+                        data += 4;
+                    }
                 }
+
+                bm.UnlockBits(bmd);
             }
+            return bm;
         }
 
         /// <summary>
@@ -100,21 +114,14 @@ namespace DUIP.GUI
             return this._Color;           
         }
 
-        public override unsafe void GetArea(Rectangle Area, int Width, int Height, byte* Data)
+        public override Bitmap GetArea(Rectangle Area, int Width, int Height)
         {
-            byte a = (byte)(this._Color.A * 255.0);
-            byte r = (byte)(this._Color.R * 255.0);
-            byte g = (byte)(this._Color.G * 255.0);
-            byte b = (byte)(this._Color.B * 255.0);
-
-            int m = Width * Height;
-            for (int t = 0; t < m; t++)
+            Bitmap b = new Bitmap(Width, Height);
+            using (Graphics g = Graphics.FromImage(b))
             {
-                Data[3] = a;
-                Data[2] = r;
-                Data[1] = g;
-                Data[0] = b;
+                g.Clear(this._Color);
             }
+            return b;
         }
 
         private Color _Color;

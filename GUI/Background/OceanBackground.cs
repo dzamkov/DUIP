@@ -17,24 +17,27 @@ namespace DUIP.GUI
             this._Layers = new List<Layer>();
 
             // Ripple layers
-            double scale = 2.0;
+            double scale = 4.0;
             double zoom = -2.0;
             double error = 0.7;
             for (int t = 0; t < 6; t++)
             {
-                
                 this._Layers.Add(new Layer()
                 {
-                    Texture = Texture.Create(
-                        new CellularFigure(
-                            Figure.Solid(Color.Transparent),
-                            Figure.Solid(Color.RGB(0.5, 0.7, 0.9)),
-                            1.0, 7.0,
-                            CellularFigure.GridDistribution(Random, 6, error, 1.0)),
+                    Texture = Texture.CreateOrLoad(
+                        Program.Cache["ocean" + t.ToString() + ".png"],
+                        delegate 
+                        {
+                            return new CellularFigure(
+                                Figure.Solid(Color.Transparent),
+                                Figure.Solid(Color.RGB(0.5, 0.7, 0.9)),
+                                1.0, 40.0,
+                                CellularFigure.GridDistribution(Random, 12, error, 1.0));
+                        },
                         new Rectangle(0.0, 0.0, 1.0, 1.0), 128, 128),
                     Scale = scale,
                     MinZoom = zoom - 4.0,
-                    MaxZoom = zoom + 6.0
+                    MaxZoom = zoom + 8.0
                 });
                 scale *= 6.0;
                 zoom += 1.6;
@@ -67,9 +70,12 @@ namespace DUIP.GUI
             GL.Enable(EnableCap.Texture2D);
 
             // Layers
+            GL.MatrixMode(MatrixMode.Texture);
+            GL.LoadIdentity();
             foreach (Layer layer in this._Layers)
             {
                 layer.Render(View, zoom);
+                GL.Rotate(70.0, 0.0, 0.0, 1.0); // Rotation makes it harder to spot patterns
             }
         }
 

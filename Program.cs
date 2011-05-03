@@ -38,11 +38,25 @@ namespace DUIP
         }
 
         /// <summary>
+        /// The location of the cache for the program. This folder may store static procedurally created data between
+        /// program runs. This folder may not exist on the first program run.
+        /// </summary>
+        public static Path Cache
+        {
+            get
+            {
+                return _Cache;
+            }
+        }
+        private static Path _Cache;
+
+        /// <summary>
         /// Program main entry point.
         /// </summary>
         public static void Main(string[] Args)
         {
             Path work = Path.WorkingDirectory;
+            _Cache = work["Cache"];
             Path data = work["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
             
