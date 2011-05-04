@@ -24,6 +24,7 @@ namespace DUIP.GUI
             this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
             this._Background = new OceanBackground(new Random());
             this._World = new World();
+            this._Probe = new Probe();
             this._MakeView();
             
             GL.Enable(EnableCap.Texture2D);
@@ -66,9 +67,8 @@ namespace DUIP.GUI
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             double updatetime = e.Time;
-            this._World.Update(null, updatetime);
-            this._Background.Update(this._World, updatetime);
 
+            // Handle input
             if (this.Keyboard[Key.Escape])
             {
                 this.Close();
@@ -103,6 +103,72 @@ namespace DUIP.GUI
             this._Camera.Update(updatetime, 0.01, -2.0, 8.0);
 
             this._MakeView();
+
+            // Update world state
+            this._Probe.Update(this.Mouse, tar);
+            this._World.Update(new Probe[] { this._Probe }, updatetime);
+            this._Background.Update(this._World, updatetime);  
+        }
+
+        /// <summary>
+        /// The probe used for a window.
+        /// </summary>
+        public class Probe : DUIP.GUI.Probe
+        {
+            /// <summary>
+            /// Updates the state of the probe based on information from the given window.
+            /// </summary>
+            public void Update(Window Window)
+            {
+                this.Update(Window.Mouse, Window._View.Project(Window.MousePosition));
+            }
+
+            /// <summary>
+            /// Updates the state of the probe based on the given information.
+            /// </summary>
+            public void Update(MouseDevice Mouse, Point Position)
+            {
+                this._Pressed = Mouse[MouseButton.Left];
+                this._Position = Position;
+            }
+
+            public override bool Pressed
+            {
+                get
+                {
+                    return this._Pressed;
+                }
+            }
+
+            public override object Owner
+            {
+                get
+                {
+                    return this._Owner;
+                }
+            }
+
+            public override void Lock(object Owner)
+            {
+                this._Owner = Owner;
+            }
+
+            public override void Release(object Owner)
+            {
+                this._Owner = null;
+            }
+
+            public override Point Position
+            {
+                get
+                {
+                    return this._Position;
+                }
+            }
+
+            private Point _Position;
+            private bool _Pressed;
+            private object _Owner;
         }
 
         /// <summary>
@@ -127,6 +193,7 @@ namespace DUIP.GUI
             this._View = this._Camera.GetView(this.Width, this.Height);
         }
 
+        private Probe _Probe;
         private Background _Background;
         private World _World;
         private Camera _Camera;

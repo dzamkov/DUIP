@@ -47,6 +47,8 @@
     <Compile Include="GUI\Figure\CellularFigure.cs" />
     <Compile Include="GUI\Color.cs" />
     <Compile Include="GUI\Figure\Figure.cs" />
+    <Compile Include="GUI\Text\Font.cs" />
+    <Compile Include="GUI\Text\Text.cs" />
     <Compile Include="GUI\World\Node.cs" />
     <Compile Include="GUI\Background\OceanBackground.cs" />
     <Compile Include="GUI\Point.cs" />

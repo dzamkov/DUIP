@@ -11,19 +11,39 @@ namespace DUIP.GUI
     public abstract class Probe
     {
         /// <summary>
-        /// Gets the "pressure" of the probe between 0.0 and 1.0. A probe's pressure relates to how strongly it drags, activates and
-        /// holds objects. A probe with no pressure can not interact with the world.
+        /// Gets if the probe is "pressing" under itself. Pressing can active and drag objects.
         /// </summary>
-        public abstract double Pressure { get; }
+        public abstract bool Pressed { get; }
+
+        /// <summary>
+        /// Gets if the probe is unlocked and available for use by any object.
+        /// </summary>
+        public bool Free
+        {
+            get
+            {
+                return this.Owner == null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the owner of the lock on the probe, or null if the probe is not locked.
+        /// </summary>
+        public abstract object Owner { get; }
+
+        /// <summary>
+        /// Locks the probe, making it unavailable for use by any object other than the one that locked it.
+        /// </summary>
+        public abstract void Lock(object Owner);
+
+        /// <summary>
+        /// Releases a lock on the probe by the given owner object.
+        /// </summary>
+        public abstract void Release(object Owner);
 
         /// <summary>
         /// Gets the position of the probe in the world.
         /// </summary>
         public abstract Point Position { get; }
-
-        /// <summary>
-        /// Gets the identity of this probe on the previous frame.
-        /// </summary>
-        public abstract Probe Previous { get; }
     }
 }

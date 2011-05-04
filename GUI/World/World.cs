@@ -39,6 +39,13 @@ namespace DUIP.GUI
             foreach (Node n in this._Nodes)
             {
                 n.Update(Time, damping);
+                foreach (Probe p in Probes)
+                {
+                    if (p.Pressed)
+                    {
+                        n.Position = p.Position;
+                    }
+                }
             }
         }
 

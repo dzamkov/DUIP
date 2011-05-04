@@ -6,7 +6,7 @@ using System.Linq;
 namespace DUIP.GUI
 {
     /// <summary>
-    /// A graphical, rectangular representation of a logical object.
+    /// A dynamic graphical, rectangular representation of a logical object.
     /// </summary>
     public class Node
     {
@@ -29,7 +29,7 @@ namespace DUIP.GUI
         }
 
         /// <summary>
-        /// Gets the size of the node.
+        /// Gets or sets the size of the node.
         /// </summary>
         public Point Size
         {
@@ -37,10 +37,14 @@ namespace DUIP.GUI
             {
                 return this._Size;
             }
+            set
+            {
+                this._Size = value;
+            }
         }
 
         /// <summary>
-        /// Gets the position of the topleft corner of the node.
+        /// Gets or sets the position of the topleft corner of the node.
         /// </summary>
         public Point Position
         {
@@ -48,16 +52,24 @@ namespace DUIP.GUI
             {
                 return this._Position;
             }
+            set
+            {
+                this._Position = value;
+            }
         }
 
         /// <summary>
-        /// Gets the velocity of the node.
+        /// Gets or sets the velocity of the node.
         /// </summary>
         public Point Velocity
         {
             get
             {
                 return this._Velocity;
+            }
+            set
+            {
+                this._Velocity = value;
             }
         }
 
