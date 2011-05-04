@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using OpenTK;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 
 namespace DUIP.GUI
 {
@@ -76,10 +79,29 @@ namespace DUIP.GUI
         /// <summary>
         /// Independently updates the state of this node.
         /// </summary>
-        public void Update(double Time, double Damping)
+        public void Update(World World, IEnumerable<Probe> Probes, double Time, double Damping)
         {
             this._Position += this._Velocity * Time;
             this._Velocity *= Math.Pow(Damping, Time);
+
+            foreach (Probe p in Probes)
+            {
+                if (this.Area.Occupies(p.Position) && p.Pressed)
+                {
+                    this._Velocity += new Point(1.0, 1.0) * Time;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Independently renders this node to the current graphics context.
+        /// </summary>
+        public void Render(World World, View View)
+        {
+            GL.Color3(Color.White);
+            GL.Disable(EnableCap.Texture2D);
+            Texture.DrawQuad(this.Area);
+            GL.Enable(EnableCap.Texture2D);
         }
 
         private Point _Position;

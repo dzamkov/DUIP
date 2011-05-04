@@ -38,14 +38,7 @@ namespace DUIP.GUI
             double damping = 0.5;
             foreach (Node n in this._Nodes)
             {
-                n.Update(Time, damping);
-                foreach (Probe p in Probes)
-                {
-                    if (p.Pressed)
-                    {
-                        n.Position = p.Position;
-                    }
-                }
+                n.Update(this, Probes, Time, damping);
             }
         }
 
@@ -56,10 +49,7 @@ namespace DUIP.GUI
         {
             foreach (Node n in this._Nodes)
             {
-                GL.Color3(Color.White);
-                GL.Disable(EnableCap.Texture2D);
-                Texture.DrawQuad(n.Area);
-                GL.Enable(EnableCap.Texture2D);
+                n.Render(this, View);
             }
         }
 
