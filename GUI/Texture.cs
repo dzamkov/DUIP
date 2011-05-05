@@ -37,6 +37,28 @@ namespace DUIP.GUI
         }
 
         /// <summary>
+        /// Gets if this is the null texture.
+        /// </summary>
+        public bool IsNull
+        {
+            get
+            {
+                return this._ID == 0;
+            }
+        }
+
+        /// <summary>
+        /// Gets the null texture.
+        /// </summary>
+        public static Texture Null
+        {
+            get
+            {
+                return new Texture(0);
+            }
+        }
+
+        /// <summary>
         /// Sets this as the current texture.
         /// </summary>
         public void Bind()

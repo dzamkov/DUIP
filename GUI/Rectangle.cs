@@ -135,6 +135,16 @@ namespace DUIP.GUI
         }
 
         /// <summary>
+        /// Creates a translated form of this rectangle.
+        /// </summary>
+        public Rectangle Translate(Point Translation)
+        {
+            return new Rectangle(
+                this.TopLeft + Translation,
+                this.BottomRight + Translation);
+        }
+
+        /// <summary>
         /// Gets a rectangle covering the intersecting area of A and B.
         /// </summary>
         public static Rectangle Intersection(Rectangle A, Rectangle B)
