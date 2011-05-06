@@ -32,7 +32,7 @@ namespace DUIP.GUI
         }
 
         /// <summary>
-        /// Gets a bitmap representation of an area within the figure. The sampling method used is undefined.
+        /// Gets a bitmap representation of an area within the figure.
         /// </summary>
         public virtual Bitmap GetArea(Rectangle Area, int Width, int Height)
         {

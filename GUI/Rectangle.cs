@@ -31,6 +31,11 @@ namespace DUIP.GUI
         }
 
         /// <summary>
+        /// The unit square, a square with an area of 1.0 with its topleft corner at the origin.
+        /// </summary>
+        public static readonly Rectangle UnitSquare = new Rectangle(0.0, 0.0, 1.0, 1.0);
+
+        /// <summary>
         /// Gets the size of the rectangle.
         /// </summary>
         public Point Size

@@ -10,17 +10,19 @@ namespace DUIP.GUI
     public abstract class Font
     {
         /// <summary>
-        /// Gets the glyph for the given character, or returns null if the character is not included in this typeset.
+        /// Gets the glyph for the given character, or returns null if the character is not included in this font. The glyph should
+        /// be bounded between the origin and the point corresponding to the size of the character.
         /// </summary>
         public abstract Figure GetGlyph(char Char);
 
         /// <summary>
-        /// Gets the size of the given character for spacing and alignment purposes.
+        /// Gets the size of the given character for spacing and alignment purposes. If this font does not include the character,
+        /// a size of (0.0, 0.0) is returned.
         /// </summary>
         public abstract Point GetSize(char Char);
 
         /// <summary>
-        /// Gets the characters included in this typeset.
+        /// Gets the characters included in this font.
         /// </summary>
         public virtual IEnumerable<char> Characters
         {

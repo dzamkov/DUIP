@@ -10,13 +10,13 @@ using OpenTK.Graphics.OpenGL;
 namespace DUIP.GUI
 {
     /// <summary>
-    /// A font that takes characters from a single bitmap image.
+    /// A font that takes glyphs from a single texture image.
     /// </summary>
     public class BitmapFont : Font, IDisposable
     {
-        public BitmapFont(Bitmap Bitmap, Dictionary<char, Glyph> GlyphMap, double Scale)
+        public BitmapFont(Texture Texture, Dictionary<char, Rectangle> GlyphMap, double Scale)
         {
-            this._Bitmap = Bitmap;
+            this._Texture = Texture;
             this._GlyphMap = GlyphMap;
             this._Scale = Scale;
         }
@@ -24,22 +24,11 @@ namespace DUIP.GUI
         /// <summary>
         /// Gets the glyph map (which gives the location of glyphs for characters in a bitmap) for the bitmap font.
         /// </summary>
-        public Dictionary<char, Glyph> GlyphMap
+        public Dictionary<char, Rectangle> GlyphMap
         {
             get
             {
                 return this._GlyphMap;
-            }
-        }
-
-        /// <summary>
-        /// Gets the bitmap for the bitmap font.
-        /// </summary>
-        public Bitmap Bitmap
-        {
-            get
-            {
-                return this._Bitmap;
             }
         }
 
@@ -50,11 +39,6 @@ namespace DUIP.GUI
         {
             get
             {
-                if (this._Texture.IsNull)
-                {
-                    this._Texture = Texture.Create(this._Bitmap);
-                    Texture.SetWrapMode(TextureWrapMode.Clamp, TextureWrapMode.Clamp);
-                }
                 return this._Texture;
             }
         }
@@ -82,64 +66,66 @@ namespace DUIP.GUI
             FontFamily Family, IEnumerable<char> Characters, FontStyle Style, 
             float FontScale, double DisplayScale, TextDirection TextDirection, int Size)
         {
-            using (var font = new System.Drawing.Font(Family, FontScale, Style))
+            using (Bitmap bm = new Bitmap(Size, Size))
             {
-                Bitmap bm = new Bitmap(Size, Size);
-                Dictionary<char, Glyph> glyphmap = new Dictionary<char, Glyph>();
-                using (var g = Graphics.FromImage(bm))
+                double isize = 1.0 / Size;
+                using (var font = new System.Drawing.Font(Family, FontScale, Style))
                 {
-                    g.Clear(Color.Transparent);
-                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-
-                    StringFormat sf = new StringFormat();
-                    sf.SetMeasurableCharacterRanges(new CharacterRange[] { new CharacterRange(0, 1) });
-                    sf.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
-                    int x = 0;
-                    int y = 0;
-                    int sy = 0;
-                    Brush b = Brushes.Black;
-                    foreach(char c in Characters)
+                    Dictionary<char, Rectangle> glyphmap = new Dictionary<char, Rectangle>();
+                    using (var g = Graphics.FromImage(bm))
                     {
-                        string str = char.ToString(c);
-                        Region[] rgs = g.MeasureCharacterRanges(str, font, new RectangleF(0.0f, 0.0f, Size, Size), sf);
-                        RectangleF crg = rgs[0].GetBounds(g);
-                        SizeF size = crg.Size;
-                        int width = (int)Math.Ceiling(size.Width);
-                        int height = (int)Math.Ceiling(size.Height);
+                        g.Clear(Color.Transparent);
+                        g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
-                        int cx = x;
-                        x = cx + width;
-                        if (x >= Size)
+                        StringFormat sf = new StringFormat();
+                        sf.SetMeasurableCharacterRanges(new CharacterRange[] { new CharacterRange(0, 1) });
+                        sf.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
+                        double x = 0;
+                        double y = 0;
+                        double sy = 0;
+                        Brush b = Brushes.Black;
+                        foreach (char c in Characters)
                         {
-                            cx = 0;
-                            x = width;
-                            sy = y;
-                        }
+                            string str = char.ToString(c);
+                            Region[] rgs = g.MeasureCharacterRanges(str, font, new RectangleF(0.0f, 0.0f, Size, Size), sf);
+                            RectangleF crg = rgs[0].GetBounds(g);
+                            SizeF size = crg.Size;
+                            double width = crg.Width;
+                            double height = crg.Height;
 
-                        int cy = sy;
-                        if (cy + height > y)
-                        {
-                            y = cy + height;
-                        }
-                        if (y >= Size)
-                        {
-                            bm.Dispose();
-                            return null;
-                        }
+                            double cx = x;
+                            x = cx + width;
+                            if (x >= Size)
+                            {
+                                cx = 0;
+                                x = width;
+                                sy = y;
+                            }
 
-                        glyphmap.Add(c, new Glyph()
-                        {
-                            X = x,
-                            Y = y,
-                            Width = width,
-                            Height = height
-                        });
-                        g.DrawString(str, font, b, cx, cy, sf);
+                            double cy = sy;
+                            if (cy + height > y)
+                            {
+                                y = cy + height;
+                            }
+                            if (y >= Size)
+                            {
+                                bm.Dispose();
+                                return null;
+                            }
+
+                            glyphmap.Add(c, Rectangle.FromOffsetSize(
+                                new Point(cx, cy) * isize,
+                                new Point(width, height) * isize));
+                            g.DrawString(str, font, b, (float)cx - crg.X, (float)cy - crg.Y, sf);
+                        }
                     }
-                }
 
-                double scale = DisplayScale / FontScale * Size;
-                return new BitmapFont(bm, glyphmap, scale);
+                    double scale = DisplayScale / FontScale * Size;
+
+                    Texture tex = Texture.Create(bm);
+                    Texture.SetWrapMode(TextureWrapMode.Clamp, TextureWrapMode.Clamp);
+                    return new BitmapFont(tex, glyphmap, scale);
+                }
             }
         }
 
@@ -161,65 +147,31 @@ namespace DUIP.GUI
 
         public override Point GetSize(char Char)
         {
-            Glyph c;
-            if (this._GlyphMap.TryGetValue(Char, out c))
+            Rectangle src;
+            if (this._GlyphMap.TryGetValue(Char, out src))
             {
-                return new Point(c.Width, c.Height) * this._Scale;
+                return src.Size * this._Scale;
             }
-            else
-            {
-                return new Point(0.0, 0.0);
-            }
+            return new Point(0.0, 0.0);
         }
 
         public override Figure GetGlyph(char Char)
         {
+            Rectangle src;
+            if (this._GlyphMap.TryGetValue(Char, out src))
+            {
+                return this._Texture.CreateFigure(src, new Rectangle(new Point(0.0, 0.0), src.Size * this._Scale));
+            }
             return null;
         }
 
         public void Dispose()
         {
-            if (this._Bitmap != null)
-            {
-                this._Bitmap.Dispose();
-            }
-            if (!this._Texture.IsNull)
-            {
-                this._Texture.Dispose();
-            }
-        }
-
-        /// <summary>
-        /// Information about a character within the font.
-        /// </summary>
-        public class Glyph
-        {
-            /// <summary>
-            /// The x-offset of the leftmost pixel of the character.
-            /// </summary>
-            public int X;
-
-            /// <summary>
-            /// The y-offset of the topmost pixel of the character.
-            /// </summary>
-            public int Y;
-
-            /// <summary>
-            /// The width of the character in pixels.
-            /// </summary>
-            public int Width;
-
-            /// <summary>
-            /// The height of the character in pixels.
-            /// </summary>
-            public int Height;
+            this._Texture.Dispose();
         }
 
         private double _Scale;
-        private double _LineSpacing;
-        private Bitmap _Bitmap;
         private Texture _Texture;
-        private TextDirection _TextDirection;
-        private Dictionary<char, Glyph> _GlyphMap;
+        private Dictionary<char, Rectangle> _GlyphMap;
     }
 }

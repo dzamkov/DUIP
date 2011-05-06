@@ -67,6 +67,22 @@ namespace DUIP.GUI
         }
 
         /// <summary>
+        /// Creates a figure to render a portion of this texture to the given area.
+        /// </summary>
+        public TextureFigure CreateFigure(Rectangle Source, Rectangle Destination)
+        {
+            return new TextureFigure(this, Source, Destination);
+        }
+
+        /// <summary>
+        /// Creates a figure to render this texture.
+        /// </summary>
+        public TextureFigure CreateFigure()
+        {
+            return new TextureFigure(this);
+        }
+
+        /// <summary>
         /// Sets the technique used for wrapping the currently-bound texture.
         /// </summary>
         public static void SetWrapMode(TextureWrapMode Horizontal, TextureWrapMode Vertical)
@@ -203,4 +219,74 @@ namespace DUIP.GUI
         private uint _ID;
     }
 
+    /// <summary>
+    /// A figure that displays a section of a texture.
+    /// </summary>
+    public class TextureFigure : Figure
+    {
+        public TextureFigure(Texture Texture, Rectangle Source, Rectangle Destination)
+        {
+            this._Texture = Texture;
+            this._Source = Source;
+            this._Destination = Destination;
+        }
+
+        public TextureFigure(Texture Texture)
+            : this(Texture, Rectangle.UnitSquare, Rectangle.UnitSquare)
+        {
+
+        }
+
+        /// <summary>
+        /// Gets the displayed texture.
+        /// </summary>
+        public Texture Texture
+        {
+            get
+            {
+                return this._Texture;
+            }
+        }
+
+        /// <summary>
+        /// Gets the rectangular area in the texture from which to take the image.
+        /// </summary>
+        public Rectangle Source
+        {
+            get
+            {
+                return this._Source;
+            }
+        }
+
+        /// <summary>
+        /// Gets the rectangular area to display the image in.
+        /// </summary>
+        public Rectangle Destination
+        {
+            get
+            {
+                return this._Destination;
+            }
+        }
+
+        public override void Render(View View)
+        {
+            this._Texture.Bind();
+            GL.Color4(Color.White);
+            Texture.DrawQuad(this._Source, this._Destination);
+        }
+
+        public override Rectangle Bounds
+        {
+            get
+            {
+                return this._Destination;
+            }
+        }
+
+        private Rectangle _Source;
+        private Rectangle _Destination;
+        private Texture _Texture;
+    }
 }
