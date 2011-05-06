@@ -77,6 +77,7 @@ namespace DUIP.GUI
                 layer.Render(View, zoom);
                 GL.Rotate(70.0, 0.0, 0.0, 1.0); // Rotation makes it harder to spot patterns
             }
+            GL.LoadIdentity();
         }
 
         public override void Update(World World, double Time)

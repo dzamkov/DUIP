@@ -32,6 +32,8 @@ namespace DUIP.GUI
             GL.Enable(EnableCap.Blend);
             GL.CullFace(CullFaceMode.Front);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+
+            this._TestFont = BitmapFont.Create(BitmapFont.GetFamily("Verdana"), Font.ASCIICharacters, FontStyle.Regular, 40.0f, 1.0, TextDirection.LeftDown, 512);
         }
 
         /// <summary>
@@ -55,6 +57,8 @@ namespace DUIP.GUI
             this._View.Setup();
             this._Background.Render(this._World, this._View);
             this._World.Render(this._View);
+            this._TestFont.Texture.Bind();
+            Texture.DrawQuad(new Rectangle(0.0, 0.0, 1.0, 1.0));
 
             this.SwapBuffers();
         }
@@ -193,6 +197,7 @@ namespace DUIP.GUI
             this._View = this._Camera.GetView(this.Width, this.Height);
         }
 
+        private BitmapFont _TestFont;
         private Probe _Probe;
         private Background _Background;
         private World _World;

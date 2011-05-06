@@ -13,7 +13,7 @@ namespace DUIP.GUI
     /// <summary>
     /// Represents a two-dimensional image in graphics memory. Contains functions related to textures.
     /// </summary>
-    public class Texture : IDisposable
+    public struct Texture : IDisposable
     {
         public Texture(uint ID)
         {
@@ -64,6 +64,15 @@ namespace DUIP.GUI
         public void Bind()
         {
             GL.BindTexture(TextureTarget.Texture2D, (int)this._ID);
+        }
+
+        /// <summary>
+        /// Sets the technique used for wrapping the currently-bound texture.
+        /// </summary>
+        public static void SetWrapMode(TextureWrapMode Horizontal, TextureWrapMode Vertical)
+        {
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)Horizontal);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)Vertical);
         }
 
         /// <summary>

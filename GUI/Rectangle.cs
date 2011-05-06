@@ -23,6 +23,14 @@ namespace DUIP.GUI
         }
 
         /// <summary>
+        /// Creates a rectangle given its offset (topleft corner) and size.
+        /// </summary>
+        public static Rectangle FromOffsetSize(Point Offset, Point Size)
+        {
+            return new Rectangle(Offset, Offset + Size);
+        }
+
+        /// <summary>
         /// Gets the size of the rectangle.
         /// </summary>
         public Point Size
@@ -30,6 +38,17 @@ namespace DUIP.GUI
             get
             {
                 return this.BottomRight - this.TopLeft;
+            }
+        }
+
+        /// <summary>
+        /// Gets the offset (topleft corner) of the rectangle.
+        /// </summary>
+        public Point Offset
+        {
+            get
+            {
+                return this.TopLeft;
             }
         }
 

@@ -48,7 +48,6 @@
     <Compile Include="GUI\Color.cs" />
     <Compile Include="GUI\Figure\Figure.cs" />
     <Compile Include="GUI\Text\BitmapFont.cs" />
-    <Compile Include="GUI\Text\CharacterFont.cs" />
     <Compile Include="GUI\Text\Font.cs" />
     <Compile Include="GUI\Text\Text.cs" />
     <Compile Include="GUI\World\Node.cs" />
