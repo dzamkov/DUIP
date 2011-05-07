@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 
-namespace DUIP.GUI
+namespace DUIP.UI
 {
     /// <summary>
     /// A user-controlled pointlike object that can be used to manipulate nodes in a world. Probes may persist between frames.

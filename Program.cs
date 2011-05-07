@@ -4,7 +4,7 @@ using System.Linq;
 using System.Drawing;
 using System.Reflection;
 
-using DUIP.GUI;
+using DUIP.UI;
 
 namespace DUIP
 {

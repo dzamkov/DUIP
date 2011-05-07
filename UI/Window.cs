@@ -9,7 +9,7 @@ using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 
-namespace DUIP.GUI
+namespace DUIP.UI
 {
     /// <summary>
     /// The main window for the program.
@@ -117,7 +117,7 @@ namespace DUIP.GUI
         /// <summary>
         /// The probe used for a window.
         /// </summary>
-        public class Probe : DUIP.GUI.Probe
+        public class Probe : DUIP.UI.Probe
         {
             /// <summary>
             /// Updates the state of the probe based on information from the given window.

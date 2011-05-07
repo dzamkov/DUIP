@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DUIP.GUI
+namespace DUIP.UI
 {
     /// <summary>
     /// A figure that creates a tileable randomly-generated cellular pattern.

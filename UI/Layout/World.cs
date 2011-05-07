@@ -6,7 +6,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
-namespace DUIP.GUI
+namespace DUIP.UI
 {
     /// <summary>
     /// An infinitely large, dynamic two-dimensional plane containing nodes and other graphical objects.

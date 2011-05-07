@@ -7,7 +7,7 @@ using System.Drawing.Drawing2D;
 
 using OpenTK.Graphics.OpenGL;
 
-namespace DUIP.GUI
+namespace DUIP.UI
 {
     /// <summary>
     /// A font that takes glyphs from a single texture image.

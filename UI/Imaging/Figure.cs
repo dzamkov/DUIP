@@ -7,7 +7,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
-namespace DUIP.GUI
+namespace DUIP.UI
 {
     /// <summary>
     /// A description of a colored object or image (with alpha channel) on an infinitely large and precise

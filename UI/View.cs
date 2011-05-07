@@ -5,7 +5,7 @@ using System.Linq;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 
-namespace DUIP.GUI
+namespace DUIP.UI
 {
     /// <summary>
     /// Stores the location and resolution of a view of a two-dimensional area.

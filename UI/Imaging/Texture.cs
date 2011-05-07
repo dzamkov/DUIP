@@ -8,7 +8,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
-namespace DUIP.GUI
+namespace DUIP.UI
 {
     /// <summary>
     /// Represents a two-dimensional image in graphics memory. Contains functions related to textures.

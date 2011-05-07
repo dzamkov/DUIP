@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 using OpenTK.Graphics;
 
-namespace DUIP.GUI
+namespace DUIP.UI
 {
     /// <summary>
     /// A color, as stolen from many of my previous projects. Represents a color including alpha.

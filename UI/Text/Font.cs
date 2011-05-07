@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DUIP.GUI
+namespace DUIP.UI
 {
     /// <summary>
     /// A collection of glyphs for characters.

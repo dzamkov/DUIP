@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 
-namespace DUIP.GUI
+namespace DUIP.UI
 {
     /// <summary>
     /// A visual representation of a string. Unless otherwise specified, the text is white, allowing for color modulation.

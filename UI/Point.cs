@@ -5,7 +5,7 @@ using System.Drawing;
 
 using OpenTK;
 
-namespace DUIP.GUI
+namespace DUIP.UI
 {
     /// <summary>
     /// A two-dimensional floating point position or offset (vector).
@@ -17,6 +17,17 @@ namespace DUIP.GUI
             this.X = X;
             this.Y = Y;
         }
+
+        /// <summary>
+        /// Gets the point at the origin of the coordinate space.
+        /// </summary>
+        public static readonly Point Origin = new Point(0.0, 0.0);
+
+        /// <summary>
+        /// Gets an offset that does not change the value of a point when
+        /// added or subtracted to it.
+        /// </summary>
+        public static readonly Point Zero = Origin;
 
         /// <summary>
         /// Gets the square of the length of this point offset (vector). This function is quicker to compute than the actual length
