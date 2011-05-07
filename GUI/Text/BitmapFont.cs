@@ -114,7 +114,7 @@ namespace DUIP.GUI
                             }
 
                             glyphmap.Add(c, Rectangle.FromOffsetSize(
-                                new Point(cx, cy) * isize,
+                                new Point(cx + 0.5, cy + 0.5) * isize,
                                 new Point(width, height) * isize));
                             g.DrawString(str, font, b, (float)cx - crg.X, (float)cy - crg.Y, sf);
                         }
