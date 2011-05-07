@@ -128,36 +128,6 @@ namespace DUIP.UI
             GL.TexCoord2(sl, sb); GL.Vertex2(dl, db);
         }
 
-
-        /// <summary>
-        /// Creates a texture of the given size for a rectangular area on a figure.
-        /// </summary>
-        public static unsafe Texture Create(Figure Figure, Rectangle Area, int Width, int Height)
-        {
-            using (Bitmap bm = Figure.GetArea(Area, Width, Height))
-            {
-                return Create(bm);
-            }
-        }
-
-        /// <summary>
-        /// Creates and caches a texture or loads it from a path.
-        /// </summary>
-        public static Texture CreateOrLoad(Path Path, Func<Figure> Figure, Rectangle Area, int Width, int Height)
-        {
-            if (Path.FileExists)
-            {
-                return Load(Path);
-            }
-            else
-            {
-                Path.Parent.MakeDirectory();
-                Bitmap bm = Figure().GetArea(Area, Width, Height);
-                bm.Save(Path);
-                return Create(bm);
-            }
-        }
-
         /// <summary>
         /// Loads a texture from a file.
         /// </summary>
@@ -166,6 +136,55 @@ namespace DUIP.UI
             using (Bitmap bm = new Bitmap(Path))
             {
                 return Create(bm);
+            }
+        }
+
+        /// <summary>
+        /// Creates a texture by sampling an image.
+        /// </summary>
+        public static Texture Create<TImage>(TImage Image, Rectangle Area, int Width, int Height)
+            where TImage : IImage
+        {
+            Texture tex;
+            using (Bitmap bm = new Bitmap(Width, Height))
+            {
+                BitmapData bmd = bm.LockBits(
+                    new System.Drawing.Rectangle(0, 0, Width, Height),
+                    ImageLockMode.WriteOnly,
+                    System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                Write<TImage>(Image, Area, bmd, Width, Height);
+                tex = Create(bmd, Width, Height, true);
+                bm.UnlockBits(bmd);
+            }
+            return tex;
+        }
+
+        /// <summary>
+        /// Creates a texture by sampling an image while using the given path for caching.
+        /// </summary>
+        public static Texture CacheCreate<TImage>(Path Cache, Func<TImage> Image, Rectangle Area, int Width, int Height)
+            where TImage : IImage
+        {
+            if (Cache.FileExists)
+            {
+                return Load(Cache);
+            }
+            else
+            {
+                Cache.Parent.MakeDirectory();
+                Texture tex;
+                using (Bitmap bm = new Bitmap(Width, Height))
+                {
+                    BitmapData bmd = bm.LockBits(
+                        new System.Drawing.Rectangle(0, 0, Width, Height),
+                        ImageLockMode.WriteOnly,
+                        System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                    Write<TImage>(Image(), Area, bmd, Width, Height);
+                    tex = Create(bmd, Width, Height, true);
+                    bm.UnlockBits(bmd);
+                    bm.Save(Cache);
+                }
+                return tex;
             }
         }
 
@@ -180,6 +199,31 @@ namespace DUIP.UI
             Texture t = Create(bd, Source.Width, Source.Height, true);
             Source.UnlockBits(bd);
             return t;
+        }
+
+        /// <summary>
+        /// Writes a section of an image to the given bitmap data.
+        /// </summary>
+        public static unsafe void Write<TImage>(TImage Image, Rectangle Area, BitmapData Data, int Width, int Height)
+            where TImage : IImage
+        {
+            byte* data = (byte*)Data.Scan0.ToPointer();
+            Point size = Area.Size;
+            Point delta = new Point(size.X / Width, size.Y / Height);
+            Point start = delta * 0.5 + Area.TopLeft;
+
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    Color col = Image.GetColor(start + new Point(x * delta.X, y * delta.Y));
+                    data[3] = (byte)(col.A * 255.0);
+                    data[2] = (byte)(col.R * 255.0);
+                    data[1] = (byte)(col.G * 255.0);
+                    data[0] = (byte)(col.B * 255.0);
+                    data += 4;
+                }
+            }
         }
 
         /// <summary>

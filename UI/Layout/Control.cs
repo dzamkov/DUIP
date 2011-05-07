@@ -34,6 +34,14 @@ namespace DUIP.UI
         /// <param name="Probes">The probes in the world.</param>
         public abstract void Update(Point Offset, IEnumerable<Probe> Probes, double Time);
 
+        /// <summary>
+        /// Called when the control will no longer be used.
+        /// </summary>
+        public virtual void Finish()
+        {
+
+        }
+
         public override Rectangle Bounds
         {
             get

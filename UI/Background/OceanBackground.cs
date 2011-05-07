@@ -24,15 +24,15 @@ namespace DUIP.UI
             {
                 this._Layers.Add(new Layer()
                 {
-                    Texture = Texture.CreateOrLoad(
+                    Texture = Texture.CacheCreate<CellularImage>(
                         Program.Cache["ocean" + t.ToString() + ".png"],
                         delegate 
                         {
-                            return new CellularFigure(
-                                Figure.Solid(Color.Transparent),
-                                Figure.Solid(Color.RGB(0.5, 0.7, 0.9)),
+                            return new CellularImage(
+                                Color.Transparent,
+                                Color.RGB(0.5, 0.7, 0.9),
                                 1.0, 40.0,
-                                CellularFigure.GridDistribution(Random, 12, error, 1.0));
+                                CellularImage.GridDistribution(Random, 12, error, 1.0));
                         },
                         new Rectangle(0.0, 0.0, 1.0, 1.0), 128, 128),
                     Scale = scale,

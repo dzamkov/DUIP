@@ -5,11 +5,11 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A figure that creates a tileable randomly-generated cellular pattern.
+    /// An image for a tileable randomly-generated cellular pattern.
     /// </summary>
-    public class CellularFigure : Figure
+    public class CellularImage : IImage
     {
-        public CellularFigure(Figure Cell, Figure Edge, double Exponent, double Multiplier, IEnumerable<Point> CellCenters)
+        public CellularImage(Color Cell, Color Edge, double Exponent, double Multiplier, IEnumerable<Point> CellCenters)
         {
             this._Centers = new List<Point>();
             this._Cell = Cell;
@@ -62,9 +62,9 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets the figure used to draw the interior of cells.
+        /// Gets the color used to draw the interior of cells.
         /// </summary>
-        public Figure Cell
+        public Color Cell
         {
             get
             {
@@ -73,9 +73,9 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets the figure used to draw the edges between cells.
+        /// Gets the color used to draw the edges between cells.
         /// </summary>
-        public Figure Edge
+        public Color Edge
         {
             get
             {
@@ -107,7 +107,7 @@ namespace DUIP.UI
             }
         }
 
-        public override Color GetPoint(Point Point)
+        public Color GetColor(Point Point)
         {
             Point.X = ((Point.X % 1.0) + 1.0) % 1.0;
             Point.Y = ((Point.Y % 1.0) + 1.0) % 1.0;
@@ -132,13 +132,13 @@ namespace DUIP.UI
             mdis *= this._Multiplier;
             mdis = Math.Pow(mdis, this._Exponent);
             mdis = Math.Min(mdis, 1.0);
-            return Color.Mix(this._Cell.GetPoint(Point), this._Edge.GetPoint(Point), mdis);
+            return Color.Mix(this._Cell, this._Edge, mdis);
         }
 
         private double _Exponent;
         private double _Multiplier;
-        private Figure _Cell;
-        private Figure _Edge;
+        private Color _Cell;
+        private Color _Edge;
         private List<Point> _Centers;
     }
 }
