@@ -94,14 +94,13 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Independently renders this node to the current graphics context.
+        /// Independently renders this node using the given context.
         /// </summary>
-        public void Render(World World, View View)
+        public void Render(World World, RenderContext Context)
         {
-            GL.Color3(Color.White);
-            GL.Disable(EnableCap.Texture2D);
-            Texture.DrawQuad(this.Area);
-            GL.Enable(EnableCap.Texture2D);
+            Context.ClearTexture();
+            Context.SetColor(Color.White);
+            Context.DrawQuad(this.Area);
         }
 
         private Point _Position;

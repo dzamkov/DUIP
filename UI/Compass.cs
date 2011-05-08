@@ -62,7 +62,7 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Maps every item in this compass to another value based using another compass and
+        /// Maps every value in this compass to another value based using another compass and
         /// a mapping function.
         /// </summary>
         public Compass<T> Map<TO>(Compass<TO> Other, Func<T, TO, T> Map)
@@ -72,6 +72,18 @@ namespace DUIP.UI
                 Map(this.Up, Other.Up),
                 Map(this.Right, Other.Right),
                 Map(this.Down, Other.Down));
+        }
+
+        /// <summary>
+        /// Maps every value in this compass to another value based using a mapping function.
+        /// </summary>
+        public Compass<F> Map<F>(Func<T, F> Map)
+        {
+            return new Compass<F>(
+                Map(this.Left),
+                Map(this.Up),
+                Map(this.Right),
+                Map(this.Down));
         }
 
         public T Left;

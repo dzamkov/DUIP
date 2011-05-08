@@ -20,27 +20,22 @@ namespace DUIP.UI
             : base(640, 680, GraphicsMode.Default, "DUIP", GameWindowFlags.Default)
         {
             this.Icon = Program.Icon;
+            RenderContext.Initialize();
 
             this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
             this._Background = new OceanBackground(new Random());
             this._World = new World();
             this._Probe = new Probe();
             this._MakeView();
-            
-            GL.Enable(EnableCap.Texture2D);
-            GL.Enable(EnableCap.CullFace);
-            GL.Enable(EnableCap.Blend);
-            GL.CullFace(CullFaceMode.Front);
-            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
             Block testblock = new BorderBlock
             {
-                Borders = new Compass<Border>(new Border
+                Border = new Border
                 {
                     Color = Color.RGB(1.0, 0.0, 0.0),
-                    Weight = 0.01,
+                    Weight = 0.05,
                     Style = BorderStyle.Solid
-                }),
+                },
                 Inner = new SpaceBlock
                 {
                     Size = new Point(1.0, 1.0)
@@ -69,10 +64,10 @@ namespace DUIP.UI
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            this._View.Setup();
-            this._Background.Render(this._World, this._View);
-            this._World.Render(this._View);
-            this._TestFigure.Render(this._View);
+            RenderContext rc = new RenderContext(this._View);
+            this._Background.Render(this._World, rc);
+            this._World.Render(rc);
+            this._TestFigure.Render(rc);
 
             this.SwapBuffers();
         }

@@ -64,6 +64,17 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Gets an offset perpendicular to this one counterclockwise.
+        /// </summary>
+        public Point Perpendicular
+        {
+            get
+            {
+                return new Point(-this.Y, this.X);
+            }
+        }
+
+        /// <summary>
         /// Creates a unit vector (point offset) for the specified angle.
         /// </summary>
         public static Point Unit(double Angle)
@@ -144,6 +155,16 @@ namespace DUIP.UI
         public static implicit operator Vector2(Point Point)
         {
             return new Vector2((float)Point.X, (float)Point.Y);
+        }
+
+        public static implicit operator Vector3d(Point Point)
+        {
+            return new Vector3d(Point.X, Point.Y, 0.0);
+        }
+
+        public static implicit operator Vector3(Point Point)
+        {
+            return new Vector3((float)Point.X, (float)Point.Y, 0.0f);
         }
 
         public static Point operator -(Point A, Point B)

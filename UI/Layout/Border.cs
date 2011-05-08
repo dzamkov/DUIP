@@ -15,10 +15,10 @@ namespace DUIP.UI
 
         }
 
-        public BorderBlock(Block Inner, Compass<Border> Borders)
+        public BorderBlock(Block Inner, Border Border)
         {
             this._Inner = Inner;
-            this._Borders = Borders;
+            this._Border = Border;
         }
 
         /// <summary>
@@ -37,17 +37,17 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets or sets the borders this block applies.
+        /// Gets or sets the border this block applies.
         /// </summary>
-        public Compass<Border> Borders
+        public Border Border
         {
             get
             {
-                return this._Borders;
+                return this._Border;
             }
             set
             {
-                this._Borders = value;
+                this._Border = value;
             }
         }
 
@@ -57,7 +57,7 @@ namespace DUIP.UI
         }
 
         private Block _Inner;
-        private Compass<Border> _Borders;
+        private Border _Border;
     }
 
     /// <summary>
@@ -68,11 +68,11 @@ namespace DUIP.UI
         public BorderControl(BorderBlock Block, Point Size, ControlEnvironment Environment)
         {
             this._Size = Size;
-            this._VisibleBorders = Block.Borders.Map(Environment.Borders, (x, y) => y.Style == BorderStyle.None ? x : Border.None);
-            Point innersize, inneroffset; _CalculateInnerLayout(this._Size, this._VisibleBorders, out innersize, out inneroffset);
-            this._Inner = Block.Inner.CreateControl(innersize, new ControlEnvironment()
+            this._Border = Block.Border;
+            this._BorderVisible = Environment.Borders.Map(x => x.Style == BorderStyle.None);
+            this._Inner = Block.Inner.CreateControl(this._InnerSize, new ControlEnvironment()
             {
-                Borders = this._VisibleBorders.Map(Environment.Borders, (x, y) => x.Style == BorderStyle.None ? y : x)
+                Borders = Environment.Borders.Map(this._BorderVisible, (x, y) => y ? this._Border : x)
             });
         }
 
@@ -88,11 +88,11 @@ namespace DUIP.UI
         {
             get
             {
-                Compass<Border> bords = this._VisibleBorders;
+                Compass<double> bords = this._BorderWeights;
                 return
                     this._Inner.PreferedSize +
-                    new Point(bords.Left.Weight, bords.Up.Weight) +
-                    new Point(bords.Right.Weight, bords.Down.Weight);
+                    new Point(bords.Left, bords.Up) +
+                    new Point(bords.Right, bords.Down);
             }
         }
 
@@ -101,32 +101,87 @@ namespace DUIP.UI
             this._Inner.Finish();
         }
 
-        public override void Render(View View)
+        public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
         {
-            throw new NotImplementedException();
+            this._Inner.Update(this._InnerOffset, Probes, Time);
+        }
+
+        public override void Render(RenderContext Context)
+        {
+            // Draw inner
+            using (Context.Translate(this._InnerOffset))
+            {
+                this._Inner.Render(Context);
+            }
+
+            // Draw borders
+            Point size = this._Size;
+            Compass<bool> vis = this._BorderVisible;
+            double w = this._Border.Weight;
+            double hw = w * 0.5;
+
+            Context.ClearTexture();
+            Context.SetColor(this._Border.Color);
+            using (Context.DrawLines(w))
+            {
+                if (vis.Left) 
+                    Context.OutputLine(new Point(hw, 0.0), new Point(hw, size.Y));
+                if (vis.Up) 
+                    Context.OutputLine(new Point(0.0, hw), new Point(size.X, hw));
+                if (vis.Right)
+                    Context.OutputLine(new Point(size.X - hw, 0.0), new Point(size.X - hw, size.Y));
+                if (vis.Down)
+                    Context.OutputLine(new Point(0.0, size.Y - hw), new Point(size.X, size.Y - hw));
+            }
         }
 
         public override Control Resize(Point Size)
         {
-            Point innersize, inneroffset;
             this._Size = Size;
-            _CalculateInnerLayout(this._Size, this._VisibleBorders, out innersize, out inneroffset);
-            this._Inner = this._Inner.Resize(innersize);
+            this._Inner = this._Inner.Resize(this._InnerSize);
             return this;
         }
 
         /// <summary>
-        /// Calculates the layout for the inner control.
+        /// Gets the offset of the inner control.
         /// </summary>
-        internal static void _CalculateInnerLayout(Point Size, Compass<Border> Borders, out Point InnerSize, out Point InnerOffset)
+        private Point _InnerOffset
         {
-            InnerOffset = new Point(Borders.Left.Weight, Borders.Up.Weight);
-            InnerSize = Size - new Point(Borders.Right.Weight, Borders.Down.Weight) - InnerOffset;
+            get
+            {
+                Compass<double> bords = this._BorderWeights;
+                return new Point(bords.Left, bords.Up);
+            }
+        }
+
+        /// <summary>
+        /// Gets the size of the inner control.
+        /// </summary>
+        private Point _InnerSize
+        {
+            get
+            {
+                Compass<double> bords = this._BorderWeights;
+                return this._Size - new Point(bords.Left, bords.Up) - new Point(bords.Right, bords.Down);
+            }
+        }
+
+        /// <summary>
+        /// Gets the weights of the borders on the sides of this control.
+        /// </summary>
+        private Compass<double> _BorderWeights
+        {
+            get
+            {
+                double w = this._Border.Weight;
+                return this._BorderVisible.Map(x => x ? w : 0.0);
+            }
         }
 
         private Point _Size;
         private Control _Inner;
-        private Compass<Border> _VisibleBorders;
+        private Border _Border;
+        private Compass<bool> _BorderVisible;
     }
 
     /// <summary>

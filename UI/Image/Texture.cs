@@ -92,43 +92,6 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Draws a textured quad using the current texture stretched across the destination area.
-        /// </summary>
-        public static void DrawQuad(Rectangle Destination)
-        {
-            DrawQuad(new Rectangle(0.0, 0.0, 1.0, 1.0), Destination);
-        }
-
-        /// <summary>
-        /// Draws a textured quad using the current texture.
-        /// </summary>
-        public static void DrawQuad(Rectangle Source, Rectangle Destination)
-        {
-            GL.Begin(BeginMode.Quads);
-            OutputQuad(Source, Destination);
-            GL.End();
-        }
-
-        /// <summary>
-        /// Outputs a texture-mapped quad to the current graphics context.
-        /// </summary>
-        public static void OutputQuad(Rectangle Source, Rectangle Destination)
-        {
-            double sl = Source.Left;
-            double st = Source.Top;
-            double sr = Source.Right;
-            double sb = Source.Bottom;
-            double dl = Destination.Left;
-            double dt = Destination.Top;
-            double dr = Destination.Right;
-            double db = Destination.Bottom;
-            GL.TexCoord2(sl, st); GL.Vertex2(dl, dt);
-            GL.TexCoord2(sr, st); GL.Vertex2(dr, dt);
-            GL.TexCoord2(sr, sb); GL.Vertex2(dr, db);
-            GL.TexCoord2(sl, sb); GL.Vertex2(dl, db);
-        }
-
-        /// <summary>
         /// Loads a texture from a file.
         /// </summary>
         public static Texture Load(Path Path)
@@ -314,11 +277,11 @@ namespace DUIP.UI
             }
         }
 
-        public override void Render(View View)
+        public override void Render(RenderContext Context)
         {
-            this._Texture.Bind();
-            GL.Color4(Color.White);
-            Texture.DrawQuad(this._Source, this._Destination);
+            Context.SetTexture(this._Texture);
+            Context.SetColor(Color.White);
+            Context.DrawTexturedQuad(this._Source, this._Destination);
         }
 
         public override Rectangle Bounds

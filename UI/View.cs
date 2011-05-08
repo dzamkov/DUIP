@@ -12,9 +12,10 @@ namespace DUIP.UI
     /// </summary>
     public struct View
     {
-        public View(Rectangle Area)
+        public View(Rectangle Area, double Resolution)
         {
             this.Area = Area;
+            this.Resolution = Resolution;
         }
 
         /// <summary>
@@ -56,6 +57,11 @@ namespace DUIP.UI
         /// The area visible by the view.
         /// </summary>
         public Rectangle Area;
+
+        /// <summary>
+        /// The amount of pixels for one space unit.
+        /// </summary>
+        public double Resolution;
     }
 
     /// <summary>
@@ -80,7 +86,7 @@ namespace DUIP.UI
             double size = this.Scale;
             Point off = ar > 1.0 ? new Point(size * ar, size) : new Point(size, size / ar);
             Rectangle rect = new Rectangle(this.Center - off, this.Center + off);
-            return new View(rect);
+            return new View(rect, (ar > 1.0 ? Height / off.Y : Width / off.X) * 0.5);
         }
 
         /// <summary>

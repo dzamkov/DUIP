@@ -15,9 +15,9 @@ namespace DUIP.UI
     public abstract class Background
     {
         /// <summary>
-        /// Renders the background to the current graphics context when the given view is used.
+        /// Renders the background using the given context.
         /// </summary>
-        public virtual void Render(World World, View View)
+        public virtual void Render(World World, RenderContext Context)
         {
 
         }
@@ -36,33 +36,33 @@ namespace DUIP.UI
         public struct Layer
         {
             /// <summary>
-            /// Renders this layer to the given view.
+            /// Renders this layer to the given context.
             /// </summary>
-            public void Render(View View)
+            public void Render(RenderContext Context)
             {
-                this.Render(View, View.Zoom);   
+                this.Render(Context, Context.View.Zoom);   
                 
             }
 
             /// <summary>
-            /// Renders this layer to the given view with an alternate (or precomputed) zoom level.
+            /// Renders this layer to the given context with an alternate (or precomputed) zoom level.
             /// </summary>
-            public void Render(View View, double Zoom)
+            public void Render(RenderContext Context, double Zoom)
             {
                 double pg = (Zoom - this.MinZoom) / (this.MaxZoom - this.MinZoom);
                 if (pg > 0.0 && pg < 1.0)
                 {
                     double alpha = pg * (1.0 - pg) * 4.0;
 
-                    this.Texture.Bind();
-                    GL.Color4(Color.RGBA(1.0, 1.0, 1.0, alpha));
-
-                    Rectangle src = View.Area;
+                    View view = Context.View;
+                    Rectangle src = view.Area;
                     double iscale = (1.0 / this.Scale);
                     src.TopLeft *= iscale;
                     src.BottomRight *= iscale;
 
-                    Texture.DrawQuad(src, View.Area);
+                    Context.SetTexture(this.Texture);
+                    Context.SetColor(Color.RGBA(1.0, 1.0, 1.0, alpha));
+                    Context.DrawTexturedQuad(src, view.Area);
                 }
             }
 

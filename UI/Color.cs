@@ -99,9 +99,6 @@ namespace DUIP.UI
             return lum;
         }
 
-        /// <summary>
-        /// Converts this color into a color usable by opentk.
-        /// </summary>
         public static implicit operator Color4(Color Color)
         {
             return new Color4(
@@ -118,6 +115,11 @@ namespace DUIP.UI
                 (int)(Color.R * 255.0),
                 (int)(Color.G * 255.0),
                 (int)(Color.B * 255.0));
+        }
+
+        public static Color operator *(Color A, Color B)
+        {
+            return Color.RGBA(A.R * B.R, A.G * B.G, A.B * B.B, A.A * B.A);
         }
 
         /// <summary>

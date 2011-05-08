@@ -15,9 +15,9 @@ namespace DUIP.UI
     public abstract class Figure
     {
         /// <summary>
-        /// Renders the figure to the current graphics context when the given view is used.
+        /// Renders the figure using the given context.
         /// </summary>
-        public abstract void Render(View View);
+        public abstract void Render(RenderContext Context);
 
         /// <summary>
         /// Gets a rectangle such that all points outside the rectangle are completely transparent (have an

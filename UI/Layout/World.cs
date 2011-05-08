@@ -43,13 +43,13 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Renders the world to the current graphics context when the given view is used.
+        /// Renders the world using the given context.
         /// </summary>
-        public void Render(View View)
+        public void Render(RenderContext Context)
         {
             foreach (Node n in this._Nodes)
             {
-                n.Render(this, View);
+                n.Render(this, Context);
             }
         }
 

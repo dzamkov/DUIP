@@ -83,7 +83,7 @@ namespace DUIP.UI
             return this;
         }
 
-        public override void Render(View View)
+        public override void Render(RenderContext Context)
         {
             
         }

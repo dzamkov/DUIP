@@ -50,6 +50,7 @@
     <Compile Include="UI\Color.cs" />
     <Compile Include="UI\Image\Figure.cs" />
     <Compile Include="UI\Image\Image.cs" />
+    <Compile Include="UI\Image\RenderContext.cs" />
     <Compile Include="UI\Layout\Block.cs" />
     <Compile Include="UI\Layout\Border.cs" />
     <Compile Include="UI\Layout\Control.cs" />
