@@ -33,8 +33,22 @@ namespace DUIP.UI
             GL.CullFace(CullFaceMode.Front);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
-            BitmapFont bf = BitmapFont.Create(BitmapFont.GetFamily("Verdana"), Font.ASCIICharacters, FontStyle.Regular, 40.0f, 1.0, TextDirection.LeftDown, 512);
-            this._TestFigure = bf.GetGlyph('y');
+            Block testblock = new BorderBlock
+            {
+                Borders = new Compass<Border>(new Border
+                {
+                    Color = Color.RGB(1.0, 0.0, 0.0),
+                    Weight = 0.01,
+                    Style = BorderStyle.Solid
+                }),
+                Inner = new SpaceBlock
+                {
+                    Size = new Point(1.0, 1.0)
+                }
+            };
+            Control testcontrol = testblock.CreateControl(new Point(1.0, 1.0), new ControlEnvironment());
+            testcontrol = testcontrol.Resize(testcontrol.PreferedSize);
+            this._TestFigure = testcontrol;
         }
 
         /// <summary>

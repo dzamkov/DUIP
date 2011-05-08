@@ -5,14 +5,13 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A mutable description of visual contents within a rectangular area.
+    /// A description of visual contents within a rectangular area.
     /// </summary>
     public abstract class Block
     {
         /// <summary>
-        /// Creates a control for this block using the given environment. The control will be updated
-        /// to reflect changes to this block.
+        /// Creates a dynamic control (instance) of this block with the given parameters.
         /// </summary>
-        public abstract Control CreateControl(ControlEnvironment Environment);
+        public abstract Control CreateControl(Point Size, ControlEnvironment Environment);
     }
 }

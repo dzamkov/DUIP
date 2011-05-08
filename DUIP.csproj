@@ -41,15 +41,19 @@
   </Target>
   -->
   <ItemGroup>
+    <Compile Include="Core\Type.cs" />
     <Compile Include="Data\Handle.cs" />
     <Compile Include="Data\Map.cs" />
     <Compile Include="UI\Background\Background.cs" />
+    <Compile Include="UI\Compass.cs" />
     <Compile Include="UI\Image\CellularImage.cs" />
     <Compile Include="UI\Color.cs" />
     <Compile Include="UI\Image\Figure.cs" />
     <Compile Include="UI\Image\Image.cs" />
     <Compile Include="UI\Layout\Block.cs" />
+    <Compile Include="UI\Layout\Border.cs" />
     <Compile Include="UI\Layout\Control.cs" />
+    <Compile Include="UI\Layout\Space.cs" />
     <Compile Include="UI\Text\BitmapFont.cs" />
     <Compile Include="UI\Text\Font.cs" />
     <Compile Include="UI\Text\Text.cs" />
