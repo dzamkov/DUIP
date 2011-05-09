@@ -12,7 +12,7 @@ namespace DUIP.UI
     /// purpose of backgrounds is to allow the user to see when and how the camera moves when there are no 
     /// foreground objects.
     /// </summary>
-    public abstract class Background
+    public abstract class Ambience
     {
         /// <summary>
         /// Renders the background using the given context.

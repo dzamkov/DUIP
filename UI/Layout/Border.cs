@@ -69,7 +69,7 @@ namespace DUIP.UI
         {
             this._Size = Size;
             this._Border = Block.Border;
-            this._BorderVisible = Environment.Borders.Map(x => x.Style == BorderStyle.None);
+            this._BorderVisible = Environment.Borders.Map(x => x.Weight == 0.0 || x.Color.A == 0.0);
             this._Inner = Block.Inner.CreateControl(this._InnerSize, new ControlEnvironment()
             {
                 Borders = Environment.Borders.Map(this._BorderVisible, (x, y) => y ? this._Border : x)
@@ -195,7 +195,6 @@ namespace DUIP.UI
         public static readonly Border None = new Border()
         {
             Color = Color.Transparent,
-            Style = BorderStyle.None,
             Weight = 0.0
         };
 
@@ -205,24 +204,8 @@ namespace DUIP.UI
         public Color Color;
 
         /// <summary>
-        /// The style of this border.
-        /// </summary>
-        public BorderStyle Style;
-
-        /// <summary>
         /// The thickness of the border.
         /// </summary>
         public double Weight;
-    }
-
-    /// <summary>
-    /// A type of border.
-    /// </summary>
-    public enum BorderStyle
-    {
-        None,
-        Solid,
-        Dashed,
-        Dotted
     }
 }

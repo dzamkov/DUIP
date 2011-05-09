@@ -23,7 +23,7 @@ namespace DUIP.UI
             RenderContext.Initialize();
 
             this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
-            this._Background = new OceanBackground(new Random());
+            this._Background = new OceanAmbience(new Random());
             this._World = new World();
             this._Probe = new Probe();
             this._MakeView();
@@ -32,13 +32,16 @@ namespace DUIP.UI
             {
                 Border = new Border
                 {
-                    Color = Color.RGB(1.0, 0.0, 0.0),
+                    Color = Color.RGB(1.0, 0.2, 0.2),
                     Weight = 0.05,
-                    Style = BorderStyle.Solid
                 },
-                Inner = new SpaceBlock
+                Inner = new BackgroundBlock
                 {
-                    Size = new Point(1.0, 1.0)
+                    Color = Color.RGB(0.95, 0.7, 0.7),
+                    Inner = new SpaceBlock
+                    {
+                        Size = new Point(1.0, 1.0)
+                    }
                 }
             };
             Control testcontrol = testblock.CreateControl(new Point(1.0, 1.0), new ControlEnvironment());
@@ -208,7 +211,7 @@ namespace DUIP.UI
 
         private Figure _TestFigure;
         private Probe _Probe;
-        private Background _Background;
+        private Ambience _Background;
         private World _World;
         private Camera _Camera;
         private View _View;

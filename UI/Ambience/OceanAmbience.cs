@@ -10,9 +10,9 @@ namespace DUIP.UI
     /// <summary>
     /// A background that somewhat resembles an ocean.
     /// </summary>
-    public class OceanBackground : Background
+    public class OceanAmbience : Ambience
     {
-        public OceanBackground(Random Random)
+        public OceanAmbience(Random Random)
         {
             this._Layers = new List<Layer>();
 
@@ -79,6 +79,7 @@ namespace DUIP.UI
                 GL.Rotate(70.0, 0.0, 0.0, 1.0); // Rotation makes it harder to spot patterns
             }
             GL.LoadIdentity();
+            GL.MatrixMode(MatrixMode.Projection);
         }
 
         public override void Update(World World, double Time)
