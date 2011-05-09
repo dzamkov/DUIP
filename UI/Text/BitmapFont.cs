@@ -64,7 +64,7 @@ namespace DUIP.UI
         /// <param name="DisplayScale">The scale to use for displayed characters.</param>
         public static BitmapFont Create(
             FontFamily Family, IEnumerable<char> Characters, FontStyle Style, 
-            float FontScale, double DisplayScale, TextDirection TextDirection, int Size)
+            float FontScale, double DisplayScale, int Size)
         {
             using (Bitmap bm = new Bitmap(Size, Size))
             {
@@ -155,7 +155,7 @@ namespace DUIP.UI
             return new Point(0.0, 0.0);
         }
 
-        public override Figure GetGlyph(char Char)
+        public override Disposable<Figure> GetGlyph(char Char)
         {
             Rectangle src;
             if (this._GlyphMap.TryGetValue(Char, out src))

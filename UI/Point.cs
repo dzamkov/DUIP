@@ -187,6 +187,31 @@ namespace DUIP.UI
             return new Point(A.X * B, A.Y * B);
         }
 
+        public static bool operator ==(Point A, Point B)
+        {
+            return A.X == B.X && A.Y == B.Y;
+        }
+
+        public static bool operator !=(Point A, Point B)
+        {
+            return A.X != B.X || A.Y != B.Y;
+        }
+
+        public override bool Equals(object obj)
+        {
+            Point? p = obj as Point?;
+            if (obj != null)
+            {
+                return p.Value == this;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return this.X.GetHashCode() ^ ~this.Y.GetHashCode();
+        }
+
         public double X;
         public double Y;
     }

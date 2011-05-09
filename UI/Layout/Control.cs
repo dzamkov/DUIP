@@ -13,6 +13,11 @@ namespace DUIP.UI
         /// The external borders of the control.
         /// </summary>
         public Compass<Border> Borders;
+
+        /// <summary>
+        /// A rectangle containing the points that correspond to all valid sizes the control may have.
+        /// </summary>
+        public Rectangle SizeRange;
     }
 
     /// <summary>
@@ -21,36 +26,17 @@ namespace DUIP.UI
     public abstract class Control : Figure
     {
         /// <summary>
-        /// Gets the current size of this control.
+        /// Gets the static size of this control.
         /// </summary>
         public abstract Point Size { get; }
 
         /// <summary>
-        /// Gets the prefered size of this control. The prefered size is a size that would
-        /// better suit the control. The control is at its optimial size when the prefered size and
-        /// actual size are equivalent. 
-        /// </summary>
-        public virtual Point PreferedSize
-        {
-            get
-            {
-                return this.Size;
-            }
-        }
-
-        /// <summary>
         /// Mutates this control, or creates an entirely new control for the block and the given parameters.
         /// </summary>
-        public virtual Control Replace(Block Block, Point Size, ControlEnvironment Environment)
+        public virtual Disposable<Control> Replace(Block Block, ControlEnvironment Environment)
         {
-            this.Finish();
-            return Block.CreateControl(Size, Environment);
+            return Block.CreateControl(Environment);
         }
-
-        /// <summary>
-        /// Mutates this control, or creates an entirely new control to have the given size.
-        /// </summary>
-        public abstract Control Resize(Point Size);
 
         /// <summary>
         /// Updates the state of the control by the given amount of time.
@@ -58,14 +44,6 @@ namespace DUIP.UI
         /// <param name="Offset">The offset of the control in relation to the world.</param>
         /// <param name="Probes">The probes in the world.</param>
         public virtual void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
-        {
-
-        }
-
-        /// <summary>
-        /// Called when the control will no longer be used.
-        /// </summary>
-        public virtual void Finish()
         {
 
         }

@@ -15,7 +15,7 @@ namespace DUIP.UI
 
         }
 
-        public BorderBlock(Block Inner, Border Border)
+        public BorderBlock(Border Border, Block Inner)
         {
             this._Inner = Inner;
             this._Border = Border;
@@ -51,9 +51,9 @@ namespace DUIP.UI
             }
         }
 
-        public override Control CreateControl(Point Size, ControlEnvironment Environment)
+        public override Disposable<Control> CreateControl(ControlEnvironment Environment)
         {
-            return new BorderControl(this, Size, Environment);
+            return new BorderControl(this, Environment);
         }
 
         private Block _Inner;
@@ -63,15 +63,15 @@ namespace DUIP.UI
     /// <summary>
     /// A control for a border block.
     /// </summary>
-    public class BorderControl : Control
+    public class BorderControl : Control, IDisposable
     {
-        public BorderControl(BorderBlock Block, Point Size, ControlEnvironment Environment)
+        public BorderControl(BorderBlock Block, ControlEnvironment Environment)
         {
-            this._Size = Size;
             this._Border = Block.Border;
             this._BorderVisible = Environment.Borders.Map(x => x.Weight == 0.0 || x.Color.A == 0.0);
-            this._Inner = Block.Inner.CreateControl(this._InnerSize, new ControlEnvironment()
+            this._Inner = Block.Inner.CreateControl(new ControlEnvironment()
             {
+                SizeRange = Environment.SizeRange.Translate(-this.InnerSizePadding),
                 Borders = Environment.Borders.Map(this._BorderVisible, (x, y) => y ? this._Border : x)
             });
         }
@@ -80,42 +80,39 @@ namespace DUIP.UI
         {
             get
             {
-                return this._Size;
+                return this._Inner.Size + this.InnerSizePadding;
             }
         }
 
-        public override Point PreferedSize
+        /// <summary>
+        /// Gets the size that is added to the inner control due to borders. 
+        /// </summary>
+        public Point InnerSizePadding
         {
             get
             {
                 Compass<double> bords = this._BorderWeights;
-                return
-                    this._Inner.PreferedSize +
-                    new Point(bords.Left, bords.Up) +
-                    new Point(bords.Right, bords.Down);
+                return new Point(bords.Left, bords.Up) + new Point(bords.Right, bords.Down);
             }
-        }
-
-        public override void Finish()
-        {
-            this._Inner.Finish();
         }
 
         public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
         {
-            this._Inner.Update(this._InnerOffset, Probes, Time);
+            Compass<double> bords = this._BorderWeights;
+            this._Inner.Update(Offset + new Point(bords.Left, bords.Up), Probes, Time);
         }
 
         public override void Render(RenderContext Context)
         {
             // Draw inner
-            using (Context.Translate(this._InnerOffset))
+            Compass<double> bords = this._BorderWeights;
+            using (Context.Translate(new Point(bords.Left, bords.Up)))
             {
                 this._Inner.Render(Context);
             }
 
             // Draw borders
-            Point size = this._Size;
+            Point size = this._Inner.Size + new Point(bords.Left, bords.Up) + new Point(bords.Right, bords.Down);
             Compass<bool> vis = this._BorderVisible;
             double w = this._Border.Weight;
             double hw = w * 0.5;
@@ -135,37 +132,6 @@ namespace DUIP.UI
             }
         }
 
-        public override Control Resize(Point Size)
-        {
-            this._Size = Size;
-            this._Inner = this._Inner.Resize(this._InnerSize);
-            return this;
-        }
-
-        /// <summary>
-        /// Gets the offset of the inner control.
-        /// </summary>
-        private Point _InnerOffset
-        {
-            get
-            {
-                Compass<double> bords = this._BorderWeights;
-                return new Point(bords.Left, bords.Up);
-            }
-        }
-
-        /// <summary>
-        /// Gets the size of the inner control.
-        /// </summary>
-        private Point _InnerSize
-        {
-            get
-            {
-                Compass<double> bords = this._BorderWeights;
-                return this._Size - new Point(bords.Left, bords.Up) - new Point(bords.Right, bords.Down);
-            }
-        }
-
         /// <summary>
         /// Gets the weights of the borders on the sides of this control.
         /// </summary>
@@ -178,7 +144,11 @@ namespace DUIP.UI
             }
         }
 
-        private Point _Size;
+        public void Dispose()
+        {
+            ((Disposable<Control>)this._Inner).Dispose();
+        }
+
         private Control _Inner;
         private Border _Border;
         private Compass<bool> _BorderVisible;

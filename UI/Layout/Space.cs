@@ -9,37 +9,20 @@ namespace DUIP.UI
     /// </summary>
     public class SpaceBlock : Block
     {
-        public SpaceBlock()
+        private SpaceBlock()
         {
 
-        }
-
-        public SpaceBlock(Point Size)
-        {
-            this._Size = Size;
         }
 
         /// <summary>
-        /// Gets or sets the size of the block.
+        /// The only instance of this class.
         /// </summary>
-        public Point Size
-        {
-            get
-            {
-                return this._Size;
-            }
-            set
-            {
-                this._Size = value;
-            }
-        }
+        public static readonly SpaceBlock Singleton = new SpaceBlock();
 
-        public override Control CreateControl(Point Size, ControlEnvironment Environment)
+        public override Disposable<Control> CreateControl(ControlEnvironment Environment)
         {
-            return new SpaceControl(Size, this._Size);
+            return new SpaceControl(Environment);
         }
-
-        private Point _Size;
     }
 
     /// <summary>
@@ -47,10 +30,9 @@ namespace DUIP.UI
     /// </summary>
     public class SpaceControl : Control
     {
-        public SpaceControl(Point Size, Point TargetSize)
+        public SpaceControl(ControlEnvironment Environment)
         {
-            this._Size = Size;
-            this._TargetSize = TargetSize;
+            this._Size = Environment.SizeRange.TopLeft;
         }
 
         public override Rectangle Bounds
@@ -69,26 +51,11 @@ namespace DUIP.UI
             }
         }
 
-        public override Point PreferedSize
-        {
-            get
-            {
-                return this._TargetSize;
-            }
-        }
-
-        public override Control Resize(Point Size)
-        {
-            this._Size = Size;
-            return this;
-        }
-
         public override void Render(RenderContext Context)
         {
             
         }
 
         private Point _Size;
-        private Point _TargetSize;
     }
 }

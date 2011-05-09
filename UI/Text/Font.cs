@@ -13,7 +13,7 @@ namespace DUIP.UI
         /// Gets the glyph for the given character, or returns null if the character is not included in this font. The glyph should
         /// be bounded between the origin and the point corresponding to the size of the character.
         /// </summary>
-        public abstract Figure GetGlyph(char Char);
+        public abstract Disposable<Figure> GetGlyph(char Char);
 
         /// <summary>
         /// Gets the size of the given character for spacing and alignment purposes. If this font does not include the character,
@@ -32,9 +32,12 @@ namespace DUIP.UI
                 do
                 {
                     char c = (char)t;
-                    if (this.GetGlyph(c) != null)
+                    using (var gly = this.GetGlyph(c))
                     {
-                        yield return c;
+                        if (gly.Object != null)
+                        {
+                            yield return c;
+                        }
                     }
                     t++;
                 }

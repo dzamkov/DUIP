@@ -50,9 +50,9 @@ namespace DUIP.UI
             }
         }
 
-        public override Control CreateControl(Point Size, ControlEnvironment Environment)
+        public override Disposable<Control> CreateControl(ControlEnvironment Environment)
         {
-            return new BackgroundControl(this._Color, this._Inner.CreateControl(Size, Environment));
+            return new BackgroundControl(this._Color, this._Inner.CreateControl(Environment));
         }
 
         private Color _Color;
@@ -62,9 +62,9 @@ namespace DUIP.UI
     /// <summary>
     /// A control for a background block.
     /// </summary>
-    public class BackgroundControl : Control
+    public class BackgroundControl : Control, IDisposable
     {
-        public BackgroundControl(Color Color, Control Inner)
+        public BackgroundControl(Color Color, Disposable<Control> Inner)
         {
             this._Color = Color;
             this._Inner = Inner;
@@ -78,20 +78,6 @@ namespace DUIP.UI
             }
         }
 
-        public override Point PreferedSize
-        {
-            get
-            {
-                return this._Inner.PreferedSize;
-            }
-        }
-
-        public override Control Resize(Point Size)
-        {
-            this._Inner = this._Inner.Resize(Size);
-            return this;
-        }
-
         public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
         {
             this._Inner.Update(Offset, Probes, Time);
@@ -103,6 +89,11 @@ namespace DUIP.UI
             Context.SetColor(this._Color);
             Context.DrawQuad(new Rectangle(Point.Origin, this._Inner.Size));
             this._Inner.Render(Context);
+        }
+
+        public void Dispose()
+        {
+            ((Disposable<Control>)this._Inner).Dispose();
         }
 
         private Color _Color;

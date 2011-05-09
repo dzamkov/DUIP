@@ -16,7 +16,6 @@ namespace DUIP.UI
         public World()
         {
             this._Nodes = new List<Node>();
-            this._Nodes.Add(new Node(new Point(1.0, 1.0), new Point(0.0, 0.0), new Point(2.0, 0.0)));
         }
 
         /// <summary>
