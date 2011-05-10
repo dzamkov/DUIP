@@ -19,7 +19,6 @@ namespace DUIP.UI
             (this._View = View).Setup();
             this._Pop = new _PopOnDispose() { Context = this };
             this._Effects = new Stack<_Effect>();
-            this._ColorModulation = Color.White;
         }
 
         /// <summary>
@@ -54,17 +53,6 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets the current color modulation used in the context.
-        /// </summary>
-        public Color ColorModulation
-        {
-            get
-            {
-                return this._ColorModulation;
-            }
-        }
-
-        /// <summary>
         /// Applies a translation effect that translates all rendering operations by the given amount.
         /// </summary>
         public IDisposable Translate(Point Translation)
@@ -72,18 +60,6 @@ namespace DUIP.UI
             this._PushEffect(new _TranslateEffect
             {
                 Translation = Translation
-            });
-            return this._Pop;
-        }
-
-        /// <summary>
-        /// Applies an effect that modulates the color of drawing operations.
-        /// </summary>
-        public IDisposable ModulateColor(Color Color)
-        {
-            this._PushEffect(new _ModulateEffect
-            {
-                Modulation = Color
             });
             return this._Pop;
         }
@@ -216,7 +192,7 @@ namespace DUIP.UI
         /// </summary>
         public void SetColor(Color Color)
         {
-            GL.Color4(Color * this._ColorModulation);
+            GL.Color4(Color);
         }
 
         /// <summary>
@@ -320,29 +296,8 @@ namespace DUIP.UI
             public BeginMode Mode;
         }
 
-        /// <summary>
-        /// An effect that modulates the colors of drawing operations.
-        /// </summary>
-        private sealed class _ModulateEffect : _Effect
-        {
-            public override void Apply(RenderContext Context)
-            {
-                this.Old = Context._ColorModulation;
-                Context._ColorModulation *= Modulation;    
-            }
-
-            public override void Remove(RenderContext Context)
-            {
-                Context._ColorModulation = this.Old;
-            }
-
-            public Color Old;
-            public Color Modulation;
-        }
-
         private _PopOnDispose _Pop;
         private View _View;
-        private Color _ColorModulation;
         private Stack<_Effect> _Effects;
 
         private static double _MaxLineWidth;

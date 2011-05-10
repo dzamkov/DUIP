@@ -44,7 +44,7 @@ namespace DUIP.UI
                 SizeRange = new Rectangle(1.0, 1.0, 3.0, 3.0),
                 Borders = new Compass<Border>(Border.None)
             });*/
-            this._TestFigure = testfont.Texture.CreateFigure();
+            this._TestFigure = testfont.Texture.CreateFigure(Color.RGB(0.0, 0.2, 0.0));
         }
 
         /// <summary>

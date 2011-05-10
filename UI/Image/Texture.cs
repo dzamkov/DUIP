@@ -71,7 +71,39 @@ namespace DUIP.UI
         /// </summary>
         public TextureFigure CreateFigure(Rectangle Source, Rectangle Destination)
         {
-            return new TextureFigure(this, Source, Destination);
+            return new TextureFigure(this, Source, Destination, Color.White);
+        }
+
+        /// <summary>
+        /// Creates a figure to render this texture with the given color modulation.
+        /// </summary>
+        public TextureFigure CreateFigure(Color Color)
+        {
+            return new TextureFigure(this, Color);
+        }
+
+        /// <summary>
+        /// Creates a figure to render a portion of this texture to the given area.
+        /// </summary>
+        public TextureFigure CreateFigure(Rectangle Source, Rectangle Destination, Color Color)
+        {
+            return new TextureFigure(this, Source, Destination, Color);
+        }
+
+        /// <summary>
+        /// Creates a figure to render this texture to the given area.
+        /// </summary>
+        public TextureFigure CreateFigure(Rectangle Destination)
+        {
+            return new TextureFigure(this, Destination);
+        }
+
+        /// <summary>
+        /// Creates a figure to render this texture to the given area with the given color modulation.
+        /// </summary>
+        public TextureFigure CreateFigure(Rectangle Destination, Color Color)
+        {
+            return new TextureFigure(this, Destination, Color);
         }
 
         /// <summary>
@@ -116,7 +148,7 @@ namespace DUIP.UI
                     ImageLockMode.WriteOnly,
                     System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 Write<TImage>(Image, Area, bmd, Width, Height);
-                tex = Create(bmd, Width, Height, true);
+                tex = Create(bmd, Format.BGRA32, true);
                 bm.UnlockBits(bmd);
             }
             return tex;
@@ -143,7 +175,7 @@ namespace DUIP.UI
                         ImageLockMode.WriteOnly,
                         System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                     Write<TImage>(Image(), Area, bmd, Width, Height);
-                    tex = Create(bmd, Width, Height, true);
+                    tex = Create(bmd, Format.BGRA32, true);
                     bm.UnlockBits(bmd);
                     bm.Save(Cache);
                 }
@@ -159,7 +191,7 @@ namespace DUIP.UI
             BitmapData bd = Source.LockBits(
                 new System.Drawing.Rectangle(0, 0, Source.Width, Source.Height),
                 ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            Texture t = Create(bd, Source.Width, Source.Height, true);
+            Texture t = Create(bd, Format.BGRA32, true);
             Source.UnlockBits(bd);
             return t;
         }
@@ -190,9 +222,33 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// A possible pixel format for a texture.
+        /// </summary>
+        public struct Format
+        {
+            public PixelInternalFormat PixelInternalFormat;
+            public OpenTK.Graphics.OpenGL.PixelFormat PixelFormat;
+            public PixelType PixelType;
+
+            public static readonly Format BGRA32 = new Format()
+            {
+                PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat.Bgra,
+                PixelInternalFormat = PixelInternalFormat.Rgba,
+                PixelType = PixelType.UnsignedByte
+            };
+
+            public static readonly Format A8 = new Format()
+            {
+                PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat.Alpha,
+                PixelInternalFormat = PixelInternalFormat.Alpha,
+                PixelType = PixelType.UnsignedByte
+            };
+        }
+
+        /// <summary>
         /// Creates a texture using the given bitmap data. The texture can optionally be mipmapped.
         /// </summary>
-        public static Texture Create(BitmapData Data, int Width, int Height, bool Mipmap)
+        public static Texture Create(BitmapData Data, Format Format, bool Mipmap)
         {
             int id = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, id);
@@ -201,9 +257,9 @@ namespace DUIP.UI
                 (float)TextureEnvMode.Modulate);
 
             GL.TexImage2D(TextureTarget.Texture2D,
-                0, PixelInternalFormat.Rgba,
-                Width, Height, 0,
-                OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, Data.Scan0);
+                0, Format.PixelInternalFormat,
+                Data.Width, Data.Height, 0,
+                Format.PixelFormat, Format.PixelType, Data.Scan0);
 
             if (Mipmap)
             {
@@ -231,15 +287,34 @@ namespace DUIP.UI
     /// </summary>
     public class TextureFigure : Figure
     {
-        public TextureFigure(Texture Texture, Rectangle Source, Rectangle Destination)
+        public TextureFigure(Texture Texture, Rectangle Source, Rectangle Destination, Color Color)
         {
             this._Texture = Texture;
             this._Source = Source;
             this._Destination = Destination;
+            this._Color = Color;
         }
 
         public TextureFigure(Texture Texture)
-            : this(Texture, Rectangle.UnitSquare, Rectangle.UnitSquare)
+            : this(Texture, Rectangle.UnitSquare, Rectangle.UnitSquare, Color.White)
+        {
+
+        }
+
+        public TextureFigure(Texture Texture, Color Color)
+            : this(Texture, Rectangle.UnitSquare, Rectangle.UnitSquare, Color)
+        {
+
+        }
+
+        public TextureFigure(Texture Texture, Rectangle Destination)
+            : this(Texture, Rectangle.UnitSquare, Destination, Color.White)
+        {
+
+        }
+
+        public TextureFigure(Texture Texture, Rectangle Destination, Color Color)
+            : this(Texture, Rectangle.UnitSquare, Destination, Color)
         {
 
         }
@@ -277,16 +352,27 @@ namespace DUIP.UI
             }
         }
 
+        /// <summary>
+        /// Gets the color used to render this texture.
+        /// </summary>
+        public Color Color
+        {
+            get
+            {
+                return this._Color;
+            }
+        }
+
         public override void Render(RenderContext Context)
         {
             Context.SetTexture(this._Texture);
-            Context.SetColor(Color.White);
+            Context.SetColor(this._Color);
             Context.DrawTexturedQuad(this._Source, this._Destination);
         }
 
         public override Figure WithTranslate(Point Offset)
         {
-            return new TextureFigure(this._Texture, this._Source, this._Destination.Translate(Offset));
+            return new TextureFigure(this._Texture, this._Source, this._Destination.Translate(Offset), this._Color);
         }
 
         public override Rectangle Bounds
@@ -299,6 +385,7 @@ namespace DUIP.UI
 
         private Rectangle _Source;
         private Rectangle _Destination;
+        private Color _Color;
         private Texture _Texture;
     }
 }

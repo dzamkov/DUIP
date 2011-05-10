@@ -11,19 +11,18 @@ namespace DUIP.UI
     {
         /// <summary>
         /// Gets the glyph for the given character, or returns null if the character is not included in this font. The glyph should
-        /// be bounded between the origin and the point corresponding to the size of the character. The glyph should be white to allow
-        /// for color modulation.
+        /// be bounded between the origin and the point corresponding to the size of the character.
         /// </summary>
-        public abstract Disposable<Figure> GetGlyph(char Char);
+        public abstract Disposable<Figure> GetGlyph(char Char, Color Color);
 
         /// <summary>
         /// Gets a text of the given characters using this font.
         /// </summary>
-        public virtual Disposable<Figure> GetText(IEnumerable<Character> Characters)
+        public virtual Disposable<Figure> GetText(IEnumerable<Character> Characters, Color Color)
         {
             return new _Text(
                 from c in Characters
-                select this.GetGlyph(c.Name).Object.WithTranslate(c.Position)
+                select this.GetGlyph(c.Name, Color).Object.WithTranslate(c.Position)
             );
         }
 
@@ -61,7 +60,7 @@ namespace DUIP.UI
                 do
                 {
                     char c = (char)t;
-                    using (var gly = this.GetGlyph(c))
+                    using (var gly = this.GetGlyph(c, Color.White))
                     {
                         if (gly.Object != null)
                         {

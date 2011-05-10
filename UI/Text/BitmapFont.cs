@@ -4,6 +4,7 @@ using System.Linq;
 using System.Drawing;
 using System.Drawing.Text;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 
 using OpenTK.Graphics.OpenGL;
 
@@ -66,7 +67,7 @@ namespace DUIP.UI
             FontFamily Family, IEnumerable<char> Characters, FontStyle Style, 
             float FontScale, double DisplayScale, int Size)
         {
-            using (Bitmap bm = new Bitmap(Size, Size))
+            using (Bitmap bm = new Bitmap(Size, Size, System.Drawing.Imaging.PixelFormat.Format24bppRgb))
             {
                 double isize = 1.0 / Size;
                 using (var font = new System.Drawing.Font(Family, FontScale, Style))
@@ -74,7 +75,7 @@ namespace DUIP.UI
                     Dictionary<char, Rectangle> glyphmap = new Dictionary<char, Rectangle>();
                     using (var g = Graphics.FromImage(bm))
                     {
-                        g.Clear(Color.Transparent);
+                        g.Clear(Color.Black);
                         g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
                         StringFormat sf = new StringFormat();
@@ -83,7 +84,7 @@ namespace DUIP.UI
                         double x = 0;
                         double y = 0;
                         double sy = 0;
-                        Brush b = Brushes.Black;
+                        Brush b = Brushes.White;
                         foreach (char c in Characters)
                         {
                             string str = char.ToString(c);
@@ -122,7 +123,28 @@ namespace DUIP.UI
 
                     double scale = DisplayScale / FontScale * Size;
 
-                    Texture tex = Texture.Create(bm);
+                    // Convert bitmap to an alpha-only format
+                    BitmapData bd = bm.LockBits(
+                        new System.Drawing.Rectangle(0, 0, Size, Size), 
+                        ImageLockMode.ReadWrite, 
+                        System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+                    unsafe
+                    {
+                        byte* r = (byte*)bd.Scan0.ToPointer();
+                        byte* w = r;
+                        int tot = Size * Size;
+                        for (int t = 0; t < tot; t++)
+                        {
+                            *w = *r;
+                            w += 1;
+                            r += 3;
+                        }
+                    }
+
+                    // Create texture
+                    Texture tex = Texture.Create(bd, Texture.Format.A8, true);
+                    bm.UnlockBits(bd);
+
                     Texture.SetWrapMode(TextureWrapMode.Clamp, TextureWrapMode.Clamp);
                     return new BitmapFont(tex, glyphmap, scale);
                 }
@@ -155,12 +177,12 @@ namespace DUIP.UI
             return new Point(0.0, 0.0);
         }
 
-        public override Disposable<Figure> GetGlyph(char Char)
+        public override Disposable<Figure> GetGlyph(char Char, Color Color)
         {
             Rectangle src;
             if (this._GlyphMap.TryGetValue(Char, out src))
             {
-                return this._Texture.CreateFigure(src, new Rectangle(new Point(0.0, 0.0), src.Size * this._Scale));
+                return this._Texture.CreateFigure(src, new Rectangle(new Point(0.0, 0.0), src.Size * this._Scale), Color);
             }
             return null;
         }
