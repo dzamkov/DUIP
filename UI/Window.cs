@@ -28,7 +28,12 @@ namespace DUIP.UI
             this._Probe = new Probe();
             this._MakeView();
 
-            Block testblock = Block.Space.WithSize(1.0, 1.0).WithBorder(new Border
+            BitmapFont testfont = BitmapFont.Create(BitmapFont.GetFamily("Verdana"), Font.ASCIICharacters, FontStyle.Regular, 40.0f, 0.1, 512);
+
+            FlowBlock testflow = new FlowBlock();
+            testflow.AddText("This is some test text", testfont, Color.RGB(0.0, 0.0, 0.0));
+
+            Block testblock = testflow.WithSize(1.0, 1.0).WithBorder(new Border
             {
                 Color = Color.RGB(1.0, 0.3, 0.3),
                 Weight = 0.05,
@@ -39,7 +44,7 @@ namespace DUIP.UI
                 SizeRange = new Rectangle(1.0, 1.0, 3.0, 3.0),
                 Borders = new Compass<Border>(Border.None)
             });
-            this._TestFigure = testcontrol;
+            this._TestFigure = testfont.Texture.CreateFigure();
         }
 
         /// <summary>

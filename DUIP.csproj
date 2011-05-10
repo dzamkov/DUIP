@@ -60,7 +60,7 @@
     <Compile Include="UI\Layout\Space.cs" />
     <Compile Include="UI\Text\BitmapFont.cs" />
     <Compile Include="UI\Text\Font.cs" />
-    <Compile Include="UI\Text\Text.cs" />
+    <Compile Include="UI\Text\Character.cs" />
     <Compile Include="UI\Layout\Node.cs" />
     <Compile Include="UI\Ambience\OceanAmbience.cs" />
     <Compile Include="UI\Point.cs" />

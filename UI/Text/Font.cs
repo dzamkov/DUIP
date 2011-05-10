@@ -5,7 +5,7 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A collection of glyphs for characters.
+    /// A collection of glyphs for characters. Unless otherwise specified, all text is white, allowing for color modulation.
     /// </summary>
     public abstract class Font
     {
@@ -14,6 +14,34 @@ namespace DUIP.UI
         /// be bounded between the origin and the point corresponding to the size of the character.
         /// </summary>
         public abstract Disposable<Figure> GetGlyph(char Char);
+
+        /// <summary>
+        /// Gets a text of the given characters using this font.
+        /// </summary>
+        public virtual Disposable<Figure> GetText(IEnumerable<Character> Characters)
+        {
+            return new _Text(
+                from c in Characters
+                select this.GetGlyph(c.Name).Object.Translate(c.Position)
+            );
+        }
+
+        private class _Text : GroupFigure, IDisposable
+        {
+            public _Text(IEnumerable<Figure> Components)
+                : base(Components)
+            {
+                
+            }
+
+            public void Dispose()
+            {
+                foreach (Figure f in this.Components)
+                {
+                    ((Disposable<Figure>)f).Dispose();
+                }
+            }
+        }
 
         /// <summary>
         /// Gets the size of the given character for spacing and alignment purposes. If this font does not include the character,
