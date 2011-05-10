@@ -31,6 +31,30 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Sets the size of this block.
+        /// </summary>
+        public SizeBlock WithSize(double Width, double Height)
+        {
+            return this.WithSize(new Point(Width, Height));
+        }
+
+        /// <summary>
+        /// Sets the size of this block.
+        /// </summary>
+        public SizeBlock WithSize(Point Size)
+        {
+            return new SizeBlock(Size, this);
+        }
+
+        /// <summary>
+        /// Sets the available size range of this block.
+        /// </summary>
+        public SizeBlock WithSize(Rectangle SizeRange)
+        {
+            return new SizeBlock(SizeRange, this);
+        }
+
+        /// <summary>
         /// Gets a space block.
         /// </summary>
         public static SpaceBlock Space

@@ -56,6 +56,7 @@
     <Compile Include="UI\Layout\Border.cs" />
     <Compile Include="UI\Layout\Control.cs" />
     <Compile Include="UI\Layout\Flow.cs" />
+    <Compile Include="UI\Layout\Size.cs" />
     <Compile Include="UI\Layout\Space.cs" />
     <Compile Include="UI\Text\BitmapFont.cs" />
     <Compile Include="UI\Text\Font.cs" />

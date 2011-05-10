@@ -9,6 +9,17 @@ namespace DUIP.UI
     /// </summary>
     public class ControlEnvironment
     {
+        public ControlEnvironment()
+        {
+
+        }
+
+        public ControlEnvironment(ControlEnvironment Source)
+        {
+            this.Borders = Source.Borders;
+            this.SizeRange = Source.SizeRange;
+        }
+
         /// <summary>
         /// The external borders of the control.
         /// </summary>
@@ -33,8 +44,9 @@ namespace DUIP.UI
         /// <summary>
         /// Mutates this control, or creates an entirely new control for the block and the given parameters.
         /// </summary>
-        public virtual Disposable<Control> Replace(Block Block, ControlEnvironment Environment)
+        public virtual Disposable<Control> Replace(Disposable<Control> Current, Block Block, ControlEnvironment Environment)
         {
+            Current.Dispose();
             return Block.CreateControl(Environment);
         }
 

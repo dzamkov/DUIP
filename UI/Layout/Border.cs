@@ -69,7 +69,7 @@ namespace DUIP.UI
         {
             this._Border = Block.Border;
             this._BorderVisible = Environment.Borders.Map(x => x.Weight == 0.0 || x.Color.A == 0.0);
-            this._Inner = Block.Inner.CreateControl(new ControlEnvironment()
+            this._Inner = Block.Inner.CreateControl(new ControlEnvironment(Environment)
             {
                 SizeRange = Environment.SizeRange.Translate(-this.InnerSizePadding),
                 Borders = Environment.Borders.Map(this._BorderVisible, (x, y) => y ? this._Border : x)

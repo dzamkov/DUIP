@@ -28,7 +28,7 @@ namespace DUIP.UI
             this._Probe = new Probe();
             this._MakeView();
 
-            Block testblock = Block.Space.WithBorder(new Border
+            Block testblock = Block.Space.WithSize(1.0, 1.0).WithBorder(new Border
             {
                 Color = Color.RGB(1.0, 0.3, 0.3),
                 Weight = 0.05,
