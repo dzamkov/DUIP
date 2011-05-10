@@ -34,18 +34,26 @@ namespace DUIP.UI
         /// <summary>
         /// Translates this figure by the given offset.
         /// </summary>
-        public virtual Figure Translate(Point Offset)
+        public virtual Figure WithTranslate(Point Offset)
         {
-            return new TranslatedFigure(this, Offset);
+            return new TranslatedFigure(Offset, this);
+        }
+
+        /// <summary>
+        /// Modulates the color of this figure by the given amount.
+        /// </summary>
+        public virtual Figure WithColor(Color Color)
+        {
+            return new ColoredFigure(Color, this);
         }
     }
 
     /// <summary>
-    /// A translated form of another figure.
+    /// A translated form of a figure.
     /// </summary>
     public class TranslatedFigure : Figure
     {
-        public TranslatedFigure(Figure Source, Point Translation)
+        public TranslatedFigure(Point Translation, Figure Source)
         {
             this._Source = Source;
             this._Translation = Translation;
@@ -89,13 +97,71 @@ namespace DUIP.UI
             }
         }
 
-        public override Figure Translate(Point Offset)
+        public override Figure WithTranslate(Point Offset)
         {
-            return new TranslatedFigure(this._Source, this._Translation + Offset);
+            return new TranslatedFigure(this._Translation + Offset, this._Source);
         }
 
         private Figure _Source;
         private Point _Translation;
+    }
+
+    /// <summary>
+    /// A color modulated form of a figure.
+    /// </summary>
+    public class ColoredFigure : Figure
+    {
+        public ColoredFigure(Color Color, Figure Source)
+        {
+            this._Color = Color;
+            this._Source = Source;
+        }
+
+        /// <summary>
+        /// Gets the source figure that is colored.
+        /// </summary>
+        public Figure Source
+        {
+            get
+            {
+                return this._Source;
+            }
+        }
+
+        /// <summary>
+        /// Gets the color modulation for the source figure.
+        /// </summary>
+        public Color Color
+        {
+            get
+            {
+                return this._Color;
+            }
+        }
+
+        public override void Render(RenderContext Context)
+        {
+            using (Context.ModulateColor(this._Color))
+            {
+                this._Source.Render(Context);
+            }
+        }
+
+        public override Rectangle Bounds
+        {
+            get
+            {
+                return this._Source.Bounds;
+            }
+        }
+
+        public override Figure WithColor(Color Color)
+        {
+            return new ColoredFigure(this._Color * Color, this._Source);
+        }
+
+        private Figure _Source;
+        private Color _Color;
     }
 
     /// <summary>

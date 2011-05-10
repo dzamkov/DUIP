@@ -39,11 +39,11 @@ namespace DUIP.UI
                 Weight = 0.05,
             }).WithBackground(Color.RGB(0.95, 0.7, 0.7));
 
-            Control testcontrol = testblock.CreateControl(new ControlEnvironment()
+            /*Control testcontrol = testblock.CreateControl(new ControlEnvironment()
             {
                 SizeRange = new Rectangle(1.0, 1.0, 3.0, 3.0),
                 Borders = new Compass<Border>(Border.None)
-            });
+            });*/
             this._TestFigure = testfont.Texture.CreateFigure();
         }
 

@@ -5,13 +5,14 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A collection of glyphs for characters. Unless otherwise specified, all text is white, allowing for color modulation.
+    /// A collection of glyphs for characters.
     /// </summary>
     public abstract class Font
     {
         /// <summary>
         /// Gets the glyph for the given character, or returns null if the character is not included in this font. The glyph should
-        /// be bounded between the origin and the point corresponding to the size of the character.
+        /// be bounded between the origin and the point corresponding to the size of the character. The glyph should be white to allow
+        /// for color modulation.
         /// </summary>
         public abstract Disposable<Figure> GetGlyph(char Char);
 
@@ -22,7 +23,7 @@ namespace DUIP.UI
         {
             return new _Text(
                 from c in Characters
-                select this.GetGlyph(c.Name).Object.Translate(c.Position)
+                select this.GetGlyph(c.Name).Object.WithTranslate(c.Position)
             );
         }
 

@@ -284,6 +284,11 @@ namespace DUIP.UI
             Context.DrawTexturedQuad(this._Source, this._Destination);
         }
 
+        public override Figure WithTranslate(Point Offset)
+        {
+            return new TextureFigure(this._Texture, this._Source, this._Destination.Translate(Offset));
+        }
+
         public override Rectangle Bounds
         {
             get
