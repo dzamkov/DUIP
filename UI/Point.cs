@@ -171,9 +171,24 @@ namespace DUIP.UI
             return (Axis)((int)Direction % 2);
         }
 
+        public static implicit operator Point(PointF Point)
+        {
+            return new Point(Point.X, Point.Y);
+        }
+
+        public static implicit operator Point(SizeF Size)
+        {
+            return new Point(Size.Width, Size.Height);
+        }
+
         public static implicit operator PointF(Point Point)
         {
             return new PointF((float)Point.X, (float)Point.Y);
+        }
+
+        public static implicit operator SizeF(Point Point)
+        {
+            return new SizeF((float)Point.X, (float)Point.Y);
         }
 
         public static implicit operator Vector2d(Point Point)
