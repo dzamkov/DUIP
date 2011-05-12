@@ -16,34 +16,6 @@ namespace DUIP.UI
         public abstract Disposable<Figure> GetGlyph(char Char, Color Color);
 
         /// <summary>
-        /// Gets a text of the given characters using this font.
-        /// </summary>
-        public virtual Disposable<Figure> GetText(IEnumerable<Character> Characters, Color Color)
-        {
-            return new _Text(
-                from c in Characters
-                select this.GetGlyph(c.Name, Color).Object.WithTranslate(c.Position)
-            );
-        }
-
-        private class _Text : GroupFigure, IDisposable
-        {
-            public _Text(IEnumerable<Figure> Components)
-                : base(Components)
-            {
-                
-            }
-
-            public void Dispose()
-            {
-                foreach (Figure f in this.Components)
-                {
-                    ((Disposable<Figure>)f).Dispose();
-                }
-            }
-        }
-
-        /// <summary>
         /// Gets the size of the given character for spacing and alignment purposes. If this font does not include the character,
         /// a size of (0.0, 0.0) is returned.
         /// </summary>

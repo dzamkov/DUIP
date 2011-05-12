@@ -30,6 +30,27 @@ namespace DUIP.UI
         public static readonly Point Zero = Origin;
 
         /// <summary>
+        /// Gets or sets the component of this point for the given axis.
+        /// </summary>
+        public double this[Axis Axis]
+        {
+            get
+            {
+                if (Axis == Axis.Horizontal)
+                    return this.X;
+                else
+                    return this.Y;
+            }
+            set
+            {
+                if (Axis == Axis.Horizontal)
+                    this.X = value;
+                else
+                    this.Y = value;
+            }
+        }
+
+        /// <summary>
         /// Gets the square of the length of this point offset (vector). This function is quicker to compute than the actual length
         /// because it avoids a square root, which may be costly.
         /// </summary>
@@ -142,6 +163,14 @@ namespace DUIP.UI
             return A.X * B.X + A.Y * B.Y;
         }
 
+        /// <summary>
+        /// Gets the axis for a direction.
+        /// </summary>
+        public static Axis GetAxis(Direction Direction)
+        {
+            return (Axis)((int)Direction % 2);
+        }
+
         public static implicit operator PointF(Point Point)
         {
             return new PointF((float)Point.X, (float)Point.Y);
@@ -214,5 +243,25 @@ namespace DUIP.UI
 
         public double X;
         public double Y;
+    }
+
+    /// <summary>
+    /// One of the four cardinal directions.
+    /// </summary>
+    public enum Direction
+    {
+        Left,
+        Up,
+        Right,
+        Down
+    }
+
+    /// <summary>
+    /// One of the two-dimensional axies.
+    /// </summary>
+    public enum Axis
+    {
+        Horizontal,
+        Vertical
     }
 }

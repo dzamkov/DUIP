@@ -91,15 +91,4 @@ namespace DUIP.UI
         public T Right;
         public T Down;
     }
-
-    /// <summary>
-    /// One of the four cardinal directions.
-    /// </summary>
-    public enum Direction
-    {
-        Left,
-        Up,
-        Right,
-        Down
-    }
 }

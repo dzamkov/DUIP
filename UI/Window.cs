@@ -31,7 +31,7 @@ namespace DUIP.UI
             BitmapFont testfont = BitmapFont.Create(BitmapFont.GetFamily("Verdana"), Font.ASCIICharacters, FontStyle.Regular, 40.0f, 0.1, 512);
 
             FlowBlock testflow = new FlowBlock();
-            testflow.AddText("This is some test text", testfont, Color.RGB(0.0, 0.0, 0.0));
+            testflow.AddText("This is some test text.", testfont, Color.RGB(0.0, 0.0, 0.0));
 
             Block testblock = testflow.WithSize(1.0, 1.0).WithBorder(new Border
             {
@@ -39,12 +39,12 @@ namespace DUIP.UI
                 Weight = 0.05,
             }).WithBackground(Color.RGB(0.95, 0.7, 0.7));
 
-            /*Control testcontrol = testblock.CreateControl(new ControlEnvironment()
+            Control testcontrol = testblock.CreateControl(new ControlEnvironment()
             {
                 SizeRange = new Rectangle(1.0, 1.0, 3.0, 3.0),
                 Borders = new Compass<Border>(Border.None)
-            });*/
-            this._TestFigure = testfont.Texture.CreateFigure(Color.RGB(0.0, 0.2, 0.0));
+            });
+            this._TestFigure = testcontrol;
         }
 
         /// <summary>
