@@ -290,6 +290,7 @@ namespace DUIP.UI
         {
             Axis minoraxis = Point.GetAxis(Style.MinorDirection);
             Lines = new List<List<_LayoutItem>>();
+            double major = 0.0;
 
             // Build lines
             int next = 0;
@@ -315,7 +316,19 @@ namespace DUIP.UI
                     }
                 }
 
-                
+                // Place items
+                double minor = 0.0;
+                foreach (_LayoutItem li in line)
+                {
+                    _CharacterLayoutItem cli = li as _CharacterLayoutItem;
+                    if (cli != null)
+                    {
+                        cli.TopLeft = new Point(minor, major);
+                        minor += cli.Text.Font.GetSize(cli.Name).X;
+                    }
+                }
+
+                major += 0.2;
             }
 
             MajorSize = 1.0;
