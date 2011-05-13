@@ -169,6 +169,16 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Creates a padded (extended) form of this rectangle.
+        /// </summary>
+        public Rectangle Pad(double Padding)
+        {
+            return new Rectangle(
+                this.TopLeft - new Point(Padding, Padding),
+                this.BottomRight + new Point(Padding, Padding));
+        }
+
+        /// <summary>
         /// Gets a rectangle covering the intersecting area of A and B.
         /// </summary>
         public static Rectangle Intersection(Rectangle A, Rectangle B)

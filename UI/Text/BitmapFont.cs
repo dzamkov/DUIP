@@ -62,9 +62,10 @@ namespace DUIP.UI
         /// <param name="Scale">The scale (em size) to use for the font in the bitmap. This affects the quality of the displayed characters and the
         /// amount of bitmap space needed.</param>
         /// <param name="Size">The edge-length in pixels, of the created bitmap.</param>
+        /// <param name="CharacterPadding">The amount of padding, in pixels, to put around characters in the texture.</param>
         /// <param name="DisplayScale">The scale to use for displayed characters.</param>
         public static BitmapFont Create(
-            FontFamily Family, IEnumerable<char> Characters, FontStyle Style, 
+            FontFamily Family, IEnumerable<char> Characters, FontStyle Style, double CharacterPadding,
             float FontScale, double DisplayScale, int Size)
         {
             using (Bitmap bm = new Bitmap(Size, Size, System.Drawing.Imaging.PixelFormat.Format24bppRgb))
@@ -76,7 +77,7 @@ namespace DUIP.UI
                     using (var g = Graphics.FromImage(bm))
                     {
                         g.Clear(Color.Black);
-                        g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+                        g.TextRenderingHint = TextRenderingHint.AntiAlias;
 
                         StringFormat sf = new StringFormat();
                         sf.SetMeasurableCharacterRanges(new CharacterRange[] { new CharacterRange(0, 1) });
@@ -86,6 +87,10 @@ namespace DUIP.UI
                         Point nextfree = new Point(0.0, 0.0);
                         double nextheight = 0.0;
                         Brush brush = Brushes.White;
+
+                        Bitmap measurebitmap = null;
+                        Graphics measureg = null;
+
                         foreach (char c in Characters)
                         {
                             // Character measurements
@@ -97,6 +102,43 @@ namespace DUIP.UI
                                 RectangleF crg = rgs[0].GetBounds(g);
                                 layoutsize = crg.Size;
                                 layoutoffset = crg.Location;
+                            }
+
+                            // GDI+ lies about required bitmap size, figure it out manually for most compact fit
+                            Point drawoffset;
+                            {
+                                fullsize = fullsize.Ceiling;
+                                int bw = (int)fullsize.X;
+                                int bh = (int)fullsize.Y;
+                                if (measurebitmap == null)
+                                {
+                                    measurebitmap = new Bitmap(bw, bh, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+                                    measureg = Graphics.FromImage(measurebitmap);
+                                }
+                                else
+                                {
+                                    // Resize the bitmap used for measurement if needed
+                                    if (measurebitmap.Width < bw || measurebitmap.Height < bh)
+                                    {
+                                        measurebitmap.Dispose();
+                                        measureg.Dispose();
+                                        measurebitmap = new Bitmap(bw, bh, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+                                        measureg = Graphics.FromImage(measurebitmap);
+                                    }
+                                }
+
+                                measureg.Clear(Color.Black);
+                                measureg.TextRenderingHint = g.TextRenderingHint;
+                                measureg.DrawString(str, font, brush, 0.0f, 0.0f, sf);
+
+                                int minx, miny, maxx, maxy;
+                                _MeasureExtent(measurebitmap, out minx, out miny, out maxx, out maxy);
+                                Rectangle extrect = new Rectangle(minx, miny, maxx, maxy);
+                                extrect = extrect.Pad(CharacterPadding);
+
+                                drawoffset = extrect.TopLeft;
+                                fullsize = extrect.Size;
+                                layoutoffset -= extrect.TopLeft;
                             }
 
                             // Fit character in bitmap
@@ -116,16 +158,24 @@ namespace DUIP.UI
                                 return null;
                             }
 
+                            // Draw character
+                            g.DrawString(str, font, brush, charpoint - drawoffset, sf);
+
                             // Add glyphmap entry
+                            charpoint += new Point(0.5, 0.5);
+                            fullsize -= new Point(1.0, 1.0);
                             glyphmap.Add(c, new Glyph
                             {
                                 Source = Rectangle.FromOffsetSize(charpoint * isize, fullsize * isize),
                                 LayoutSize = layoutsize * isize,
                                 LayoutOffset = layoutoffset * isize
                             });
+                        }
 
-                            // Draw character
-                            g.DrawString(str, font, brush, charpoint, sf);
+                        if (measurebitmap != null)
+                        {
+                            measurebitmap.Dispose();
+                            measureg.Dispose();
                         }
                     }
 
@@ -157,6 +207,75 @@ namespace DUIP.UI
                     return new BitmapFont(tex, glyphmap, scale);
                 }
             }
+        }
+
+        /// <summary>
+        /// Measures the extent of the colored region in a 24bbp bitmap.
+        /// </summary>
+        private static unsafe void _MeasureExtent(Bitmap Bitmap, out int MinX, out int MinY, out int MaxX, out int MaxY)
+        {
+            BitmapData bd = Bitmap.LockBits(
+                    new System.Drawing.Rectangle(0, 0, Bitmap.Width, Bitmap.Height),
+                    ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            byte* ptr = (Byte*)bd.Scan0.ToPointer();
+
+            int w = bd.Width;
+            int h = bd.Height;
+            int s = bd.Stride;
+
+            // Left to right scan
+            for (MinX = 0; MinX < w; MinX++)
+            {
+                for (int y = 0; y < h; y++)
+                {
+                    if (ptr[(MinX * 3) + y * s] > 0)
+                    {
+                        goto ltr_end;
+                    }
+                }
+            }
+        ltr_end:
+
+            // Right to left scan
+            for (MaxX = w - 1; MaxX > MinX; MaxX--)
+            {
+                for (int y = 0; y < h; y++)
+                {
+                    if (ptr[(MaxX * 3) + y * s] > 0)
+                    {
+                        goto rtl_end;
+                    }
+                }
+            }
+        rtl_end:
+
+            // Top to bottom scan
+            for (MinY = 0; MinY < h; MinY++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    if (ptr[(x * 3) + MinY * s] > 0)
+                    {
+                        goto ttb_end;
+                    }
+                }
+            }
+        ttb_end:
+
+            // Bottom to top scan
+            for (MaxY = h - 1; MaxY > MinY; MaxY--)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    if (ptr[(x * 3) + MaxY * s] > 0)
+                    {
+                        goto btt_end;
+                    }
+                }
+            }
+        btt_end:
+
+            Bitmap.UnlockBits(bd);
         }
 
         /// <summary>

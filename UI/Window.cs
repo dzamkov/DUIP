@@ -28,7 +28,7 @@ namespace DUIP.UI
             this._Probe = new Probe();
             this._MakeView();
 
-            BitmapFont testfont = BitmapFont.Create(BitmapFont.GetFamily("Verdana"), Font.ASCIICharacters, FontStyle.Regular, 32.0f, 0.05, 512);
+            BitmapFont testfont = BitmapFont.Create(BitmapFont.GetFamily("Verdana"), Font.ASCIICharacters, FontStyle.Regular, 4.0, 46.0f, 0.05, 512);
 
             FlowBlock testflow = new FlowBlock();
             testflow.AddText("This is some test text.", testfont, Color.RGB(0.0, 0.0, 0.0));
