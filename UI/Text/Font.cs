@@ -5,7 +5,7 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A collection of glyphs for characters.
+    /// A collection of fixed-size, colored glyphs for a subset of visible characters.
     /// </summary>
     public abstract class Font
     {
@@ -14,7 +14,7 @@ namespace DUIP.UI
         /// will be translated so that the origin is at the top left corner of the layout rectangle. It is possible for part of a glyph
         /// to be outside the layout rectangle.
         /// </summary>
-        public abstract Disposable<Figure> GetGlyph(char Char, Color Color);
+        public abstract Disposable<Figure> GetGlyph(char Char);
 
         /// <summary>
         /// Gets the size of the layout rectangle for the given character for use in spacing and alignment purposes. If this font
@@ -33,7 +33,7 @@ namespace DUIP.UI
                 do
                 {
                     char c = (char)t;
-                    using (var gly = this.GetGlyph(c, Color.White))
+                    using (var gly = this.GetGlyph(c))
                     {
                         if (gly.Object != null)
                         {

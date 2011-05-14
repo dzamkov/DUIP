@@ -67,11 +67,6 @@ namespace DUIP.UI
                 public Font Font;
 
                 /// <summary>
-                /// The (foreground) color of the text.
-                /// </summary>
-                public Color Color;
-
-                /// <summary>
                 /// Can words be broken between lines?
                 /// </summary>
                 public bool BreakWords;
@@ -89,13 +84,12 @@ namespace DUIP.UI
         /// <summary>
         /// Appends text to this flowblock.
         /// </summary>
-        public void AddText(string String, Font Font, Color Color, bool BreakWords)
+        public void AddText(string String, Font Font, bool BreakWords)
         {
             this._Items.Add(new Item.Text
             {
                 String = String,
                 Font = Font,
-                Color = Color,
                 BreakWords = BreakWords
             });
         }
@@ -103,9 +97,9 @@ namespace DUIP.UI
         /// <summary>
         /// Appends text to this flowblock.
         /// </summary>
-        public void AddText(string String, Font Font, Color Color)
+        public void AddText(string String, Font Font)
         {
-            this.AddText(String, Font, Color, false);
+            this.AddText(String, Font, false);
         }
 
         public override Disposable<Control> CreateControl(ControlEnvironment Environment)
@@ -160,7 +154,7 @@ namespace DUIP.UI
                 _CharacterLayoutItem cli = li as _CharacterLayoutItem;
                 if (cli != null)
                 {
-                    Figure glyph = cli.Text.Font.GetGlyph(cli.Name, Color.Black);
+                    Figure glyph = cli.Text.Font.GetGlyph(cli.Name);
                     glyph.WithTranslate(cli.TopLeft).Render(Context);
                     ((Disposable<Figure>)glyph).Dispose();
                 }
