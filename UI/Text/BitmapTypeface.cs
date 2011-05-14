@@ -65,117 +65,39 @@ namespace DUIP.UI
         /// <param name="Size">The edge-length in pixels, of the created bitmap.</param>
         /// <param name="CharacterPadding">The amount of padding, in pixels, to put around characters in the texture.</param>
         public static BitmapTypeface Create(
-            FontFamily Family, IEnumerable<char> Characters, FontStyle Style, double CharacterPadding,
+            FontFamily Family, IEnumerable<char> Characters, FontStyle Style, int CharacterPadding,
             float FontSize, int Size)
         {
-            using (Bitmap bm = new Bitmap(Size, Size, System.Drawing.Imaging.PixelFormat.Format24bppRgb))
+            var bitmapformat = System.Drawing.Imaging.PixelFormat.Format24bppRgb;
+            using (Bitmap bm = new Bitmap(Size, Size, bitmapformat))
             {
-                double isize = 1.0 / Size;
                 using (var font = new System.Drawing.Font(Family, FontSize, Style, GraphicsUnit.Pixel))
                 {
-                    Dictionary<char, Glyph> glyphmap = new Dictionary<char, Glyph>();
+                    Dictionary<char, Glyph> glyphmap;
                     using (var g = Graphics.FromImage(bm))
                     {
                         g.Clear(Color.Black);
-                        g.TextRenderingHint = TextRenderingHint.AntiAlias;
 
                         StringFormat sf = new StringFormat();
-                        sf.SetMeasurableCharacterRanges(new CharacterRange[] { new CharacterRange(0, 1) });
                         sf.Trimming = StringTrimming.None;
                         sf.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
                         sf.FormatFlags |= StringFormatFlags.FitBlackBox;
-                        Point nextfree = new Point(0.0, 0.0);
-                        double nextheight = 0.0;
-                        Brush brush = Brushes.White;
 
-                        Bitmap measurebitmap = null;
-                        Graphics measureg = null;
+                        // Create source glyphs
+                        IEnumerable<SourceGlyph> glyphs = CreateSourceGlyphs(
+                            g, font, sf, Color.Black, Brushes.White, bitmapformat, CharacterPadding, Characters);
 
-                        foreach (char c in Characters)
+                        // Fit
+                        double isize = 1.0 / Size;
+                        if (!FitSourceGlyphs(bm, g, glyphs, out glyphmap, isize))
                         {
-                            // Character measurements
-                            string str = char.ToString(c);
-                            Point fullsize, layoutsize, layoutoffset;
-                            {
-                                fullsize = g.MeasureString(str, font, Size, sf);
-                                Region[] rgs = g.MeasureCharacterRanges(str, font, new RectangleF(Point.Origin, fullsize), sf);
-                                RectangleF crg = rgs[0].GetBounds(g);
-                                layoutsize = crg.Size;
-                                layoutoffset = crg.Location;
-                            }
-
-                            // GDI+ lies about required bitmap size, figure it out manually for most compact fit
-                            Point drawoffset;
-                            {
-                                fullsize = fullsize.Ceiling;
-                                int bw = (int)fullsize.X;
-                                int bh = (int)fullsize.Y;
-                                if (measurebitmap == null)
-                                {
-                                    measurebitmap = new Bitmap(bw, bh, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-                                    measureg = Graphics.FromImage(measurebitmap);
-                                }
-                                else
-                                {
-                                    // Resize the bitmap used for measurement if needed
-                                    if (measurebitmap.Width < bw || measurebitmap.Height < bh)
-                                    {
-                                        measurebitmap.Dispose();
-                                        measureg.Dispose();
-                                        measurebitmap = new Bitmap(bw, bh, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-                                        measureg = Graphics.FromImage(measurebitmap);
-                                    }
-                                }
-
-                                measureg.Clear(Color.Black);
-                                measureg.TextRenderingHint = g.TextRenderingHint;
-                                measureg.DrawString(str, font, brush, 0.0f, 0.0f, sf);
-
-                                int minx, miny, maxx, maxy;
-                                _MeasureExtent(measurebitmap, out minx, out miny, out maxx, out maxy);
-                                Rectangle extrect = new Rectangle(minx, miny, maxx, maxy);
-                                extrect = extrect.Pad(CharacterPadding);
-
-                                drawoffset = extrect.TopLeft;
-                                fullsize = extrect.Size;
-                                layoutoffset -= extrect.TopLeft;
-                            }
-
-                            // Fit character in bitmap
-                            Point charpoint = nextfree;
-                            nextheight = Math.Max(nextheight, charpoint.Y + fullsize.Y);
-                            nextfree.X = charpoint.X + fullsize.X;
-                            if (nextfree.X >= Size)
-                            {
-                                charpoint.X = 0.0;
-                                nextfree.X = fullsize.X;
-                                charpoint.Y = nextheight;
-                                nextfree.Y = nextheight;
-                            }
-                            if (nextheight >= Size)
-                            {
-                                bm.Dispose();
-                                return null;
-                            }
-
-                            // Draw character
-                            g.DrawString(str, font, brush, charpoint - drawoffset, sf);
-
-                            // Add glyphmap entry
-                            charpoint += new Point(0.5, 0.5);
-                            fullsize -= new Point(1.0, 1.0);
-                            glyphmap.Add(c, new Glyph
-                            {
-                                Source = Rectangle.FromOffsetSize(charpoint * isize, fullsize * isize),
-                                LayoutSize = layoutsize * isize,
-                                LayoutOffset = layoutoffset * isize
-                            });
+                            return null;
                         }
 
-                        if (measurebitmap != null)
+                        // Dispose glyphs
+                        foreach (SourceGlyph gly in glyphs)
                         {
-                            measurebitmap.Dispose();
-                            measureg.Dispose();
+                            gly.Image.Dispose();
                         }
                     }
 
@@ -204,6 +126,106 @@ namespace DUIP.UI
                     Texture.SetWrapMode(TextureWrapMode.Clamp, TextureWrapMode.Clamp);
                     return new BitmapTypeface(tex, glyphmap, (double)Size / (double)FontSize);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Describes a glyph within an image to be used as part of a bitmap typeface.
+        /// </summary>
+        public class SourceGlyph
+        {
+            /// <summary>
+            /// The name of the character this glyph is for.
+            /// </summary>
+            public char Name;
+
+            /// <summary>
+            /// The image this glyph is from.
+            /// </summary>
+            public Image Image;
+
+            /// <summary>
+            /// The x-offset of the glyph in the image.
+            /// </summary>
+            public int X;
+
+            /// <summary>
+            /// The y-offset of the glyph in the image.
+            /// </summary>
+            public int Y;
+
+            /// <summary>
+            /// The width of the glyph in the image.
+            /// </summary>
+            public int Width;
+            
+            /// <summary>
+            /// The height of the glyph in the image.
+            /// </summary>
+            public int Height;
+
+            /// <summary>
+            /// The offset of the topleft corner of layout rectangle from the topleft corner of the glyph in pixels.
+            /// </summary>
+            public Point LayoutOffset;
+
+            /// <summary>
+            /// The size of the layout rectangle in pixels.
+            /// </summary>
+            public Point LayoutSize;
+        }
+
+        /// <summary>
+        /// Creates source glyphs for a gdi+ font. Note that the images for all glyphs need to be disposed manually
+        /// after they are no longer in use.
+        /// </summary>
+        /// <param name="MeasureGraphics">A graphics context used to take initial measurements of characters.</param>
+        /// <param name="Padding">The length of uncolored pixels to add around each side of each character.</param>
+        public static IEnumerable<SourceGlyph> CreateSourceGlyphs(
+            Graphics MeasureGraphics, System.Drawing.Font Font, StringFormat Format,
+            Color BackColor, Brush GlyphBrush,
+            System.Drawing.Imaging.PixelFormat ImageFormat,
+            int Padding, IEnumerable<char> Characters)
+        {
+            Format.SetMeasurableCharacterRanges(new CharacterRange[] { new CharacterRange(0, 1) });
+            foreach (char c in Characters)
+            {
+                // Initial measurements
+                string str = char.ToString(c);
+                Point fullsize = MeasureGraphics.MeasureString(str, Font, new PointF(0.0f, 0.0f), Format);
+                fullsize = fullsize.Ceiling;
+                Region[] rgs = MeasureGraphics.MeasureCharacterRanges(str, Font, new RectangleF(Point.Origin, fullsize), Format);
+                RectangleF crg = rgs[0].GetBounds(MeasureGraphics);
+                Point layoutsize = crg.Size;
+                Point layoutoffset = crg.Location;
+
+                // Draw character
+                Bitmap bmp = new Bitmap((int)fullsize.X, (int)fullsize.Y, ImageFormat);
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.Clear(BackColor);
+                    g.TextRenderingHint = TextRenderingHint.AntiAlias;
+                    g.DrawString(str, Font, GlyphBrush, 0.0f, 0.0f, Format);
+                }
+
+                // Character actual size
+                int minx, miny, maxx, maxy;
+                _MeasureExtent(bmp, out minx, out miny, out maxx, out maxy);
+                minx -= Padding; miny -= Padding; maxx += Padding; maxy += Padding;
+                layoutoffset -= new Point(minx, miny);
+
+                // Output glyph
+                yield return new SourceGlyph
+                {
+                    Name = c,
+                    Image = bmp,
+                    X = minx,
+                    Y = miny,
+                    Width = maxx - minx,
+                    Height = maxy - miny,
+                    LayoutOffset = layoutoffset,
+                    LayoutSize = layoutsize
+                };
             }
         }
 
@@ -274,6 +296,58 @@ namespace DUIP.UI
         btt_end:
 
             Bitmap.UnlockBits(bd);
+        }
+
+        /// <summary>
+        /// Tries fitting a collection of source glyphs into a bitmap. Produces a glyphmap if successful.
+        /// </summary>
+        /// <param name="Scale">The scaling to apply to get from pixel coordinates to glyphmap coordinates.</param>
+        public static bool FitSourceGlyphs(
+            Bitmap Bitmap, Graphics Graphics, IEnumerable<SourceGlyph> Glyphs,
+            out Dictionary<char, Glyph> GlyphMap, double Scale)
+        {
+            // Sort glyphs by ascending height for increased packing efficency.
+            Glyphs = from gly in Glyphs
+                     orderby gly.Height ascending
+                     select gly;
+
+            // Begin placing glyphs in rows on the bitmap
+            GlyphMap = new Dictionary<char, Glyph>();
+            int cury = 0;
+            int nexty = 0;
+            int nextx = 0;
+            foreach (SourceGlyph gly in Glyphs)
+            {
+                int glyx = nextx;
+                int glyy = cury;
+
+                nextx = glyx + gly.Width;
+                nexty = Math.Max(glyy + gly.Height, nexty);
+                if (nextx >= Bitmap.Width)
+                {
+                    glyx = 0;
+                    cury = glyy = nexty;
+                    nextx = gly.Width;
+                    nexty = glyy + gly.Height;
+                }
+                if (nexty >= Bitmap.Height)
+                {
+                    // Nope :(
+                    return false;
+                }
+
+                Graphics.SetClip(new System.Drawing.Rectangle(glyx, glyy, gly.Width, gly.Height));
+                Graphics.DrawImageUnscaled(gly.Image, glyx - gly.X, glyy - gly.Y);
+                GlyphMap.Add(gly.Name, new Glyph
+                {
+                    Source = Rectangle.FromOffsetSize(
+                        new Point(glyx, glyy) * Scale, 
+                        new Point(gly.Width, gly.Height) * Scale),
+                    LayoutOffset = gly.LayoutOffset * Scale,
+                    LayoutSize = gly.LayoutSize * Scale
+                });
+            }
+            return true;
         }
 
         /// <summary>
