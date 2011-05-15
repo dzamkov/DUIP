@@ -119,266 +119,104 @@ namespace DUIP.UI
         public FlowControl(FlowBlock Block, ControlEnvironment Environment)
         {
             FlowStyle style = Block.Style;
-            IEnumerable<FlowBlock.Item> sourceitems = Block.Items;
-            double minorsize = Environment.SizeRange.TopLeft[Point.GetAxis(style.MinorDirection)];
-            double majorsize;
+            double minorsize, majorsize;
+            minorsize = Environment.SizeRange.TopLeft[style.MinorAxis];
+            this._Items = new List<Flow.Item>();
 
-            // Create and layout items
-            List<List<_LayoutItem>> linedlayoutitems = new List<List<_LayoutItem>>();
-            _GenerateItems(Environment, minorsize, sourceitems, out this._VisualItems, out this._LayoutItems);
-            _PerformLayout(this._LayoutItems, style, minorsize, out majorsize, out linedlayoutitems);
+            foreach (FlowBlock.Item it in Block.Items)
+            {
+                var ti = it as FlowBlock.Item.Text;
+                if (ti != null)
+                {
+                    foreach (char c in ti.String)
+                    {
+                        this._Items.Add(new _CharItem(ti.Font, c));
+                    }
+                }
+            }
 
-            // Get size
-            this._Size = new Point(minorsize, majorsize);
-            if (Point.GetAxis(style.MinorDirection) == Axis.Vertical)
-                this._Size = this._Size.Swap;
+            Flow.Layout(this._Items, style, minorsize, out majorsize);
+            this._Size = new Point(minorsize, majorsize).Shift(style.MinorAxis);
+        }
+
+        /// <summary>
+        /// A layout item for a character of a certain font.
+        /// </summary>
+        private class _CharItem : Flow.StandardItem
+        {
+            public _CharItem(Font Font, char Name)
+            {
+                this._Font = Font;
+                this._Name = Name;
+                this._Size = this._Font.GetSize(Name);
+            }
+
+            public void Render(RenderContext Context)
+            {
+                Disposable<Figure> glyph = this._Font.GetGlyph(this._Name);
+                using (Context.Translate(this._Position))
+                {
+                    ((Figure)glyph).Render(Context);
+                }
+                glyph.Dispose();
+            }
+
+            public override Point Size
+            {
+                get
+                {
+                    return this._Size;
+                }
+            }
+
+            public override Point Position
+            {
+                get
+                {
+                    return this._Position;
+                }
+                set
+                {
+                    this._Position = value;
+                }
+            }
+
+            private Point _Size;
+            private Point _Position;
+            private Font _Font;
+            private char _Name;
         }
 
         public override Point Size
         {
-            get 
+            get
             {
                 return this._Size;
             }
         }
 
-        public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
-        {
-            
-        }
-
         public override void Render(RenderContext Context)
         {
-            foreach (_LayoutItem li in this._LayoutItems)
+            foreach (Flow.Item item in this._Items)
             {
-                _CharacterLayoutItem cli = li as _CharacterLayoutItem;
-                if (cli != null)
+                _CharItem ci = item as _CharItem;
+                if (ci != null)
                 {
-                    Figure glyph = cli.Text.Font.GetGlyph(cli.Name);
-                    glyph.WithTranslate(cli.TopLeft).Render(Context);
-                    ((Disposable<Figure>)glyph).Dispose();
+                    ci.Render(Context);
                 }
             }
         }
 
-        /// <summary>
-        /// A discrete item within a line of a flow control. This type of item contributes to the layout
-        /// of the control but can not be interacted with directly.
-        /// </summary>
-        private class _LayoutItem
-        {
-
-        }
-
-        /// <summary>
-        /// A layout item for a character in a text.
-        /// </summary>
-        private class _CharacterLayoutItem : _LayoutItem
-        {
-            /// <summary>
-            /// The top-left corner of the character.
-            /// </summary>
-            public Point TopLeft;
-
-            /// <summary>
-            /// The text this character is associated with.
-            /// </summary>
-            public _TextVisualItem Text;
-
-            /// <summary>
-            /// The offset of this character in the text.
-            /// </summary>
-            public int Offset;
-
-            /// <summary>
-            /// The name of the character.
-            /// </summary>
-            public char Name;
-        }
-
-        /// <summary>
-        /// A combination of layout items to be placed on the same line whenever possible. Groups are broken into their parts
-        /// during the layout phase.
-        /// </summary>
-        private class _GroupLayoutItem : _LayoutItem
-        {
-            /// <summary>
-            /// The items in this group.
-            /// </summary>
-            public List<_LayoutItem> Items;
-        }
-
-        /// <summary>
-        /// An item that can be rendered, updated, and disposed. Usually linked to one or more layout items.
-        /// </summary>
-        private class _VisualItem
-        {
-
-        }
-
-        /// <summary>
-        /// A visual item for text. 
-        /// </summary>
-        private class _TextVisualItem : _VisualItem
-        {
-            /// <summary>
-            /// The font used for this text.
-            /// </summary>
-            public Font Font;
-        }
-
-        /// <summary>
-        /// Gets the minor length of a layout item when added to a line.
-        /// </summary>
-        private static double _GetMinorLength(_LayoutItem Item, Axis MinorAxis)
-        {
-            _CharacterLayoutItem cli = Item as _CharacterLayoutItem;
-            if (cli != null)
-            {
-                return cli.Text.Font.GetSize(cli.Name)[MinorAxis];
-            }
-
-            _GroupLayoutItem gli = Item as _GroupLayoutItem;
-            if (gli != null)
-            {
-                double tot = 0.0;
-                foreach (_LayoutItem li in gli.Items)
-                {
-                    tot += _GetMinorLength(li, MinorAxis);
-                }
-                return tot;
-            }
-
-            return 0.0;
-        }
-
-        /// <summary>
-        /// Appends a layout item to the given line.
-        /// </summary>
-        private static void _AppendLine(_LayoutItem Item, List<_LayoutItem> Line)
-        {
-            _GroupLayoutItem gli = Item as _GroupLayoutItem;
-            if (gli != null)
-            {
-                foreach (_LayoutItem li in gli.Items)
-                {
-                    _AppendLine(li, Line);
-                }
-                return;
-            }
-
-            Line.Add(Item);
-        }
-
-        /// <summary>
-        /// Arranges a collection of layout items into a flow control by updating their positions and creating a list of the contents of lines.
-        /// </summary>
-        /// <param name="Items">The items to perform layout on.</param>
-        /// <param name="MinorSize">The size of the available area for the flow control in the minor direction.</param>
-        /// <param name="MajorSize">The size of the flow control in the major direction.</param>
-        /// <param name="Lines">The input items arranged in lines.</param>
-        private static void _PerformLayout(
-            List<_LayoutItem> Items, 
-            FlowStyle Style, double MinorSize, out double MajorSize, 
-            out List<List<_LayoutItem>> Lines)
-        {
-            Axis minoraxis = Point.GetAxis(Style.MinorDirection);
-            Lines = new List<List<_LayoutItem>>();
-            double major = 0.0;
-
-            // Build lines
-            int next = 0;
-            while (next < Items.Count)
-            {
-                // Determine what items should be on the line
-                List<_LayoutItem> line = new List<_LayoutItem>();
-                Lines.Add(line);
-                double linelength = 0.0;
-                while (next < Items.Count)
-                {
-                    _LayoutItem curitem = Items[next];
-                    double minorlength = _GetMinorLength(curitem, minoraxis);
-                    if (minorlength + linelength < MinorSize)
-                    {
-                        linelength += minorlength;
-                        _AppendLine(curitem, line);
-                        next++;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-
-                // Place items
-                double minor = 0.0;
-                foreach (_LayoutItem li in line)
-                {
-                    _CharacterLayoutItem cli = li as _CharacterLayoutItem;
-                    if (cli != null)
-                    {
-                        cli.TopLeft = new Point(minor, major);
-                        minor += cli.Text.Font.GetSize(cli.Name).X;
-                    }
-                }
-
-                major += 0.2;
-            }
-
-            MajorSize = 1.0;
-        }
-
-        /// <summary>
-        /// Creates visual and layout items for the given source items. Position information for layout items is not calculated.
-        /// </summary>
-        private static void _GenerateItems(
-            ControlEnvironment Environment, 
-            double MinorSize,
-            IEnumerable<FlowBlock.Item> SourceItems,
-            out List<_VisualItem> VisualItems,
-            out List<_LayoutItem> LayoutItems)
-        {
-            VisualItems = new List<_VisualItem>();
-            LayoutItems = new List<_LayoutItem>();
-
-            foreach (FlowBlock.Item item in SourceItems)
-            {
-                // Text item
-                var textitem = item as FlowBlock.Item.Text;
-                if (textitem != null)
-                {
-                    _TextVisualItem tvi = new _TextVisualItem
-                    {
-                        Font = textitem.Font
-                    };
-                    VisualItems.Add(tvi);
-
-                    // TODO: obey "BreakWords"
-                    int o = 0;
-                    foreach (char c in textitem.String)
-                    {
-                        LayoutItems.Add(new _CharacterLayoutItem
-                        {
-                            Name = c,
-                            Offset = o++,
-                            Text = tvi
-                        });
-                    }
-                }
-
-
-            }
-        }
-
-        private List<_LayoutItem> _LayoutItems;
-        private List<_VisualItem> _VisualItems;
+        private List<Flow.Item> _Items;
         private Point _Size;
     }
 
     /// <summary>
     /// Gives information about the arrangement of items within a flow block.
     /// </summary>
-    public struct FlowStyle
+    /// <remarks>The minor direction is the direction items within a line follow. The major direction
+    /// is the direction lines follow.</remarks>
+    public class FlowStyle
     {
         /// <summary>
         /// The justification mode for items.
@@ -386,22 +224,22 @@ namespace DUIP.UI
         public FlowJustification Justification;
 
         /// <summary>
-        /// Gets the direction lines are arranged in the flow block.
+        /// The direction of the flow.
         /// </summary>
-        public Direction MajorDirection;
+        public FlowDirection Direction;
 
         /// <summary>
-        /// Gets the direction items within lines are arranged in the flow block.
+        /// The alignment of items within lines on the major axis.
         /// </summary>
-        public Direction MinorDirection;
+        public Alignment LineAlignment;
 
         /// <summary>
-        /// The minimum size, in the major direction, of a line.
+        /// The minimum size, on the major axis, of a line.
         /// </summary>
         public double MinLineSize;
 
         /// <summary>
-        /// The maximum size, in the major direction, of a line.
+        /// The maximum size, on the major axis, of a line.
         /// </summary>
         public double MaxLineSize;
 
@@ -409,6 +247,54 @@ namespace DUIP.UI
         /// The amount of space, in the major direction, between lines.
         /// </summary>
         public double LineSpacing;
+
+        /// <summary>
+        /// The amount of padding in the minor direction.
+        /// </summary>
+        public double MinorPadding;
+
+        /// <summary>
+        /// The amount of padding in the major direction.
+        /// </summary>
+        public double MajorPadding;
+
+        /// <summary>
+        /// Gets the minor axis for this flow style.
+        /// </summary>
+        public Axis MinorAxis
+        {
+            get
+            {
+                return (int)this.Direction < 4 ? Axis.Horizontal : Axis.Vertical;
+            }
+        }
+
+        /// <summary>
+        /// Gets the major axis for this flow style.
+        /// </summary>
+        public Axis MajorAxis
+        {
+            get
+            {
+                return (int)this.Direction < 4 ? Axis.Vertical : Axis.Horizontal;
+            }
+        }
+    }
+
+    /// <summary>
+    /// The direction that lines (major) and items within lines (minor) progress in a flow block. Items within
+    /// this enumeration are named with the minor direction followed by the major direction.
+    /// </summary>
+    public enum FlowDirection
+    {
+        RightDown,
+        RightUp,
+        LeftDown,
+        LeftUp,
+        DownRight,
+        DownLeft,
+        UpRight,
+        UpLeft,
     }
 
     /// <summary>
@@ -435,5 +321,53 @@ namespace DUIP.UI
         /// Items are aligned only to the end of a line.
         /// </summary>
         ReverseRagged,
+    }
+
+    /// <summary>
+    /// Contains functions related to flow blocks and flowing items.
+    /// </summary>
+    public static class Flow
+    {
+        /// <summary>
+        /// A layout item that can be placed in a flow.
+        /// </summary>
+        public abstract class Item
+        {
+
+        }
+
+        /// <summary>
+        /// A item placed in a line that has no additional effects on the arrangement of other items.
+        /// </summary>
+        public abstract class StandardItem : Item
+        {
+            /// <summary>
+            /// Gets the size of the item.
+            /// </summary>
+            public abstract Point Size { get; }
+
+            /// <summary>
+            /// Gets or sets the position of the topleft corner of the item in relation to the topleft corner of
+            /// the flow block.
+            /// </summary>
+            public abstract Point Position { get; set; }
+        }
+
+        /// <summary>
+        /// Performs layout on a collection of flow items.
+        /// </summary>
+        /// <param name="MinorSize">The allowable size on the minor axis for layout.</param>
+        /// <param name="MajorSize">The size required on the major axis to place all items.</param>
+        public static void Layout(IEnumerable<Item> Items, FlowStyle Style, double MinorSize, out double MajorSize)
+        {
+            double curmajor = Style.MajorPadding;
+
+            foreach (Item item in Items)
+            {
+
+            }
+
+            MajorSize = curmajor + Style.MajorPadding;
+        }
     }
 }

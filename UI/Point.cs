@@ -123,6 +123,18 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Shifts the components of this point so that the given axis becomes the X component.
+        /// </summary>
+        public Point Shift(Axis Axis)
+        {
+            switch (Axis)
+            {
+                case Axis.Horizontal: return new Point(this.X, this.Y);
+                case Axis.Vertical: return new Point(this.Y, this.X);
+            }
+        }
+
+        /// <summary>
         /// Rounds the point to the nearest integer components.
         /// </summary>
         public Point Round

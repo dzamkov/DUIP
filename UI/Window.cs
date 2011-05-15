@@ -31,8 +31,21 @@ namespace DUIP.UI
             BitmapTypeface typeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Verdana"), Font.ASCIICharacters, FontStyle.Regular, 3, 74.0f, 512);
             BitmapFont font = typeface.GetFont(0.05, Color.Black);
 
-            FlowBlock testflow = new FlowBlock();
-            testflow.AddText("This is some test text.", font);
+            FlowBlock testflow = new FlowBlock
+            {
+                Style = new FlowStyle
+                {
+                    Direction = FlowDirection.RightDown,
+                    Justification = FlowJustification.Justify,
+                    LineAlignment = Alignment.Center,
+                    LineSpacing = 0.02,
+                    MaxLineSize = 0.09,
+                    MinLineSize = 0.05,
+                    MinorPadding = 0.02,
+                    MajorPadding = 0.02
+                }
+            };
+            testflow.AddText("The quick brown fox jumped over the lazy tortise.", font);
 
             Block testblock = testflow.WithSize(1.0, 1.0).WithBorder(new Border
             {
