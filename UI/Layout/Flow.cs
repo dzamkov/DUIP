@@ -120,9 +120,11 @@ namespace DUIP.UI
         {
             FlowStyle style = Block.Style;
             double minorsize, majorsize;
-            minorsize = Environment.SizeRange.TopLeft[style.MinorAxis];
-            this._Items = new List<Flow.Item>();
+            Point minsize = Environment.SizeRange.TopLeft.Shift(style.MinorAxis);
+            Point maxsize = Environment.SizeRange.BottomRight.Shift(style.MajorAxis);
+            minorsize = minsize.X;
 
+            this._Items = new List<Flow.Item>();
             foreach (FlowBlock.Item it in Block.Items)
             {
                 var ti = it as FlowBlock.Item.Text;
@@ -134,8 +136,9 @@ namespace DUIP.UI
                     }
                 }
             }
-
             Flow.Layout(this._Items, style, minorsize, out majorsize);
+            majorsize = Math.Max(minsize.Y, Math.Min(maxsize.Y, majorsize));
+
             this._Size = new Point(minorsize, majorsize).Shift(style.MinorAxis);
         }
 
@@ -171,18 +174,14 @@ namespace DUIP.UI
 
             public override Point Position
             {
-                get
-                {
-                    return this._Position;
-                }
                 set
                 {
                     this._Position = value;
                 }
             }
 
-            private Point _Size;
             private Point _Position;
+            private Point _Size;
             private Font _Font;
             private char _Name;
         }
@@ -236,27 +235,12 @@ namespace DUIP.UI
         /// <summary>
         /// The minimum size, on the major axis, of a line.
         /// </summary>
-        public double MinLineSize;
-
-        /// <summary>
-        /// The maximum size, on the major axis, of a line.
-        /// </summary>
-        public double MaxLineSize;
+        public double LineSize;
 
         /// <summary>
         /// The amount of space, in the major direction, between lines.
         /// </summary>
         public double LineSpacing;
-
-        /// <summary>
-        /// The amount of padding in the minor direction.
-        /// </summary>
-        public double MinorPadding;
-
-        /// <summary>
-        /// The amount of padding in the major direction.
-        /// </summary>
-        public double MajorPadding;
 
         /// <summary>
         /// Gets the minor axis for this flow style.
@@ -347,10 +331,10 @@ namespace DUIP.UI
             public abstract Point Size { get; }
 
             /// <summary>
-            /// Gets or sets the position of the topleft corner of the item in relation to the topleft corner of
+            /// Sets the position of the topleft corner of the item in relation to the topleft corner of
             /// the flow block.
             /// </summary>
-            public abstract Point Position { get; set; }
+            public abstract Point Position { set; }
         }
 
         /// <summary>
@@ -360,14 +344,14 @@ namespace DUIP.UI
         /// <param name="MajorSize">The size required on the major axis to place all items.</param>
         public static void Layout(IEnumerable<Item> Items, FlowStyle Style, double MinorSize, out double MajorSize)
         {
-            double curmajor = Style.MajorPadding;
+            double curmajor = 0.0;
 
             foreach (Item item in Items)
             {
 
             }
 
-            MajorSize = curmajor + Style.MajorPadding;
+            MajorSize = curmajor;
         }
     }
 }
