@@ -127,10 +127,13 @@ namespace DUIP.UI
         /// </summary>
         public Point Shift(Axis Axis)
         {
-            switch (Axis)
+            if (Axis == Axis.Horizontal)
             {
-                case Axis.Horizontal: return new Point(this.X, this.Y);
-                case Axis.Vertical: return new Point(this.Y, this.X);
+                return new Point(this.X, this.Y);
+            }
+            else
+            {
+                return new Point(this.Y, this.X);
             }
         }
 

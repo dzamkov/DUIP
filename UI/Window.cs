@@ -39,10 +39,7 @@ namespace DUIP.UI
                     Justification = FlowJustification.Justify,
                     LineAlignment = Alignment.Center,
                     LineSpacing = 0.02,
-                    MaxLineSize = 0.09,
-                    MinLineSize = 0.05,
-                    MinorPadding = 0.02,
-                    MajorPadding = 0.02
+                    LineSize = 0.05
                 }
             };
             testflow.AddText("The quick brown fox jumped over the lazy tortise.", font);

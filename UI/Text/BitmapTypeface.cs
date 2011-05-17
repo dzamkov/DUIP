@@ -204,7 +204,7 @@ namespace DUIP.UI
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
                     g.Clear(BackColor);
-                    g.TextRenderingHint = TextRenderingHint.AntiAlias;
+                    g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
                     g.DrawString(str, Font, GlyphBrush, 0.0f, 0.0f, Format);
                 }
 
