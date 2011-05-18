@@ -23,6 +23,12 @@ namespace DUIP.UI
              
         }
 
+        public Compass(T Horizontal, T Vertical)
+            : this(Horizontal, Vertical, Horizontal, Vertical)
+        {
+
+        }
+
         /// <summary>
         /// Gets or sets the value of this compass for the given direction.
         /// </summary>

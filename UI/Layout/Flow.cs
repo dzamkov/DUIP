@@ -118,13 +118,13 @@ namespace DUIP.UI
     {
         public FlowControl(FlowBlock Block, ControlEnvironment Environment)
         {
-            FlowStyle style = Block.Style;
+            this._FlowStyle = Block.Style;
             double minorsize, majorsize;
-            Point minsize = Environment.SizeRange.TopLeft.Shift(style.MinorAxis);
-            Point maxsize = Environment.SizeRange.BottomRight.Shift(style.MajorAxis);
+            Point minsize = Environment.SizeRange.TopLeft.Shift(this._FlowStyle.MinorAxis);
+            Point maxsize = Environment.SizeRange.BottomRight.Shift(this._FlowStyle.MinorAxis);
             minorsize = minsize.X;
 
-            this._Items = new List<Flow.Item>();
+            List<Flow.Item> items = new List<Flow.Item>();
             foreach (FlowBlock.Item it in Block.Items)
             {
                 var ti = it as FlowBlock.Item.Text;
@@ -132,14 +132,14 @@ namespace DUIP.UI
                 {
                     foreach (char c in ti.String)
                     {
-                        this._Items.Add(new _CharItem(ti.Font, c));
+                        items.Add(new _CharItem(ti.Font, c));
                     }
                 }
             }
-            Flow.Layout(this._Items, style, minorsize, out majorsize);
+            this._Lines = Flow.Layout(items, this._FlowStyle, minorsize, out majorsize);
             majorsize = Math.Max(minsize.Y, Math.Min(maxsize.Y, majorsize));
 
-            this._Size = new Point(minorsize, majorsize).Shift(style.MinorAxis);
+            this._Size = new Point(minorsize, majorsize).Shift(this._FlowStyle.MinorAxis);
         }
 
         /// <summary>
@@ -154,10 +154,10 @@ namespace DUIP.UI
                 this._Size = this._Font.GetSize(Name);
             }
 
-            public void Render(RenderContext Context)
+            public void Render(RenderContext Context, Point Position)
             {
                 Disposable<Figure> glyph = this._Font.GetGlyph(this._Name);
-                using (Context.Translate(this._Position))
+                using (Context.Translate(Position))
                 {
                     ((Figure)glyph).Render(Context);
                 }
@@ -172,15 +172,6 @@ namespace DUIP.UI
                 }
             }
 
-            public override Point Position
-            {
-                set
-                {
-                    this._Position = value;
-                }
-            }
-
-            private Point _Position;
             private Point _Size;
             private Font _Font;
             private char _Name;
@@ -196,17 +187,21 @@ namespace DUIP.UI
 
         public override void Render(RenderContext Context)
         {
-            foreach (Flow.Item item in this._Items)
+            foreach (Flow.Line line in this._Lines)
             {
-                _CharItem ci = item as _CharItem;
-                if (ci != null)
+                foreach (Flow.Item item in line.Items)
                 {
-                    ci.Render(Context);
+                    _CharItem ci = item as _CharItem;
+                    if (ci != null)
+                    {
+                        ci.Render(Context, ci.GetPosition(line, this._Size, this._FlowStyle));
+                    }
                 }
             }
         }
 
-        private List<Flow.Item> _Items;
+        private List<Flow.Line> _Lines;
+        private FlowStyle _FlowStyle;
         private Point _Size;
     }
 
@@ -331,10 +326,32 @@ namespace DUIP.UI
             public abstract Point Size { get; }
 
             /// <summary>
-            /// Sets the position of the topleft corner of the item in relation to the topleft corner of
-            /// the flow block.
+            /// Gets the position of this item along the line it was placed in.
             /// </summary>
-            public abstract Point Position { set; }
+            /// <remarks>This position will start at 0.0 and ascend for successive items, regardless of the flow direction.</remarks>
+            public double MinorPosition
+            {
+                get
+                {
+                    return this._MinorPosition;
+                }
+            }
+
+            /// <summary>
+            /// Gets the position of this item in relation to the flow container, given the line the item is in, the size of the container,
+            /// and the style used for the container.
+            /// </summary>
+            public Point GetPosition(Line Line, Point ContainerSize, FlowStyle Style)
+            {
+                ContainerSize = ContainerSize.Shift(Style.MinorAxis);
+                Point size = this.Size.Shift(Style.MinorAxis);
+                double lineoffset = Align.AxisOffset(Style.LineAlignment, Line.MajorSize, size.Y);
+                return new Point(
+                    (int)Style.Direction % 4 < 2 ? this._MinorPosition : ContainerSize.X - this._MinorPosition - size.X,
+                    ((int)Style.Direction % 2 < 1 ? Line.MajorPosition : ContainerSize.Y - Line.MajorPosition - Line.MajorSize) + lineoffset).Shift(Style.MinorAxis);
+            }
+
+            internal double _MinorPosition;
         }
 
         /// <summary>
@@ -361,9 +378,9 @@ namespace DUIP.UI
             }
 
             /// <summary>
-            /// Gets the position of this line on the major axis, in relation the flow
-            /// container it is for.
+            /// Gets the position of this line on the major axis.
             /// </summary>
+            /// <remarks>This position will start at 0.0 and ascend for successive lines, regardless of the flow direction.</remarks>
             public double MajorPosition
             {
                 get
@@ -380,6 +397,17 @@ namespace DUIP.UI
                 get
                 {
                     return this._UsedLength;
+                }
+            }
+
+            /// <summary>
+            /// Gets the items in this line.
+            /// </summary>
+            public IEnumerable<Item> Items
+            {
+                get
+                {
+                    return this._Items;
                 }
             }
 
@@ -412,6 +440,7 @@ namespace DUIP.UI
             /// </summary>
             internal void _Layout(double MajorPosition, double MinorSize, FlowStyle Style)
             {
+                Axis minoraxis = Style.MinorAxis;
                 this._MajorPosition = MajorPosition;
 
                 double cur;
@@ -424,24 +453,23 @@ namespace DUIP.UI
                             StandardItem si = item as StandardItem;
                             if (si != null)
                             {
-                                double itemminorsize;
-                                this._Position(si, MinorSize, cur, Style, out itemminorsize);
-                                cur += itemminorsize;
+                                si._MinorPosition = cur;
+                                cur += si.Size[minoraxis];
                                 continue;
                             }
                         }
                         break;
                     case FlowJustification.Justify:
                         cur = 0.0;
-                        double spacing = (MinorSize - this._UsedLength) / this._Items.Count;
+                        double spacing = this._UsedLength > MinorSize * 0.7 ? (MinorSize - this._UsedLength) / this._Items.Count : 0.0;
                         foreach (Item item in this._Items)
                         {
                             StandardItem si = item as StandardItem;
                             if (si != null)
                             {
-                                double itemminorsize;
-                                this._Position(si, MinorSize, cur, Style, out itemminorsize);
-                                cur += itemminorsize + spacing;
+                                si._MinorPosition = cur;
+                                cur += si.Size[minoraxis];
+                                cur += spacing;
                                 continue;
                             }
                         }
@@ -449,44 +477,6 @@ namespace DUIP.UI
                 }
             }
 
-            /// <summary>
-            /// Positions a standard item within a line.
-            /// </summary>
-            private void _Position(StandardItem Item, double MinorSize, double RelMinorPosition, FlowStyle Style, out double ItemMinorSize)
-            {
-                Axis minoraxis = Style.MinorAxis;
-                Point size = Item.Size.Shift(minoraxis);
-                ItemMinorSize = size.X;
-
-                double minorposition, majorposition;
-
-                // Determine minor position of item
-                if ((int)Style.Direction % 4 < 2)
-                {
-                    minorposition = RelMinorPosition;
-                }
-                else
-                {
-                    minorposition = MinorSize - RelMinorPosition - ItemMinorSize;
-                }
-
-                // Determine major position of item
-                switch (Style.LineAlignment)
-                {
-                    case Alignment.Up:
-                        majorposition = this._MajorPosition;
-                        break;
-                    case Alignment.Center:
-                        majorposition = this._MajorPosition + (this._MajorSize / 2.0) - (size.Y / 2.0);
-                        break;
-                    default:
-                        majorposition = this._MajorPosition + this._MajorSize - size.Y;
-                        break;
-                }
-
-                // Set position
-                Item.Position = new Point(minorposition, majorposition).Shift(minoraxis);
-            }
 
             private List<Item> _Items;
             private double _UsedLength;
@@ -515,39 +505,16 @@ namespace DUIP.UI
             }
 
             // Layout lines
-            if ((int)Style.Direction % 2 < 1)
+            double majorposition = 0.0;
+            double majorsize = 0.0;
+            foreach (Line line in lines)
             {
-                double majorposition = 0.0;
-                double majorsize = 0.0;
-                foreach (Line line in lines)
-                {
-                    line._Layout(majorposition, MinorSize, Style);
-                    majorsize = majorposition + line.MajorSize;
-                    majorposition = majorsize + Style.LineSpacing;
-                }
-                MajorSize = majorsize;
+                line._Layout(majorposition, MinorSize, Style);
+                majorsize = majorposition + line.MajorSize;
+                majorposition = majorsize + Style.LineSpacing;
             }
-            else
-            {
-                // Determine major size first
-                double majorposition = 0.0;
-                double majorsize = 0.0;
-                foreach (Line line in lines)
-                {
-                    majorsize = majorposition + line.MajorSize;
-                    majorposition = majorsize + Style.LineSpacing;
-                }
-                MajorSize = majorsize;
+            MajorSize = majorsize;
 
-                // Layout items
-                majorposition = majorsize;
-                foreach (Line line in lines)
-                {
-                    line._Layout(majorposition - line.MajorSize, MinorSize, Style);
-                    majorposition -= line.MajorSize;
-                    majorposition -= Style.LineSpacing;
-                }
-            }
 
             // Return lines
             return lines;

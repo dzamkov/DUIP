@@ -15,4 +15,23 @@ namespace DUIP.UI
         Right = 2,
         Down = 2
     }
+
+    /// <summary>
+    /// Contains functions related to the alignment of items within containers.
+    /// </summary>
+    public static class Align
+    {
+        /// <summary>
+        /// Gets the offset of an item from the top/left edge of its container based on the given alignment mode.
+        /// </summary>
+        public static double AxisOffset(Alignment Alignment, double ContainerSize, double ItemSize)
+        {
+            switch (Alignment)
+            {
+                case Alignment.Up: return 0.0;
+                case Alignment.Center: return (ContainerSize - ItemSize) * 0.5;
+                default: return ContainerSize - ItemSize;
+            }
+        }
+    }
 }
