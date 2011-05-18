@@ -28,8 +28,8 @@ namespace DUIP.UI
             this._Probe = new Probe();
             this._MakeView();
 
-            BitmapTypeface typeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Verdana"), Font.ASCIICharacters, FontStyle.Regular, 3, 74.0f, 512);
-            BitmapFont font = typeface.GetFont(0.05, Color.Black);
+            BitmapTypeface typeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Eurostile"), Font.ASCIICharacters, FontStyle.Regular, 3, 50.0f, 512);
+            BitmapFont font = typeface.GetFont(0.04, Color.Black);
 
             FlowBlock testflow = new FlowBlock
             {
@@ -38,16 +38,25 @@ namespace DUIP.UI
                     Direction = FlowDirection.RightDown,
                     Justification = FlowJustification.Justify,
                     LineAlignment = Alignment.Center,
-                    LineSpacing = 0.02,
-                    LineSize = 0.05
+                    LineSpacing = 0.00,
+                    LineSize = 0.01
                 }
             };
-            testflow.AddText("The quick brown fox jumped over the lazy tortise.", font);
+            testflow.AddText(
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc suscipit pharetra nunc, " + 
+                "sit amet faucibus risus scelerisque ac. Etiam condimentum justo quis dolor vehicula ac volutpat " + 
+                "tortor adipiscing. Donec tincidunt quam quis orci pellentesque feugiat. Fusce eget nisi ac mi " + 
+                "tristique porttitor. Aliquam et malesuada elit. Suspendisse eleifend hendrerit semper. " +
+                "Pellentesque ac mauris et tortor luctus varius sit amet non velit. Morbi pretium diam ac odio " + 
+                "iaculis eleifend. Mauris rutrum vulputate orci, quis sagittis est semper nec. Vivamus convallis, " + 
+                "metus non sollicitudin congue, leo lacus aliquam magna, ut auctor elit nibh quis mauris. Class aptent " + 
+                "taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Mauris a sapien est. Cras " +
+                "a purus leo, rhoncus tincidunt nisl. Morbi vel metus eget orci venenatis volutpat.", font);
 
             Block testblock = testflow.WithSize(1.0, 1.0).WithBorder(new Border
             {
-                Color = Color.RGB(1.0, 0.3, 0.3),
-                Weight = 0.05,
+                Color = Color.RGB(0.8, 0.2, 0.2),
+                Weight = 0.04,
             }).WithBackground(Color.RGB(0.95, 0.7, 0.7));
 
             Control testcontrol = testblock.CreateControl(new ControlEnvironment()
@@ -57,11 +66,7 @@ namespace DUIP.UI
             });
 
 
-            this._TestFigure = new GroupFigure(new Figure[] 
-            {
-                typeface.Texture.CreateFigure().WithTranslate(new Point(-1.0, 0.0)),
-                testcontrol.WithTranslate(new Point(1.0, 0.0))
-            }); 
+            this._TestFigure = testcontrol;
         }
 
         /// <summary>

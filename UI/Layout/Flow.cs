@@ -338,20 +338,219 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Performs layout on a collection of flow items.
+        /// Represents a line of flowed items.
+        /// </summary>
+        public class Line
+        {
+            internal Line(FlowStyle Style)
+            {
+                this._Items = new List<Item>();
+                this._MajorSize = Style.LineSize;
+                this._UsedLength = 0.0;
+            }
+
+            /// <summary>
+            /// Gets the size of this line on the major axis.
+            /// </summary>
+            public double MajorSize
+            {
+                get
+                {
+                    return this._MajorSize;
+                }
+            }
+
+            /// <summary>
+            /// Gets the position of this line on the major axis, in relation the flow
+            /// container it is for.
+            /// </summary>
+            public double MajorPosition
+            {
+                get
+                {
+                    return this._MajorPosition;
+                }
+            }
+
+            /// <summary>
+            /// Gets the total length along the minor axis of the items in this line.
+            /// </summary>
+            public double UsedLength
+            {
+                get
+                {
+                    return this._UsedLength;
+                }
+            }
+
+            /// <summary>
+            /// Tries appending the given item to the end of this line. Returns true if it was successfully add or false
+            /// if it can not be added.
+            /// </summary>
+            internal bool _TryAppend(Item Item, double MinorSize, FlowStyle Style)
+            {
+                StandardItem si = Item as StandardItem;
+                if (si != null)
+                {
+                    Point size = si.Size.Shift(Style.MinorAxis);
+                    double nusedlength = this._UsedLength + size.X;
+                    if (nusedlength <= MinorSize)
+                    {
+                        this._UsedLength = nusedlength;
+                        this._MajorSize = Math.Max(this._MajorSize, size.Y);
+                        this._Items.Add(si);
+                        return true;
+                    }
+                    return false;
+                }
+
+                throw new NotImplementedException();
+            }
+
+            /// <summary>
+            /// Performs layout on the items in this line. The items are assumed to be final, with no more to be added in the future.
+            /// </summary>
+            internal void _Layout(double MajorPosition, double MinorSize, FlowStyle Style)
+            {
+                this._MajorPosition = MajorPosition;
+
+                double cur;
+                switch (Style.Justification)
+                {
+                    case FlowJustification.Ragged:
+                        cur = 0.0;
+                        foreach (Item item in this._Items)
+                        {
+                            StandardItem si = item as StandardItem;
+                            if (si != null)
+                            {
+                                double itemminorsize;
+                                this._Position(si, MinorSize, cur, Style, out itemminorsize);
+                                cur += itemminorsize;
+                                continue;
+                            }
+                        }
+                        break;
+                    case FlowJustification.Justify:
+                        cur = 0.0;
+                        double spacing = (MinorSize - this._UsedLength) / this._Items.Count;
+                        foreach (Item item in this._Items)
+                        {
+                            StandardItem si = item as StandardItem;
+                            if (si != null)
+                            {
+                                double itemminorsize;
+                                this._Position(si, MinorSize, cur, Style, out itemminorsize);
+                                cur += itemminorsize + spacing;
+                                continue;
+                            }
+                        }
+                        break;
+                }
+            }
+
+            /// <summary>
+            /// Positions a standard item within a line.
+            /// </summary>
+            private void _Position(StandardItem Item, double MinorSize, double RelMinorPosition, FlowStyle Style, out double ItemMinorSize)
+            {
+                Axis minoraxis = Style.MinorAxis;
+                Point size = Item.Size.Shift(minoraxis);
+                ItemMinorSize = size.X;
+
+                double minorposition, majorposition;
+
+                // Determine minor position of item
+                if ((int)Style.Direction % 4 < 2)
+                {
+                    minorposition = RelMinorPosition;
+                }
+                else
+                {
+                    minorposition = MinorSize - RelMinorPosition - ItemMinorSize;
+                }
+
+                // Determine major position of item
+                switch (Style.LineAlignment)
+                {
+                    case Alignment.Up:
+                        majorposition = this._MajorPosition;
+                        break;
+                    case Alignment.Center:
+                        majorposition = this._MajorPosition + (this._MajorSize / 2.0) - (size.Y / 2.0);
+                        break;
+                    default:
+                        majorposition = this._MajorPosition + this._MajorSize - size.Y;
+                        break;
+                }
+
+                // Set position
+                Item.Position = new Point(minorposition, majorposition).Shift(minoraxis);
+            }
+
+            private List<Item> _Items;
+            private double _UsedLength;
+            private double _MajorSize;
+            private double _MajorPosition;
+        }
+
+        /// <summary>
+        /// Performs layout on a collection of flow items. Returns a list of the lines the items are arranged in.
         /// </summary>
         /// <param name="MinorSize">The allowable size on the minor axis for layout.</param>
         /// <param name="MajorSize">The size required on the major axis to place all items.</param>
-        public static void Layout(IEnumerable<Item> Items, FlowStyle Style, double MinorSize, out double MajorSize)
+        public static List<Line> Layout(IEnumerable<Item> Items, FlowStyle Style, double MinorSize, out double MajorSize)
         {
-            double curmajor = 0.0;
-
+            // Build lines
+            List<Line> lines = new List<Line>();
+            Line curline = null;
             foreach (Item item in Items)
             {
-
+                if (curline == null || !curline._TryAppend(item, MinorSize, Style))
+                {
+                    curline = new Line(Style);
+                    lines.Add(curline);
+                    curline._TryAppend(item, MinorSize, Style);
+                }
             }
 
-            MajorSize = curmajor;
+            // Layout lines
+            if ((int)Style.Direction % 2 < 1)
+            {
+                double majorposition = 0.0;
+                double majorsize = 0.0;
+                foreach (Line line in lines)
+                {
+                    line._Layout(majorposition, MinorSize, Style);
+                    majorsize = majorposition + line.MajorSize;
+                    majorposition = majorsize + Style.LineSpacing;
+                }
+                MajorSize = majorsize;
+            }
+            else
+            {
+                // Determine major size first
+                double majorposition = 0.0;
+                double majorsize = 0.0;
+                foreach (Line line in lines)
+                {
+                    majorsize = majorposition + line.MajorSize;
+                    majorposition = majorsize + Style.LineSpacing;
+                }
+                MajorSize = majorsize;
+
+                // Layout items
+                majorposition = majorsize;
+                foreach (Line line in lines)
+                {
+                    line._Layout(majorposition - line.MajorSize, MinorSize, Style);
+                    majorposition -= line.MajorSize;
+                    majorposition -= Style.LineSpacing;
+                }
+            }
+
+            // Return lines
+            return lines;
         }
     }
 }
