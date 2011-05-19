@@ -67,9 +67,9 @@ namespace DUIP.UI
                 public Font Font;
 
                 /// <summary>
-                /// Can words be broken between lines?
+                /// Are characters within words grouped in the same line?
                 /// </summary>
-                public bool BreakWords;
+                public bool GroupWords;
             }
         }
 
@@ -84,13 +84,13 @@ namespace DUIP.UI
         /// <summary>
         /// Appends text to this flowblock.
         /// </summary>
-        public void AddText(string String, Font Font, bool BreakWords)
+        public void AddText(string String, Font Font, bool GroupWords)
         {
             this._Items.Add(new Item.Text
             {
                 String = String,
                 Font = Font,
-                BreakWords = BreakWords
+                GroupWords = GroupWords
             });
         }
 
@@ -99,7 +99,7 @@ namespace DUIP.UI
         /// </summary>
         public void AddText(string String, Font Font)
         {
-            this.AddText(String, Font, false);
+            this.AddText(String, Font, true);
         }
 
         public override Disposable<Control> CreateControl(ControlEnvironment Environment)
@@ -127,19 +127,51 @@ namespace DUIP.UI
             List<Flow.Item> items = new List<Flow.Item>();
             foreach (FlowBlock.Item it in Block.Items)
             {
-                var ti = it as FlowBlock.Item.Text;
-                if (ti != null)
-                {
-                    foreach (char c in ti.String)
-                    {
-                        items.Add(new _CharItem(ti.Font, c));
-                    }
-                }
+                _Append(it, items, this._FlowStyle, Environment);
             }
             this._Lines = Flow.Layout(items, this._FlowStyle, minorsize, out majorsize);
             majorsize = Math.Max(minsize.Y, Math.Min(maxsize.Y, majorsize));
 
             this._Size = new Point(minorsize, majorsize).Shift(this._FlowStyle.MinorAxis);
+        }
+
+        /// <summary>
+        /// Appends a flowblock item to a list of layout items.
+        /// </summary>
+        private static void _Append(FlowBlock.Item Item, List<Flow.Item> Items, FlowStyle Style, ControlEnvironment Environment)
+        {
+            // Text
+            var text = Item as FlowBlock.Item.Text;
+            if (text != null)
+            {
+                if (text.GroupWords)
+                {
+                    List<Flow.Item> curgroup = new List<Flow.Item>();
+                    foreach (char c in text.String)
+                    {
+                        if (c == ' ')
+                        {
+                            if (curgroup.Count > 0)
+                            {
+                                Items.Add(new Flow.GroupItem(curgroup));
+                                curgroup = new List<Flow.Item>();
+                            }
+                            Items.Add(new _CharItem(text.Font, ' '));
+                        }
+                        else
+                        {
+                            curgroup.Add(new _CharItem(text.Font, c));
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (char c in text.String)
+                    {
+                        Items.Add(new _CharItem(text.Font, c));
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -353,6 +385,27 @@ namespace DUIP.UI
 
             internal double _MinorPosition;
         }
+        
+        /// <summary>
+        /// An ordered collection of items to be placed on the same line.
+        /// </summary>
+        public class GroupItem : Item
+        {
+            public GroupItem()
+            {
+
+            }
+
+            public GroupItem(List<Item> Items)
+            {
+                this.Items = Items;
+            }
+
+            /// <summary>
+            /// The items of this group.
+            /// </summary>
+            public List<Item> Items;
+        }
 
         /// <summary>
         /// Represents a line of flowed items.
@@ -427,6 +480,33 @@ namespace DUIP.UI
                         this._UsedLength = nusedlength;
                         this._MajorSize = Math.Max(this._MajorSize, size.Y);
                         this._Items.Add(si);
+                        return true;
+                    }
+                    return false;
+                }
+
+                GroupItem gi = Item as GroupItem;
+                if (gi != null)
+                {
+                    double len = 0.0;
+                    double hei = this._MajorSize;
+                    foreach (Item subitem in gi.Items)
+                    {
+                        si = subitem as StandardItem;
+                        if (si != null)
+                        {
+                            Point size = si.Size.Shift(Style.MinorAxis);
+                            len += size.X;
+                            hei = Math.Max(hei, size.Y);
+                        }
+                    }
+
+                    double nusedlength = this._UsedLength + len;
+                    if (nusedlength <= MinorSize)
+                    {
+                        this._UsedLength = nusedlength;
+                        this._MajorSize = hei;
+                        this._Items.AddRange(gi.Items);
                         return true;
                     }
                     return false;
