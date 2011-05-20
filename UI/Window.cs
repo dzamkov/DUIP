@@ -28,31 +28,35 @@ namespace DUIP.UI
             this._Probe = new Probe();
             this._MakeView();
 
-            BitmapTypeface typeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Verdana"), Font.ASCIICharacters, FontStyle.Regular, 3, 60.0f, 512);
-            BitmapFont font = typeface.GetFont(0.04, Color.Black);
+            BitmapTypeface typeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Arial"), Font.ASCIICharacters, FontStyle.Regular, 3, 60.0f, 512);
+            BitmapFont font = typeface.GetFont(0.05, Color.Black);
 
             FlowBlock testflow = new FlowBlock
             {
                 Style = new FlowStyle
                 {
                     Direction = FlowDirection.RightDown,
-                    Justification = FlowJustification.Ragged,
+                    Justification = FlowJustification.Justify,
                     LineAlignment = Alignment.Center,
                     LineSpacing = 0.00,
                     LineSize = 0.01
                 }
             };
             testflow.AddText(
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc suscipit pharetra nunc, " + 
-                "sit amet faucibus risus scelerisque ac. Etiam condimentum justo quis dolor vehicula ac volutpat " + 
-                "tortor adipiscing. Donec tincidunt quam quis orci pellentesque feugiat. Fusce eget nisi ac mi " + 
-                "tristique porttitor. Aliquam et malesuada elit. Suspendisse eleifend hendrerit semper. ", font);
+                "Lorem ipsum dolor sit amet, consec tetur adipis cing elit. Nunc sus cipit phare tra nunc, " + 
+                "sit amet fauc ibus risus sceler isque ac. Etiam condi mentum justo quis dolor vehi cula ac volut pat " + 
+                "tortor adi piscing. Donec tinci dunt quam quis orci pel lent esque feug iat. Fusce eget nisi ac mi " + 
+                "trist ique port titor. Aliq uam et males uada elit. Suspen disse elei fend hend rerit semper. ", font);
 
-            Block testblock = testflow.WithSize(1.0, 1.0).WithBorder(new Border
-            {
-                Color = Color.RGB(0.8, 0.2, 0.2),
-                Weight = 0.04,
-            }).WithBackground(Color.RGB(0.9, 0.5, 0.5));
+            Block testblock = testflow
+                .WithPad(0.05)
+                .WithSize(1.0, 1.0)
+                .WithBorder(new Border
+                    {
+                        Color = Color.RGB(0.8, 0.2, 0.2),
+                        Weight = 0.04,
+                    })
+                .WithBackground(Color.RGB(0.9, 0.5, 0.5));
 
             Control testcontrol = testblock.CreateControl(new ControlEnvironment()
             {

@@ -31,6 +31,14 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Insets this block by applying padding on its edges.
+        /// </summary>
+        public PadBlock WithPad(Compass<double> Padding)
+        {
+            return new PadBlock(Padding, this);
+        }
+
+        /// <summary>
         /// Sets the size of this block.
         /// </summary>
         public SizeBlock WithSize(double Width, double Height)

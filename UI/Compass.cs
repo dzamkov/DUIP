@@ -92,6 +92,11 @@ namespace DUIP.UI
                 Map(this.Down));
         }
 
+        public static implicit operator Compass<T>(T Value)
+        {
+            return new Compass<T>(Value);
+        }
+
         public T Left;
         public T Up;
         public T Right;
