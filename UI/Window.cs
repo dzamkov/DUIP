@@ -161,34 +161,40 @@ namespace DUIP.UI
             /// </summary>
             public void Update(MouseDevice Mouse, Point Position)
             {
-                this._Pressed = Mouse[MouseButton.Left];
+                this._User = null;
+                this._Active = Mouse[MouseButton.Left];
                 this._Position = Position;
             }
 
-            public override bool Pressed
+            public override bool Active
             {
                 get
                 {
-                    return this._Pressed;
+                    return this._Active;
                 }
             }
 
-            public override object Owner
+            public override bool Use(object Object)
             {
-                get
+                if (this._User == null)
                 {
-                    return this._Owner;
+                    if (this._Lock == null || this._Lock == Object)
+                    {
+                        this._User = Object;
+                        return true;
+                    }
                 }
+                return false;
             }
 
-            public override void Lock(object Owner)
+            public override void Lock()
             {
-                this._Owner = Owner;
+                this._Lock = this._User;
             }
 
-            public override void Release(object Owner)
+            public override void Release()
             {
-                this._Owner = null;
+                this._Lock = null;
             }
 
             public override Point Position
@@ -200,8 +206,9 @@ namespace DUIP.UI
             }
 
             private Point _Position;
-            private bool _Pressed;
-            private object _Owner;
+            private bool _Active;
+            private object _User;
+            private object _Lock;
         }
 
         /// <summary>

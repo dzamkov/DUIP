@@ -11,35 +11,25 @@ namespace DUIP.UI
     public abstract class Probe
     {
         /// <summary>
-        /// Gets if the probe is "pressing" under itself. Pressing can active and drag objects.
+        /// Gets if the probe is active.
         /// </summary>
-        public abstract bool Pressed { get; }
+        public abstract bool Active { get; }
 
         /// <summary>
-        /// Gets if the probe is unlocked and available for use by any object.
+        /// Determines wether the probe can be used by the given object in the current frame. Once a probe is used in a frame,
+        /// it may not be used again until the next frame.
         /// </summary>
-        public bool Free
-        {
-            get
-            {
-                return this.Owner == null;
-            }
-        }
+        public abstract bool Use(object Object);
 
         /// <summary>
-        /// Gets the owner of the lock on the probe, or null if the probe is not locked.
+        /// Locks the probe, making it unavailable for use by any object other than the one that is currently using it.
         /// </summary>
-        public abstract object Owner { get; }
+        public abstract void Lock();
 
         /// <summary>
-        /// Locks the probe, making it unavailable for use by any object other than the one that locked it.
+        /// Releases a lock on the probe by the object currently using it.
         /// </summary>
-        public abstract void Lock(object Owner);
-
-        /// <summary>
-        /// Releases a lock on the probe by the given owner object.
-        /// </summary>
-        public abstract void Release(object Owner);
+        public abstract void Release();
 
         /// <summary>
         /// Gets the position of the probe in the world.
