@@ -191,6 +191,18 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Gets if the two rectangles intersect.
+        /// </summary>
+        public static bool Intersects(Rectangle A, Rectangle B)
+        {
+            return
+                A.Left < B.Right &&
+                A.Top < B.Bottom &&
+                A.Right > B.Left &&
+                A.Bottom > B.Top;
+        }
+
+        /// <summary>
         /// The top left (minimum) point on the rectangle.
         /// </summary>
         public Point TopLeft;

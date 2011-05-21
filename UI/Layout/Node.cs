@@ -151,6 +151,59 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Performs a collision response for two nodes.
+        /// </summary>
+        public static void CollisionResponse(Node A, Node B)
+        {
+            const double res = 0.9;
+            const double fri = 0.1;
+            Point asize = A.Size;
+            Point bsize = B.Size;
+            Point tsize = asize + bsize;
+
+            Point acenter = A._Position + asize * 0.5;
+            Point bcenter = B._Position + bsize * 0.5;
+
+            Point diff = bcenter - acenter;
+            Point pen = tsize * 0.5 - new Point(Math.Abs(diff.X), Math.Abs(diff.Y));
+            Point vdiff = B._Velocity - A._Velocity;
+
+            if (pen.X > 0.0 && pen.Y > 0.0)
+            {
+                if (pen.X < pen.Y)
+                {
+                    if (diff.X > 0.0)
+                    {
+                        A._Position -= new Point(pen.X * 0.5, 0.0);
+                        B._Position += new Point(pen.X * 0.5, 0.0);
+                    }
+                    else
+                    {
+                        A._Position += new Point(pen.X * 0.5, 0.0);
+                        B._Position -= new Point(pen.X * 0.5, 0.0);
+                    }
+                    A._Velocity += new Point(vdiff.X * res, vdiff.Y * fri);
+                    B._Velocity -= new Point(vdiff.X * res, vdiff.Y * fri);
+                }
+                else
+                {
+                    if (diff.Y > 0.0)
+                    {
+                        A._Position -= new Point(0.0, pen.Y * 0.5);
+                        B._Position += new Point(0.0, pen.Y * 0.5);
+                    }
+                    else
+                    {
+                        A._Position += new Point(0.0, pen.Y * 0.5);
+                        B._Position -= new Point(0.0, pen.Y * 0.5);
+                    }
+                    A._Velocity += new Point(vdiff.X * fri, vdiff.Y * res);
+                    B._Velocity -= new Point(vdiff.X * fri, vdiff.Y * res);
+                }
+            }
+        }
+
+        /// <summary>
         /// Independently renders this node using the given context.
         /// </summary>
         public void Render(World World, RenderContext Context)

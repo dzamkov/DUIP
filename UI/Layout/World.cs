@@ -26,7 +26,7 @@ namespace DUIP.UI
         {
             get
             {
-                return 0.5;
+                return 0.2;
             }
         }
 
@@ -57,6 +57,17 @@ namespace DUIP.UI
             foreach (Node n in this._Nodes)
             {
                 n.Update(this, Probes, Time);
+            }
+
+            foreach (Node n in this._Nodes)
+            {
+                foreach (Node np in this._Nodes)
+                {
+                    if (n != np && n.GetHashCode() > np.GetHashCode() && Rectangle.Intersects(n.Area, np.Area))
+                    {
+                        Node.CollisionResponse(n, np);
+                    }
+                }
             }
         }
 
