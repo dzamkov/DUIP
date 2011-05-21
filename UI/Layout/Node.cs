@@ -13,7 +13,7 @@ namespace DUIP.UI
     /// </summary>
     public class Node
     {
-        public Node(Content Content, Point Position, Point Velocity)
+        public Node(Disposable<Content> Content, Point Position, Point Velocity)
         {
             this._Content = Content;
             this._Position = Position;
@@ -38,7 +38,7 @@ namespace DUIP.UI
         {
             get
             {
-                return this._Content.Size;
+                return ((Content)this._Content).Size;
             }
         }
 
@@ -90,7 +90,7 @@ namespace DUIP.UI
         {
             this._Position += this._Velocity * Time;
             this._Velocity *= Math.Pow(World.Damping, Time);
-            this._Content.Update(this._Position, Probes, Time);
+            this._Content = ((Content)this._Content).Update(this, Probes, Time);
         }
 
         /// <summary>
@@ -100,13 +100,13 @@ namespace DUIP.UI
         {
             using (Context.Translate(this._Position))
             {
-                this._Content.Render(Context);
+                ((Content)this._Content).Render(Context);
             }
         }
 
         private Point _Position;
         private Point _Velocity;
-        private Content _Content;
+        private Disposable<Content> _Content;
     }
 
     /// <summary>
@@ -128,13 +128,14 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Updates the state of the content by the given amount of time while receiving input from probes.
+        /// Updates the state of the content by the given amount of time while receiving input from probes. Returns the
+        /// new state of the content. If the interface for the content changes, the older interface will be disposed.
         /// </summary>
-        /// <param name="Offset">The offset of the control in relation to the world.</param>
+        /// <param name="Node">The node this content is in.</param>
         /// <param name="Probes">The probes in the world.</param>
-        public virtual void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+        public virtual Disposable<Content> Update(Node Node, IEnumerable<Probe> Probes, double Time)
         {
-
+            return this;
         }
     }
 }

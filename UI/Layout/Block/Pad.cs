@@ -86,10 +86,11 @@ namespace DUIP.UI
             }
         }
 
-        public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+        public override Disposable<Control> Update(Point Offset, IEnumerable<Probe> Probes, double Time)
         {
             Compass<double> pad = this._Padding;
-            this._Inner.Update(Offset + new Point(pad.Left, pad.Up), Probes, Time);
+            this._Inner = this._Inner.Update(Offset + new Point(pad.Left, pad.Up), Probes, Time);
+            return this;
         }
 
         public override void Render(RenderContext Context)

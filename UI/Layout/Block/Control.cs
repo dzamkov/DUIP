@@ -44,5 +44,21 @@ namespace DUIP.UI
             Current.Dispose();
             return Block.CreateControl(Environment);
         }
+
+        public sealed override Disposable<Content> Update(Node Node, IEnumerable<Probe> Probes, double Time)
+        {
+            return (Control)this.Update(Node.Position, Probes, Time);
+        }
+
+        /// <summary>
+        /// Updates the state of the control by the given amount of time while receiving input from probes. Returns the new state of the control. If
+        /// interface for the control changes, the older interface should be disposed.
+        /// </summary>
+        /// <param name="Offset">The offset of the control from the probes.</param>
+        /// <param name="Probes">The probes that affect the control.</param>
+        public virtual Disposable<Control> Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+        {
+            return this;
+        }
     }
 }

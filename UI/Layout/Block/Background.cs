@@ -78,9 +78,10 @@ namespace DUIP.UI
             }
         }
 
-        public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+        public override Disposable<Control> Update(Point Offset, IEnumerable<Probe> Probes, double Time)
         {
-            this._Inner.Update(Offset, Probes, Time);
+            this._Inner = this._Inner.Update(Offset, Probes, Time);
+            return this;
         }
 
         public override void Render(RenderContext Context)
