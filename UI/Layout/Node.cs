@@ -121,7 +121,7 @@ namespace DUIP.UI
                     {
                         if (probe.Active)
                         {
-                            this.Pull(World, this._DragState.Offset, probe.Position, 100.0, Time);
+                            this.Pull(this._DragState.Offset, probe.Position, Time);
                         }
                         else
                         {
@@ -139,29 +139,15 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Applies a force that pulls the point at the given offset on the node towards the given world position.
+        /// Drags the point at the given offset on the node towards the given world position.
         /// </summary>
-        public void Pull(World World, Point Offset, Point Position, double Force, double Time)
+        public void Pull(Point Offset, Point Position, double Time)
         {
-            double damping = Math.Min(World.Damping, 0.99);
-            double lndamping = Math.Log(damping);
-
+            const double velsmooth = 2.0;
             Point anchor = this._Position + Offset;
             Point dir = Position - anchor;
-            double dis = dir.Length;
-            if (dis > 0.0)
-            {
-                double vel = Math.Max(this._Velocity.Length, double.Epsilon);
-                double stoppingtime = Math.Log(-lndamping * (vel - Force / lndamping) / Force) / -lndamping;
-                double stoppingdamp = Math.Pow(damping, stoppingtime);
-                double stoppingdis = (lndamping * (Force * stoppingtime + vel * (stoppingdamp - 1)) - Force * stoppingdamp + Force) / (lndamping * lndamping);
-
-                dir = Position - (anchor + this._Velocity * ((1.0 / -lndamping) * (stoppingdis / dis)));
-                dis = dir.Length;
-                dir *= (1.0 / dis);
-                double veldelta = Force * Time * dis / (dis + Force * 0.01);
-                this._Velocity += dir * veldelta;
-            }
+            this._Velocity = (dir / Time + this._Velocity * velsmooth) / (1.0 + velsmooth);
+            this._Position = (Position - Offset);
         }
 
         /// <summary>

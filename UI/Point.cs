@@ -246,6 +246,11 @@ namespace DUIP.UI
             return new Point(A.X * B, A.Y * B);
         }
 
+        public static Point operator /(Point A, double B)
+        {
+            return new Point(A.X / B, A.Y / B);
+        }
+
         public static bool operator ==(Point A, Point B)
         {
             return A.X == B.X && A.Y == B.Y;
