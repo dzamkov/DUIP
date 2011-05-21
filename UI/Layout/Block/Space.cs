@@ -35,14 +35,6 @@ namespace DUIP.UI
             this._Size = Environment.SizeRange.TopLeft;
         }
 
-        public override Rectangle Bounds
-        {
-            get
-            {
-                return Rectangle.Null;
-            }
-        }
-
         public override Point Size
         {
             get

@@ -34,13 +34,8 @@ namespace DUIP.UI
     /// <summary>
     /// A dynamic, displayable, instance of a block within a world.
     /// </summary>
-    public abstract class Control : Figure
+    public abstract class Control : Content
     {
-        /// <summary>
-        /// Gets the static size of this control.
-        /// </summary>
-        public abstract Point Size { get; }
-
         /// <summary>
         /// Mutates this control, or creates an entirely new control for the block and the given parameters.
         /// </summary>
@@ -48,24 +43,6 @@ namespace DUIP.UI
         {
             Current.Dispose();
             return Block.CreateControl(Environment);
-        }
-
-        /// <summary>
-        /// Updates the state of the control by the given amount of time.
-        /// </summary>
-        /// <param name="Offset">The offset of the control in relation to the world.</param>
-        /// <param name="Probes">The probes in the world.</param>
-        public virtual void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
-        {
-
-        }
-
-        public override Rectangle Bounds
-        {
-            get
-            {
-                return new Rectangle(Point.Origin, this.Size);
-            }
         }
     }
 }

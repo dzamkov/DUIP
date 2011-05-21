@@ -64,8 +64,7 @@ namespace DUIP.UI
                 Borders = new Compass<Border>(Border.None)
             });
 
-
-            this._TestFigure = testcontrol;
+            this._World.Spawn(new Node(testcontrol, Point.Origin, Point.Zero));
         }
 
         /// <summary>
@@ -89,7 +88,6 @@ namespace DUIP.UI
             RenderContext rc = new RenderContext(this._View);
             this._Background.Render(this._World, rc);
             this._World.Render(rc);
-            this._TestFigure.Render(rc);
 
             this.SwapBuffers();
         }
@@ -228,7 +226,6 @@ namespace DUIP.UI
             this._View = this._Camera.GetView(this.Width, this.Height);
         }
 
-        private Figure _TestFigure;
         private Probe _Probe;
         private Ambience _Background;
         private World _World;

@@ -13,9 +13,9 @@ namespace DUIP.UI
     /// </summary>
     public class Node
     {
-        public Node(Point Size, Point Position, Point Velocity)
+        public Node(Content Content, Point Position, Point Velocity)
         {
-            this._Size = Size;
+            this._Content = Content;
             this._Position = Position;
             this._Velocity = Velocity;
         }
@@ -27,22 +27,29 @@ namespace DUIP.UI
         {
             get
             {
-                return new Rectangle(this._Position, this._Position + this._Size);
+                return new Rectangle(this._Position, this._Position + this.Size);
             }
         }
 
         /// <summary>
-        /// Gets or sets the size of the node.
+        /// Gets the size of the node.
         /// </summary>
         public Point Size
         {
             get
             {
-                return this._Size;
+                return this._Content.Size;
             }
-            set
+        }
+
+        /// <summary>
+        /// Gets the content for the node.
+        /// </summary>
+        public Content Content
+        {
+            get
             {
-                this._Size = value;
+                return this._Content;
             }
         }
 
@@ -79,18 +86,11 @@ namespace DUIP.UI
         /// <summary>
         /// Independently updates the state of this node.
         /// </summary>
-        public void Update(World World, IEnumerable<Probe> Probes, double Time, double Damping)
+        public void Update(World World, IEnumerable<Probe> Probes, double Time)
         {
             this._Position += this._Velocity * Time;
-            this._Velocity *= Math.Pow(Damping, Time);
-
-            foreach (Probe p in Probes)
-            {
-                if (this.Area.Occupies(p.Position) && p.Pressed)
-                {
-                    this._Velocity += new Point(1.0, 1.0) * Time;
-                }
-            }
+            this._Velocity *= Math.Pow(World.Damping, Time);
+            this._Content.Update(this._Position, Probes, Time);
         }
 
         /// <summary>
@@ -98,13 +98,43 @@ namespace DUIP.UI
         /// </summary>
         public void Render(World World, RenderContext Context)
         {
-            Context.ClearTexture();
-            Context.SetColor(Color.White);
-            Context.DrawQuad(this.Area);
+            using (Context.Translate(this._Position))
+            {
+                this._Content.Render(Context);
+            }
         }
 
         private Point _Position;
         private Point _Velocity;
-        private Point _Size;
+        private Content _Content;
+    }
+
+    /// <summary>
+    /// Content a node can display.
+    /// </summary>
+    public abstract class Content
+    {
+        /// <summary>
+        /// Gets the size of the content when rendered.
+        /// </summary>
+        public abstract Point Size { get; }
+
+        /// <summary>
+        /// Renders the content to the given render context.
+        /// </summary>
+        public virtual void Render(RenderContext Context)
+        {
+
+        }
+
+        /// <summary>
+        /// Updates the state of the content by the given amount of time while receiving input from probes.
+        /// </summary>
+        /// <param name="Offset">The offset of the control in relation to the world.</param>
+        /// <param name="Probes">The probes in the world.</param>
+        public virtual void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+        {
+
+        }
     }
 }

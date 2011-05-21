@@ -19,6 +19,18 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Gets the velocity damping of nodes and other objects within the world. This is expressed as the proportion of velocity
+        /// an object retains every time unit.
+        /// </summary>
+        public double Damping
+        {
+            get
+            {
+                return 0.5;
+            }
+        }
+
+        /// <summary>
         /// Gets all the nodes currently in the world.
         /// </summary>
         public IEnumerable<Node> Nodes
@@ -30,14 +42,21 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Places the given node into the world, displacing other nodes as needed.
+        /// </summary>
+        public void Spawn(Node Node)
+        {
+            this._Nodes.Add(Node);
+        }
+
+        /// <summary>
         /// Updates the state of the world by the given amount of time.
         /// </summary>
         public void Update(IEnumerable<Probe> Probes, double Time)
         {
-            double damping = 0.5;
             foreach (Node n in this._Nodes)
             {
-                n.Update(this, Probes, Time, damping);
+                n.Update(this, Probes, Time);
             }
         }
 
