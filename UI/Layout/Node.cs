@@ -143,11 +143,12 @@ namespace DUIP.UI
         /// </summary>
         public void Pull(Point Offset, Point Position, double Time)
         {
-            const double velsmooth = 2.0;
-            Point anchor = this._Position + Offset;
-            Point dir = Position - anchor;
-            this._Velocity = (dir / Time + this._Velocity * velsmooth) / (1.0 + velsmooth);
-            this._Position = (Position - Offset);
+            const double velsmooth = 4.0;
+            const double possmooth = 1.0;
+            Point tar = (Position - Offset);
+            Point dif = tar - this._Position;
+            this._Velocity = (dif / Time + this._Velocity * velsmooth) / (1.0 + velsmooth);
+            this._Position = (tar + this._Position * possmooth) / (1.0 + possmooth);
         }
 
         /// <summary>
@@ -157,6 +158,7 @@ namespace DUIP.UI
         {
             const double res = 0.9;
             const double fri = 0.1;
+            const double pus = 0.9;
             Point asize = A.Size;
             Point bsize = B.Size;
             Point tsize = asize + bsize;
@@ -182,8 +184,8 @@ namespace DUIP.UI
                         A._Position += new Point(pen.X * 0.5, 0.0);
                         B._Position -= new Point(pen.X * 0.5, 0.0);
                     }
-                    A._Velocity += new Point(vdiff.X * res, vdiff.Y * fri);
-                    B._Velocity -= new Point(vdiff.X * res, vdiff.Y * fri);
+                    A._Velocity += new Point(vdiff.X * res, vdiff.Y * fri - diff.Y * pus);
+                    B._Velocity -= new Point(vdiff.X * res, vdiff.Y * fri - diff.Y * pus);
                 }
                 else
                 {
@@ -197,8 +199,8 @@ namespace DUIP.UI
                         A._Position += new Point(0.0, pen.Y * 0.5);
                         B._Position -= new Point(0.0, pen.Y * 0.5);
                     }
-                    A._Velocity += new Point(vdiff.X * fri, vdiff.Y * res);
-                    B._Velocity -= new Point(vdiff.X * fri, vdiff.Y * res);
+                    A._Velocity += new Point(vdiff.X * fri - diff.X * pus, vdiff.Y * res);
+                    B._Velocity -= new Point(vdiff.X * fri - diff.X * pus, vdiff.Y * res);
                 }
             }
         }
