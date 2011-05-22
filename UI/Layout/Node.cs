@@ -18,7 +18,7 @@ namespace DUIP.UI
             this._Content = Content;
             this._Position = Position;
             this._Velocity = Velocity;
-            this._Texture = Texture.Create(this.Content, new View(this.Content.Bounds), Texture.Format.BGRA32, 512, 512);
+            this._Texture = Texture.Create(this.Content, new View(this.Content.Bounds), Texture.Format.BGRA32, 256, 256);
 
             this._Texture.Bind();
             Texture.GenerateMipmap();
@@ -217,9 +217,19 @@ namespace DUIP.UI
         {
             using (Context.Translate(this._Position))
             {
-                if (Context.View.Zoom > 2.0)
+                double zoom = Context.View.Zoom;
+                if (zoom > 1.0)
                 {
-                    this._Texture.CreateFigure(new Rectangle(Point.Origin, this.Size)).Render(Context);
+                    if (zoom < 4.0)
+                    {
+                        double alpha = (zoom - 1.0) / (4.0 - 1.0);
+                        ((Content)this._Content).Render(Context);
+                        this._Texture.CreateFigure(new Rectangle(Point.Origin, this.Size), Color.RGBA(1.0, 1.0, 1.0, alpha)).Render(Context);
+                    }
+                    else
+                    {
+                        this._Texture.CreateFigure(new Rectangle(Point.Origin, this.Size)).Render(Context);
+                    }
                 }
                 else
                 {
