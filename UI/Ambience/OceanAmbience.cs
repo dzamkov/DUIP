@@ -59,16 +59,14 @@ namespace DUIP.UI
             double t = view.Area.Top;
             double r = view.Area.Right;
             double b = view.Area.Bottom;
-            GL.Disable(EnableCap.Texture2D);
-            GL.Begin(BeginMode.Quads);
-            GL.Color3(topcol);
-            GL.Vertex2(l, t);
-            GL.Vertex2(r, t);
-            GL.Color3(botcol);
-            GL.Vertex2(r, b);
-            GL.Vertex2(l, b);
-            GL.End();
-            GL.Enable(EnableCap.Texture2D);
+            Context.ClearTexture();
+            using (Context.Draw(BeginMode.Quads))
+            {
+                Context.OutputVertex(new Point(l, t), topcol);
+                Context.OutputVertex(new Point(r, t), topcol);
+                Context.OutputVertex(new Point(r, b), botcol);
+                Context.OutputVertex(new Point(l, b), botcol);
+            }
 
             // Layers
             GL.MatrixMode(MatrixMode.Texture);

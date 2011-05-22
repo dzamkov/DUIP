@@ -102,9 +102,17 @@ namespace DUIP.UI
         /// </summary>
         public IDisposable DrawQuads()
         {
+            return this.Draw(BeginMode.Quads);
+        }
+
+        /// <summary>
+        /// Applies a draw effect that begins a manual drawing operation.
+        /// </summary>
+        public IDisposable Draw(BeginMode Mode)
+        {
             this._PushEffect(new _DrawEffect
             {
-                Mode = BeginMode.Quads
+                Mode = Mode
             });
             return this._Pop;
         }
@@ -121,22 +129,14 @@ namespace DUIP.UI
                 {
                     this._FakeLines = false;
                     GL.LineWidth((float)width);
-                    this._PushEffect(new _DrawEffect
-                    {
-                        Mode = BeginMode.Lines
-                    });
-                    return this._Pop;
+                    return this.Draw(BeginMode.Lines);
                 }
             }
 
             // Imitate lines using quads
             this._FakeLines = true;
             this._LineThickness = Thickness;
-            this._PushEffect(new _DrawEffect
-            {
-                Mode = BeginMode.Quads
-            });
-            return this._Pop;
+            return this.Draw(BeginMode.Quads);
         }
 
         /// <summary>
@@ -193,6 +193,42 @@ namespace DUIP.UI
                 GL.Vertex2((Vector2d)Start);
                 GL.Vertex2((Vector2d)End);
             }
+        }
+
+        /// <summary>
+        /// Outputs a vertex with the given parameters. This should only be used when a draw mode is manually specified.
+        /// </summary>
+        public void OutputVertex(Point Position, Point UV, Color Color)
+        {
+            GL.TexCoord2((Vector2d)UV);
+            GL.Color4(Color);
+            GL.Vertex2((Vector2)Position);
+        }
+
+        /// <summary>
+        /// Outputs a vertex with the given parameters. This should only be used when a draw mode is manually specified.
+        /// </summary>
+        public void OutputVertex(Point Position, Point UV)
+        {
+            GL.TexCoord2((Vector2d)UV);
+            GL.Vertex2((Vector2)Position);
+        }
+
+        /// <summary>
+        /// Outputs a vertex with the given parameters. This should only be used when a draw mode is manually specified.
+        /// </summary>
+        public void OutputVertex(Point Position, Color Color)
+        {
+            GL.Color4(Color);
+            GL.Vertex2((Vector2)Position);
+        }
+
+        /// <summary>
+        /// Outputs a vertex with the given parameters. This should only be used when a draw mode is manually specified.
+        /// </summary>
+        public void OutputVertex(Point Position)
+        {
+            GL.Vertex2((Vector2)Position);
         }
 
         /// <summary>

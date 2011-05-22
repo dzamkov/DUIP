@@ -64,9 +64,13 @@ namespace DUIP.UI
                 Borders = new Compass<Border>(Border.None)
             };
 
+
+            List<Node> nodes = new List<Node>();
             for (int t = 0; t < 10; t++)
             {
-                this._World.Spawn(new Node((Control)testblock.CreateControl(ce), new Point(t * 2.0 - 10.0, 0.0), Point.Zero));
+                Node node = new Node((Control)testblock.CreateControl(ce), new Point(t * 2.0 - 10.0, 0.0), Point.Zero);
+                this._World.Spawn(node);
+                nodes.Add(node);
             }
         }
 
