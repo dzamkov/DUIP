@@ -20,14 +20,10 @@ namespace DUIP.UI
             Point size = View.Area.Size;
             double wres = Width / size.X;
             double hres = Height / size.Y;
-            if (Math.Abs(wres - hres) < 0.0001)
-            {
-                this._Resolution = (wres + hres) * 0.5;
-            }
-            else
-            {
-                this._Resolution = Maybe<double>.Nothing;
-            }
+
+            const double propthreshold = 0.0001;
+            this._Resolution = Math.Sqrt(wres * hres);
+            this._Proportional = Math.Abs(wres - this._Resolution) < propthreshold && Math.Abs(hres - this._Resolution) < propthreshold;
 
 
             (this._View = View).Setup(InvertY);
@@ -67,6 +63,29 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Gets the current pixels per unit for the view of the render context.
+        /// </summary>
+        public double Resolution
+        {
+            get
+            {
+                return this._Resolution;
+            }
+        }
+
+        /// <summary>
+        /// Gets if the view of the render context is proportional (the amount of pixels per unit is the same
+        /// on both axies).
+        /// </summary>
+        public bool Proportional
+        {
+            get
+            {
+                return this._Proportional;
+            }
+        }
+
+        /// <summary>
         /// Applies a translation effect that translates all rendering operations by the given amount.
         /// </summary>
         public IDisposable Translate(Point Translation)
@@ -95,9 +114,9 @@ namespace DUIP.UI
         /// </summary>
         public IDisposable DrawLines(double Thickness)
         {
-            if (this._Resolution.HasValue)
+            if (this._Proportional)
             {
-                double width = this._Resolution.Value * Thickness;
+                double width = this._Resolution * Thickness;
                 if (width < _MaxLineWidth)
                 {
                     this._FakeLines = false;
@@ -317,7 +336,8 @@ namespace DUIP.UI
         private View _View;
         private Stack<_Effect> _Effects;
 
-        private Maybe<double> _Resolution;
+        private double _Resolution;
+        private bool _Proportional;
 
         private static double _MaxLineWidth;
         private static double _MinLineWidth;
