@@ -138,6 +138,20 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Gets a unit point in the given direction.
+        /// </summary>
+        public static Point Unit(Direction Direction)
+        {
+            switch (Direction)
+            {
+                case Direction.Left: return new Point(-1.0, 0.0);
+                case Direction.Up: return new Point(0.0, 1.0);
+                case Direction.Right: return new Point(1.0, 0.0);
+                default: return new Point(0.0, -1.0);
+            }
+        }
+
+        /// <summary>
         /// Rounds the point to the nearest integer components.
         /// </summary>
         public Point Round

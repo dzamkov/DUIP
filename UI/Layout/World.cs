@@ -15,6 +15,7 @@ namespace DUIP.UI
     {
         public World()
         {
+            this._Arcs = new List<Arc>();
             this._Nodes = new List<Node>();
         }
 
@@ -50,6 +51,14 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Places the given arc into the world, making it visible and allowing it to affect its nodes.
+        /// </summary>
+        public void Spawn(Arc Arc)
+        {
+            this._Arcs.Add(Arc);
+        }
+
+        /// <summary>
         /// Updates the state of the world by the given amount of time.
         /// </summary>
         public void Update(IEnumerable<Probe> Probes, double Time)
@@ -57,6 +66,11 @@ namespace DUIP.UI
             foreach (Node n in this._Nodes)
             {
                 n.Update(this, Probes, Time);
+            }
+
+            foreach (Arc a in this._Arcs)
+            {
+                a.Update(this, Time);
             }
 
             foreach (Node n in this._Nodes)
@@ -80,8 +94,13 @@ namespace DUIP.UI
             {
                 n.Render(this, Context);
             }
+            foreach (Arc a in this._Arcs)
+            {
+                a.Render(this, Context);
+            }
         }
 
+        private List<Arc> _Arcs;
         private List<Node> _Nodes;
     }
 }
