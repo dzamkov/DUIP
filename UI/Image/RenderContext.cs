@@ -140,6 +140,61 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Draws a cubic bezier curve with the given thickness.
+        /// </summary>
+        public void DrawBezierCurve(Point A, Point B, Point C, Point D, double Thickness)
+        {
+            double width = this._Resolution * Thickness;
+            double elen = (D - C).Length + (C - B).Length + (B - A).Length;
+            int segments = (int)(Math.Sqrt(this._Resolution * elen) * 0.7) + 2;
+            double delta = 1.0 / segments;
+
+            if (this._Proportional && width < _MaxLineWidth)
+            {
+                // Draw using lines
+                GL.LineWidth((float)width);
+                GL.Begin(BeginMode.LineStrip);
+                GL.Vertex2((Vector2d)A);
+                for (int t = 1; t <= segments; t++)
+                {
+                    double param = delta * t;
+                    GL.Vertex2((Vector2d)Curve.EvaluateBezier(ref A, ref B, ref C, ref D, param));
+                }
+                GL.Vertex2((Vector2d)D);
+                GL.End();
+                return;
+            }
+
+            // Draw using quads
+            Point da = B - A;
+            Point db = C - B;
+            Point dc = D - C;
+            double hthickness = Thickness * 0.5;
+            GL.Begin(BeginMode.QuadStrip);
+            _OutputCurveStop(A, da.Direction, hthickness);
+            for (int t = 1; t <= segments; t++)
+            {
+                double param = delta * t;
+                _OutputCurveStop(
+                    Curve.EvaluateBezier(ref A, ref B, ref C, ref D, param), 
+                    Curve.EvaluateBezier(ref da, ref db, ref dc, param).Direction, hthickness);
+            }
+            _OutputCurveStop(D, dc.Direction, hthickness);
+            GL.End();
+        }
+
+        /// <summary>
+        /// Output a stop of a curve being drawn with a quad strip.
+        /// </summary>
+        private static void _OutputCurveStop(Point Position, Point Direction, double HalfThickness)
+        {
+            Direction = Direction.Perpendicular;
+            Direction *= HalfThickness;
+            GL.Vertex2((Vector2d)(Position + Direction));
+            GL.Vertex2((Vector2d)(Position - Direction));
+        }
+
+        /// <summary>
         /// Outputs a quad.
         /// </summary>
         public void OutputQuad(Rectangle Quad)

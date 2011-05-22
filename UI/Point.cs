@@ -123,6 +123,17 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Gets the direction (unit point) of this point from the origin.
+        /// </summary>
+        public Point Direction
+        {
+            get
+            {
+                return this / this.Length;
+            }
+        }
+
+        /// <summary>
         /// Shifts the components of this point so that the given axis becomes the X component.
         /// </summary>
         public Point Shift(Axis Axis)
