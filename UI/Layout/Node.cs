@@ -18,6 +18,11 @@ namespace DUIP.UI
             this._Content = Content;
             this._Position = Position;
             this._Velocity = Velocity;
+            this._Texture = Texture.Create(this.Content, new View(this.Content.Bounds), Texture.Format.BGRA32, 512, 512);
+
+            this._Texture.Bind();
+            Texture.GenerateMipmap();
+            Texture.SetFilterMode(TextureMinFilter.LinearMipmapLinear, TextureMagFilter.Linear);
         }
 
         /// <summary>
@@ -158,7 +163,7 @@ namespace DUIP.UI
         {
             const double res = 0.9;
             const double fri = 0.1;
-            const double pus = 0.9;
+            const double pus = 0.4;
             Point asize = A.Size;
             Point bsize = B.Size;
             Point tsize = asize + bsize;
@@ -212,7 +217,14 @@ namespace DUIP.UI
         {
             using (Context.Translate(this._Position))
             {
-                ((Content)this._Content).Render(Context);
+                if (Context.View.Zoom > 2.0)
+                {
+                    this._Texture.CreateFigure(new Rectangle(Point.Origin, this.Size)).Render(Context);
+                }
+                else
+                {
+                    ((Content)this._Content).Render(Context);
+                }
             }
         }
 
@@ -232,6 +244,7 @@ namespace DUIP.UI
             public Point Offset;
         }
 
+        private Texture _Texture;
         private Point _Position;
         private Point _Velocity;
         private DragState _DragState;
@@ -241,20 +254,12 @@ namespace DUIP.UI
     /// <summary>
     /// Content a node can display.
     /// </summary>
-    public abstract class Content
+    public abstract class Content : Figure
     {
         /// <summary>
         /// Gets the size of the content when rendered.
         /// </summary>
         public abstract Point Size { get; }
-
-        /// <summary>
-        /// Renders the content to the given render context.
-        /// </summary>
-        public virtual void Render(RenderContext Context)
-        {
-
-        }
 
         /// <summary>
         /// Updates the state of the content by the given amount of time while receiving input from probes. Returns the
@@ -265,6 +270,14 @@ namespace DUIP.UI
         public virtual Disposable<Content> Update(Node Node, IEnumerable<Probe> Probes, double Time)
         {
             return this;
+        }
+
+        public sealed override Rectangle Bounds
+        {
+            get
+            {
+                return new Rectangle(Point.Origin, this.Size);
+            }
         }
     }
 }

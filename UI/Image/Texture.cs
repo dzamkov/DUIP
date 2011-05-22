@@ -124,6 +124,23 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Sets the filter mode for the currently-bound texture.
+        /// </summary>
+        public static void SetFilterMode(TextureMinFilter Min, TextureMagFilter Mag)
+        {
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)Min);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)Mag);
+        }
+
+        /// <summary>
+        /// Creates a mipmap for the currently-bound texture based on its current contents.
+        /// </summary>
+        public static void GenerateMipmap()
+        {
+            GL.Ext.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+        }
+
+        /// <summary>
         /// Loads a texture from a file.
         /// </summary>
         public static Texture Load(Path Path)
@@ -132,6 +149,32 @@ namespace DUIP.UI
             {
                 return Create(bm);
             }
+        }
+
+        /// <summary>
+        /// Creates a texture by rendering a view of the given figure.
+        /// </summary>
+        public static Texture Create(Figure Figure, View View, Format Format, int Width, int Height)
+        {
+            Texture tex = Texture.Create(Format, Width, Height);
+            Texture.SetFilterMode(TextureMinFilter.Linear, TextureMagFilter.Linear);
+            Render(Figure, View, tex._ID, Width, Height);
+            return tex;
+        }
+
+        /// <summary>
+        /// Render a figure to the currently-bound texture (with the given id).
+        /// </summary>
+        public static void Render(Figure Figure, View View, uint ID, int Width, int Height)
+        {
+            int fbo;
+            GL.GenFramebuffers(1, out fbo);
+            GL.BindFramebuffer(FramebufferTarget.FramebufferExt, fbo);
+            GL.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.ColorAttachment0Ext, TextureTarget.Texture2D, ID, 0);
+            RenderContext context = new RenderContext(View, Width, Height, false);
+            Figure.Render(context);
+            GL.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
+            GL.DeleteFramebuffers(1, ref fbo);
         }
 
         /// <summary>
@@ -194,6 +237,23 @@ namespace DUIP.UI
             Texture t = Create(bd, Format.BGRA32, true);
             Source.UnlockBits(bd);
             return t;
+        }
+
+        /// <summary>
+        /// Creates a blank texture.
+        /// </summary>
+        public static Texture Create(Format Format, int Width, int Height)
+        {
+            int id = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, id);
+            GL.TexEnv(TextureEnvTarget.TextureEnv,
+                TextureEnvParameter.TextureEnvMode,
+                (float)TextureEnvMode.Modulate);
+            GL.TexImage2D(TextureTarget.Texture2D,
+                0, Format.PixelInternalFormat,
+                Width, Height, 0,
+                Format.PixelFormat, Format.PixelType, IntPtr.Zero);
+            return new Texture(id);
         }
 
         /// <summary>
@@ -261,15 +321,15 @@ namespace DUIP.UI
                 Data.Width, Data.Height, 0,
                 Format.PixelFormat, Format.PixelType, Data.Scan0);
 
+            Texture tex = new Texture(id);
             if (Mipmap)
             {
-                GL.Ext.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+                GenerateMipmap();
+                SetFilterMode(TextureMinFilter.LinearMipmapLinear, TextureMagFilter.Linear);
             }
             else
             {
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                SetFilterMode(TextureMinFilter.Linear, TextureMagFilter.Linear);
             }
             return new Texture(id);
         }

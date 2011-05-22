@@ -88,7 +88,7 @@ namespace DUIP.UI
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            RenderContext rc = new RenderContext(this._View);
+            RenderContext rc = new RenderContext(this._View, this.Width, this.Height, true);
             this._Background.Render(this._World, rc);
             this._World.Render(rc);
 

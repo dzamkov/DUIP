@@ -8,27 +8,26 @@ using OpenTK.Graphics.OpenGL;
 namespace DUIP.UI
 {
     /// <summary>
-    /// Stores the location and resolution of a view of a two-dimensional area.
+    /// Represents a view of a two-dimensional area.
     /// </summary>
     public struct View
     {
-        public View(Rectangle Area, double Resolution)
+        public View(Rectangle Area)
         {
             this.Area = Area;
-            this.Resolution = Resolution;
         }
 
         /// <summary>
         /// Sets this view as the current one for future rendering use.
         /// </summary>
-        public void Setup()
+        public void Setup(bool InvertY)
         {
             Point size = this.Area.Size;
             Point center = this.Area.TopLeft + size * 0.5;
 
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
-            GL.Scale(2.0 / size.X, -2.0 / size.Y, 1.0);
+            GL.Scale(2.0 / size.X, InvertY ? -2.0 / size.Y : 2.0 / size.Y, 1.0);
             GL.Translate(-center.X, -center.Y, 0.0);
         }
 
@@ -57,11 +56,6 @@ namespace DUIP.UI
         /// The area visible by the view.
         /// </summary>
         public Rectangle Area;
-
-        /// <summary>
-        /// The amount of pixels for one space unit.
-        /// </summary>
-        public double Resolution;
     }
 
     /// <summary>
@@ -86,7 +80,7 @@ namespace DUIP.UI
             double size = this.Scale;
             Point off = ar > 1.0 ? new Point(size * ar, size) : new Point(size, size / ar);
             Rectangle rect = new Rectangle(this.Center - off, this.Center + off);
-            return new View(rect, (ar > 1.0 ? Height / off.Y : Width / off.X) * 0.5);
+            return new View(rect);
         }
 
         /// <summary>

@@ -14,9 +14,24 @@ namespace DUIP.UI
     /// </summary>
     public class RenderContext
     {
-        public RenderContext(View View)
+        public RenderContext(View View, int Width, int Height, bool InvertY)
         {
-            (this._View = View).Setup();
+            GL.Viewport(0, 0, Width, Height);
+            Point size = View.Area.Size;
+            double wres = Width / size.X;
+            double hres = Height / size.Y;
+            if (Math.Abs(wres - hres) < 0.0001)
+            {
+                this._Resolution = (wres + hres) * 0.5;
+            }
+            else
+            {
+                this._Resolution = Maybe<double>.Nothing;
+            }
+
+
+            (this._View = View).Setup(InvertY);
+            GL.CullFace(InvertY ? CullFaceMode.Front : CullFaceMode.Back);
             this._Pop = new _PopOnDispose() { Context = this };
             this._Effects = new Stack<_Effect>();
         }
@@ -31,7 +46,6 @@ namespace DUIP.UI
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.Blend);
             GL.Enable(EnableCap.LineSmooth);
-            GL.CullFace(CullFaceMode.Front);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
             // Get line width range
@@ -81,25 +95,28 @@ namespace DUIP.UI
         /// </summary>
         public IDisposable DrawLines(double Thickness)
         {
-            double width = this._View.Resolution * Thickness;
-            if (width > _MaxLineWidth)
+            if (this._Resolution.HasValue)
             {
-                this._FakeLines = true;
-                this._LineThickness = Thickness;
-                this._PushEffect(new _DrawEffect
+                double width = this._Resolution.Value * Thickness;
+                if (width < _MaxLineWidth)
                 {
-                    Mode = BeginMode.Quads
-                });
+                    this._FakeLines = false;
+                    GL.LineWidth((float)width);
+                    this._PushEffect(new _DrawEffect
+                    {
+                        Mode = BeginMode.Lines
+                    });
+                    return this._Pop;
+                }
             }
-            else
+
+            // Imitate lines using quads
+            this._FakeLines = true;
+            this._LineThickness = Thickness;
+            this._PushEffect(new _DrawEffect
             {
-                this._FakeLines = false;
-                GL.LineWidth((float)width);
-                this._PushEffect(new _DrawEffect
-                {
-                    Mode = BeginMode.Lines
-                });
-            }
+                Mode = BeginMode.Quads
+            });
             return this._Pop;
         }
 
@@ -208,7 +225,7 @@ namespace DUIP.UI
         /// </summary>
         public void ClearTexture()
         {
-            GL.BindTexture(TextureTarget.Texture2D, 0);
+           GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
         /// <summary>
@@ -299,6 +316,8 @@ namespace DUIP.UI
         private _PopOnDispose _Pop;
         private View _View;
         private Stack<_Effect> _Effects;
+
+        private Maybe<double> _Resolution;
 
         private static double _MaxLineWidth;
         private static double _MinLineWidth;
