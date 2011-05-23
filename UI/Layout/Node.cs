@@ -189,8 +189,8 @@ namespace DUIP.UI
                         A._Position += new Point(pen.X * 0.5, 0.0);
                         B._Position -= new Point(pen.X * 0.5, 0.0);
                     }
-                    A._Velocity += new Point(vdiff.X * res, vdiff.Y * fri - diff.Y * pus);
-                    B._Velocity -= new Point(vdiff.X * res, vdiff.Y * fri - diff.Y * pus);
+                    A._Velocity += new Point(vdiff.X * res, vdiff.Y * fri - diff.Y * Math.Abs(vdiff.X) * pus);
+                    B._Velocity -= new Point(vdiff.X * res, vdiff.Y * fri - diff.Y * Math.Abs(vdiff.X) * pus);
                 }
                 else
                 {
@@ -204,8 +204,8 @@ namespace DUIP.UI
                         A._Position += new Point(0.0, pen.Y * 0.5);
                         B._Position -= new Point(0.0, pen.Y * 0.5);
                     }
-                    A._Velocity += new Point(vdiff.X * fri - diff.X * pus, vdiff.Y * res);
-                    B._Velocity -= new Point(vdiff.X * fri - diff.X * pus, vdiff.Y * res);
+                    A._Velocity += new Point(vdiff.X * fri - diff.X * Math.Abs(vdiff.Y) * pus, vdiff.Y * res);
+                    B._Velocity -= new Point(vdiff.X * fri - diff.X * Math.Abs(vdiff.Y) * pus, vdiff.Y * res);
                 }
             }
         }

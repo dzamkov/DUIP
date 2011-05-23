@@ -76,7 +76,7 @@ namespace DUIP.UI
             Arc arc = new Arc(
                 new Arc.EndPoint(nodes[5], Direction.Right, 0.5),
                 new Arc.EndPoint(nodes[6], Direction.Left, 0.5),
-                0.03, Color.RGB(0.2, 1.0, 0.0));
+                0.03, Color.RGBA(0.5, 0.2, 0.2, 0.6));
             this._World.Spawn(arc);
         }
 
