@@ -274,7 +274,7 @@ namespace DUIP.UI
         /// </summary>
         public void OutputVertex(Point Position, Color Color)
         {
-            GL.Color4(Color);
+            GL.Color4((Color4)Color);
             GL.Vertex2((Vector2)Position);
         }
 

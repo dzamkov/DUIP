@@ -11,13 +11,20 @@ using OpenTK.Graphics.OpenGL;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A control that allows the user to interact with a view of a world.
+    /// A control that allows the user to interact with a world.
     /// </summary>
-    public class WorldView : GLControl
+    public class WorldDisplay : GLControl
     {
-        public WorldView()
+        public WorldDisplay()
             : base(GraphicsMode.Default)
         {
+            this.AllowDrop = true;
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+
             this.MakeCurrent();
 
             RenderContext.Initialize();
@@ -89,6 +96,8 @@ namespace DUIP.UI
             this._Background.Render(this._World, rc);
             this._World.Render(rc);
             this.SwapBuffers();
+
+            ErrorCode ec = GL.GetError();
         }
 
         /// <summary>
@@ -119,33 +128,26 @@ namespace DUIP.UI
 
         protected override void OnResize(EventArgs e)
         {
-            base.OnResize(e);
             this._MakeView();
         }
 
         protected override void OnMouseEnter(EventArgs e)
         {
-            base.OnMouseEnter(e);
             this._HasProbe = true;
         }
 
         protected override void OnMouseLeave(EventArgs e)
         {
-            base.OnMouseLeave(e);
             this._HasProbe = false;
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            base.OnMouseMove(e);
-            this._HasProbe = true;
             this._Probe.UpdatePosition(this._GetMousePosition(e.X, e.Y));
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            base.OnMouseDown(e);
-            this._HasProbe = true;
             if (e.Button == MouseButtons.Left)
             {
                 this._Probe.UpdateActive(true);
@@ -154,8 +156,6 @@ namespace DUIP.UI
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
-            base.OnMouseUp(e);
-            this._HasProbe = true;
             if (e.Button == MouseButtons.Left)
             {
                 this._Probe.UpdateActive(false);
@@ -164,9 +164,12 @@ namespace DUIP.UI
 
         protected override void OnMouseWheel(MouseEventArgs e)
         {
-            base.OnMouseWheel(e);
-            this._HasProbe = true;
             this._WheelDelta += e.Delta;
+        }
+
+        protected override void OnDragEnter(DragEventArgs drgevent)
+        {
+            this._HasProbe = true;
         }
 
         /// <summary>

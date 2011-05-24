@@ -77,7 +77,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\Layout\World.cs" />
-    <Compile Include="UI\WorldView.cs">
+    <Compile Include="UI\WorldDisplay.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Util\Disposable.cs" />

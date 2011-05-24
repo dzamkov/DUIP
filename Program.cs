@@ -65,11 +65,16 @@ namespace DUIP
 
             Application.EnableVisualStyles();
             MainForm mf = new MainForm();
+            mf.Icon = Icon;
+            mf.Text = "DUIP";
             mf.Show();
             DateTime lastupdate = DateTime.Now;
+
+            const double fpssmooth = 1.0;
+            double fps = 60.0;
             while (mf.Visible)
             {
-                WorldView view = mf.WorldView;
+                WorldDisplay view = mf.WorldDisplay;
                 view.Render();
 
                 DateTime now = DateTime.Now;
@@ -78,7 +83,6 @@ namespace DUIP
                 view.Update(updatetime);
 
                 Application.DoEvents();
-                System.Threading.Thread.Sleep(1);
             }
         }
     }
