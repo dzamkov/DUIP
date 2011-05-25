@@ -56,22 +56,91 @@ namespace DUIP.UI
             }
         }
 
-        public override Disposable<Control> CreateControl(ControlEnvironment Environment)
+        public override Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme)
         {
-            Rectangle sr = this._SizeRange;
-            Rectangle csr = Environment.SizeRange;
-            Rectangle nsr = new Rectangle(
-                Math.Max(csr.Left, Math.Min(csr.Right, sr.Left)),
-                Math.Max(csr.Top, Math.Min(csr.Bottom, sr.Top)),
-                Math.Max(csr.Left, Math.Min(csr.Right, sr.Right)),
-                Math.Max(csr.Top, Math.Min(csr.Bottom, sr.Bottom)));
-            return this._Inner.CreateControl(new ControlEnvironment(Environment)
-            {
-                SizeRange = nsr
-            });
+            return new SizeControl(this._SizeRange, SizeRange, this._Inner.CreateControl(GetInnerSizeRange(this._SizeRange, SizeRange), Theme));
+        }
+
+        /// <summary>
+        /// Gets the size range of an inner control given the size range the block restricts to.
+        /// </summary>
+        public static Rectangle GetInnerSizeRange(Rectangle LimitSizeRange, Rectangle SizeRange)
+        {
+            Rectangle lsr = LimitSizeRange;
+            Rectangle csr = SizeRange;
+            return new Rectangle(
+                Math.Max(csr.Left, Math.Min(csr.Right, lsr.Left)),
+                Math.Max(csr.Top, Math.Min(csr.Bottom, lsr.Top)),
+                Math.Max(csr.Left, Math.Min(csr.Right, lsr.Right)),
+                Math.Max(csr.Top, Math.Min(csr.Bottom, lsr.Bottom)));
         }
 
         private Block _Inner;
         private Rectangle _SizeRange;
+    }
+
+    /// <summary>
+    /// A control for a size block.
+    /// </summary>
+    public class SizeControl : Control, IDisposable
+    {
+        public SizeControl(Rectangle LimitSizeRange, Rectangle SizeRange, Disposable<Control> Inner)
+        {
+            this._LimitSizeRange = LimitSizeRange;
+            this._Inner = Inner;
+        }
+
+        /// <summary>
+        /// Gets the inner control for this size control.
+        /// </summary>
+        public Control Inner
+        {
+            get
+            {
+                return this._Inner;
+            }
+        }
+
+        public override Point Size
+        {
+            get
+            {
+                return this.Inner.Size;
+            }
+        }
+
+        public override Rectangle SizeRange
+        {
+            set
+            {
+                this.Inner.SizeRange = SizeBlock.GetInnerSizeRange(this._LimitSizeRange, value);    
+            }
+        }
+
+        public override Theme Theme
+        {
+            set
+            {
+                this.Inner.Theme = value;
+            }
+        }
+
+        public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+        {
+            this.Inner.Update(Offset, Probes, Time);
+        }
+
+        public override void Render(RenderContext Context)
+        {
+            this.Inner.Render(Context);
+        }
+
+        public void Dispose()
+        {
+            this._Inner.Dispose();
+        }
+
+        private Disposable<Control> _Inner;
+        private Rectangle _LimitSizeRange;
     }
 }

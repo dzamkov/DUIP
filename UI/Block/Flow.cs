@@ -102,9 +102,9 @@ namespace DUIP.UI
             this.AddText(String, Font, true);
         }
 
-        public override Disposable<Control> CreateControl(ControlEnvironment Environment)
+        public override Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme)
         {
-            return new FlowControl(this, Environment);
+            return new FlowControl(this, SizeRange, Theme);
         }
 
         private FlowStyle _Style;
@@ -116,18 +116,18 @@ namespace DUIP.UI
     /// </summary>
     public class FlowControl : Control
     {
-        public FlowControl(FlowBlock Block, ControlEnvironment Environment)
+        public FlowControl(FlowBlock Block, Rectangle SizeRange, Theme Theme)
         {
             this._FlowStyle = Block.Style;
             double minorsize, majorsize;
-            Point minsize = Environment.SizeRange.TopLeft.Shift(this._FlowStyle.MinorAxis);
-            Point maxsize = Environment.SizeRange.BottomRight.Shift(this._FlowStyle.MinorAxis);
+            Point minsize = SizeRange.TopLeft.Shift(this._FlowStyle.MinorAxis);
+            Point maxsize = SizeRange.BottomRight.Shift(this._FlowStyle.MinorAxis);
             minorsize = minsize.X;
 
             List<Flow.Item> items = new List<Flow.Item>();
             foreach (FlowBlock.Item it in Block.Items)
             {
-                _Append(it, items, this._FlowStyle, Environment);
+                _Append(it, items, this._FlowStyle, SizeRange, Theme);
             }
             this._Lines = Flow.Layout(items, this._FlowStyle, minorsize, out majorsize);
             majorsize = Math.Max(minsize.Y, Math.Min(maxsize.Y, majorsize));
@@ -138,7 +138,7 @@ namespace DUIP.UI
         /// <summary>
         /// Appends a flowblock item to a list of layout items.
         /// </summary>
-        private static void _Append(FlowBlock.Item Item, List<Flow.Item> Items, FlowStyle Style, ControlEnvironment Environment)
+        private static void _Append(FlowBlock.Item Item, List<Flow.Item> Items, FlowStyle Style, Rectangle SizeRange, Theme Theme)
         {
             // Text
             var text = Item as FlowBlock.Item.Text;

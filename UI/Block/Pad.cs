@@ -50,14 +50,18 @@ namespace DUIP.UI
             }
         }
 
-        public override Disposable<Control> CreateControl(ControlEnvironment Environment)
+        public override Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme)
         {
             Compass<double> pad = this._Padding;
-            return new PadControl(pad, this._Inner.CreateControl(new ControlEnvironment(Environment)
-            {
-                Borders = Environment.Borders.Map(this._Padding, (b, p) => p > 0.0 ? b : Border.None),
-                SizeRange = Environment.SizeRange.Translate(-new Point(pad.Left + pad.Right, pad.Up + pad.Down)) 
-            }));
+            return new PadControl(pad, this._Inner.CreateControl(GetInnerSizeRange(SizeRange, pad), Theme));
+        }
+
+        /// <summary>
+        /// Gets the size range to use for an inner control, given the amount of padding.
+        /// </summary>
+        public static Rectangle GetInnerSizeRange(Rectangle SizeRange, Compass<double> Padding)
+        {
+            return SizeRange.Translate(-new Point(Padding.Left + Padding.Right, Padding.Up + Padding.Down));
         }
 
         private Compass<double> _Padding;
@@ -75,22 +79,32 @@ namespace DUIP.UI
             this._Inner = Inner;
         }
 
+        /// <summary>
+        /// Gets the inner control for this pad control.
+        /// </summary>
+        public Control Inner
+        {
+            get
+            {
+                return this._Inner;
+            }
+        }
+
         public override Point Size
         {
             get
             {
                 Compass<double> pad = this._Padding;
-                return this._Inner.Size +
+                return this.Inner.Size +
                     new Point(pad.Left, pad.Up) +
                     new Point(pad.Right, pad.Down);
             }
         }
 
-        public override Disposable<Control> Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+        public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
         {
             Compass<double> pad = this._Padding;
-            this._Inner = this._Inner.Update(Offset + new Point(pad.Left, pad.Up), Probes, Time);
-            return this;
+            this.Inner.Update(Offset + new Point(pad.Left, pad.Up), Probes, Time);
         }
 
         public override void Render(RenderContext Context)
@@ -98,16 +112,16 @@ namespace DUIP.UI
             Compass<double> pad = this._Padding;
             using (Context.Translate(new Point(pad.Left, pad.Up)))
             {
-                this._Inner.Render(Context);
+                this.Inner.Render(Context);
             }
         }
 
         public void Dispose()
         {
-            ((Disposable<Control>)this._Inner).Dispose();
+            this._Inner.Dispose();
         }
 
         private Compass<double> _Padding;
-        private Control _Inner;
+        private Disposable<Control> _Inner;
     }
 }

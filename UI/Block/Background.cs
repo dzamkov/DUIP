@@ -50,9 +50,9 @@ namespace DUIP.UI
             }
         }
 
-        public override Disposable<Control> CreateControl(ControlEnvironment Environment)
+        public override Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme)
         {
-            return new BackgroundControl(this._Color, this._Inner.CreateControl(Environment));
+            return new BackgroundControl(this._Color, this._Inner.CreateControl(SizeRange, Theme));
         }
 
         private Color _Color;
@@ -70,34 +70,60 @@ namespace DUIP.UI
             this._Inner = Inner;
         }
 
+        /// <summary>
+        /// Gets the inner control for this background control. This control is displayed above the background.
+        /// </summary>
+        public Control Inner
+        {
+            get
+            {
+                return this._Inner;
+            }
+        }
+
         public override Point Size
         {
             get
             {
-                return this._Inner.Size;
+                return this.Inner.Size;
             }
         }
 
-        public override Disposable<Control> Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+        public override Rectangle SizeRange
         {
-            this._Inner = this._Inner.Update(Offset, Probes, Time);
-            return this;
+            set
+            {
+                this.Inner.SizeRange = value;
+            }
+        }
+
+        public override Theme Theme
+        {
+            set
+            {
+                this.Inner.Theme = value;
+            }
+        }
+
+        public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+        {
+            this.Inner.Update(Offset, Probes, Time);
         }
 
         public override void Render(RenderContext Context)
         {
             Context.ClearTexture();
             Context.SetColor(this._Color);
-            Context.DrawQuad(new Rectangle(Point.Origin, this._Inner.Size));
-            this._Inner.Render(Context);
+            Context.DrawQuad(new Rectangle(Point.Origin, this.Inner.Size));
+            this.Inner.Render(Context);
         }
 
         public void Dispose()
         {
-            ((Disposable<Control>)this._Inner).Dispose();
+            this._Inner.Dispose();
         }
 
         private Color _Color;
-        private Control _Inner;
+        private Disposable<Control> _Inner;
     }
 }

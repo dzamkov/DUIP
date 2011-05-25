@@ -12,7 +12,7 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a dynamic control (instance) of this block with the given parameters.
         /// </summary>
-        public abstract Disposable<Control> CreateControl(ControlEnvironment Environment);
+        public abstract Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme);
 
         /// <summary>
         /// Applies the given border to this block.

@@ -45,6 +45,7 @@
     <Compile Include="Data\Handle.cs" />
     <Compile Include="Data\Map.cs" />
     <Compile Include="UI\Ambience\Ambience.cs" />
+    <Compile Include="UI\Block\Theme.cs" />
     <Compile Include="UI\Curve.cs" />
     <Compile Include="UI\Compass.cs" />
     <Compile Include="UI\Image\CellularImage.cs" />

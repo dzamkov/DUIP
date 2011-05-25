@@ -51,9 +51,18 @@ namespace DUIP.UI
             }
         }
 
-        public override Disposable<Control> CreateControl(ControlEnvironment Environment)
+        public override Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme)
         {
-            return new BorderControl(this, Environment);
+            return new BorderControl(this._Border, this._Inner.CreateControl(GetInnerSizeRange(SizeRange, this._Border), Theme));
+        }
+
+        /// <summary>
+        /// Gets the size range to use for an inner control, given the border used.
+        /// </summary>
+        public static Rectangle GetInnerSizeRange(Rectangle SizeRange, Border Border)
+        {
+            double w = -Border.Weight * 2.0;
+            return SizeRange.Translate(new Point(w, w));
         }
 
         private Block _Inner;
@@ -65,94 +74,86 @@ namespace DUIP.UI
     /// </summary>
     public class BorderControl : Control, IDisposable
     {
-        public BorderControl(BorderBlock Block, ControlEnvironment Environment)
+        public BorderControl(Border Border, Disposable<Control> Inner)
         {
-            this._Border = Block.Border;
-            this._BorderVisible = Environment.Borders.Map(x => x.Weight == 0.0 || x.Color.A == 0.0);
-            this._Inner = Block.Inner.CreateControl(new ControlEnvironment(Environment)
+            this._Border = Border;
+            this._Inner = Inner;
+        }
+
+        /// <summary>
+        /// Gets the inner control for this border control.
+        /// </summary>
+        public Control Inner
+        {
+            get
             {
-                SizeRange = Environment.SizeRange.Translate(-this.InnerSizePadding),
-                Borders = Environment.Borders.Map(this._BorderVisible, (x, y) => y ? this._Border : x)
-            });
+                return this._Inner;
+            }
         }
 
         public override Point Size
         {
             get
             {
-                return this._Inner.Size + this.InnerSizePadding;
+                double w = this._Border.Weight * 2.0;
+                return this.Inner.Size + new Point(w, w);
             }
         }
 
-        /// <summary>
-        /// Gets the size that is added to the inner control due to borders. 
-        /// </summary>
-        public Point InnerSizePadding
+        public override Rectangle SizeRange
         {
-            get
+            set
             {
-                Compass<double> bords = this._BorderWeights;
-                return new Point(bords.Left, bords.Up) + new Point(bords.Right, bords.Down);
+                this.Inner.SizeRange = value;
             }
         }
 
-        public override Disposable<Control> Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+        public override Theme Theme
         {
-            Compass<double> bords = this._BorderWeights;
-            this._Inner = this._Inner.Update(Offset + new Point(bords.Left, bords.Up), Probes, Time);
-            return this;
+            set
+            {
+                this.Inner.Theme = value;
+            }
+        }
+
+        public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+        {
+            double w = this._Border.Weight;
+            this.Inner.Update(Offset + new Point(w, w), Probes, Time);
         }
 
         public override void Render(RenderContext Context)
         {
+            double w = this._Border.Weight;
+            double hw = w * 0.5;
+
             // Draw inner
-            Compass<double> bords = this._BorderWeights;
-            using (Context.Translate(new Point(bords.Left, bords.Up)))
+            using (Context.Translate(new Point(w, w)))
             {
-                this._Inner.Render(Context);
+                this.Inner.Render(Context);
             }
 
             // Draw borders
-            Point size = this._Inner.Size + new Point(bords.Left, bords.Up) + new Point(bords.Right, bords.Down);
-            Compass<bool> vis = this._BorderVisible;
-            double w = this._Border.Weight;
-            double hw = w * 0.5;
+            Point size = this.Inner.Size + new Point(w * 2.0, w * 2.0);
 
             Context.ClearTexture();
             Context.SetColor(this._Border.Color);
             using (Context.DrawLines(w))
             {
-                if (vis.Left) 
-                    Context.OutputLine(new Point(hw, 0.0), new Point(hw, size.Y));
-                if (vis.Up) 
-                    Context.OutputLine(new Point(0.0, hw), new Point(size.X, hw));
-                if (vis.Right)
-                    Context.OutputLine(new Point(size.X - hw, 0.0), new Point(size.X - hw, size.Y));
-                if (vis.Down)
-                    Context.OutputLine(new Point(0.0, size.Y - hw), new Point(size.X, size.Y - hw));
-            }
-        }
-
-        /// <summary>
-        /// Gets the weights of the borders on the sides of this control.
-        /// </summary>
-        private Compass<double> _BorderWeights
-        {
-            get
-            {
-                double w = this._Border.Weight;
-                return this._BorderVisible.Map(x => x ? w : 0.0);
+                Context.OutputLine(new Point(hw, 0.0), new Point(hw, size.Y));
+                Context.OutputLine(new Point(0.0, hw), new Point(size.X, hw));
+                Context.OutputLine(new Point(size.X - hw, 0.0), new Point(size.X - hw, size.Y));
+                Context.OutputLine(new Point(0.0, size.Y - hw), new Point(size.X, size.Y - hw));
             }
         }
 
         public void Dispose()
         {
-            ((Disposable<Control>)this._Inner).Dispose();
+            this._Inner.Dispose();
         }
 
-        private Control _Inner;
+        private Disposable<Control> _Inner;
         private Border _Border;
-        private Compass<bool> _BorderVisible;
     }
 
     /// <summary>

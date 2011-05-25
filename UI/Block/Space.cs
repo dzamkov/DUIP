@@ -5,7 +5,7 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A block that takes up a certain amount of space and does without displaying any contents.
+    /// A block that takes up the least amount of space possible without displaying any contents.
     /// </summary>
     public class SpaceBlock : Block
     {
@@ -19,9 +19,9 @@ namespace DUIP.UI
         /// </summary>
         public static readonly SpaceBlock Singleton = new SpaceBlock();
 
-        public override Disposable<Control> CreateControl(ControlEnvironment Environment)
+        public override Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme)
         {
-            return new SpaceControl(Environment);
+            return new SpaceControl(SizeRange, Theme);
         }
     }
 
@@ -30,9 +30,9 @@ namespace DUIP.UI
     /// </summary>
     public class SpaceControl : Control
     {
-        public SpaceControl(ControlEnvironment Environment)
+        public SpaceControl(Rectangle SizeRange, Theme Theme)
         {
-            this._Size = Environment.SizeRange.TopLeft;
+            this._Size = SizeRange.TopLeft;
         }
 
         public override Point Size

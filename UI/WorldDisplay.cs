@@ -64,17 +64,12 @@ namespace DUIP.UI
                 })
                 .WithBackground(Color.RGB(0.9, 0.5, 0.5));
 
-            ControlEnvironment ce = new ControlEnvironment()
-            {
-                SizeRange = new Rectangle(1.0, 1.0, 3.0, 3.0),
-                Borders = new Compass<Border>(Border.None)
-            };
-
+            Rectangle sizerange = new Rectangle(1.0, 1.0, 3.0, 3.0);
 
             List<Node> nodes = new List<Node>();
             for (int t = 0; t < 10; t++)
             {
-                Node node = new Node((Control)testblock.CreateControl(ce), new Point(t * 2.0 - 10.0, 0.0), Point.Zero);
+                Node node = new Node((Control)testblock.CreateControl(sizerange, null), new Point(t * 2.0 - 10.0, 0.0), Point.Zero);
                 this._World.Spawn(node);
                 nodes.Add(node);
             }
