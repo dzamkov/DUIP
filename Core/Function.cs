@@ -5,7 +5,7 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// A relation between an argument and a result.
+    /// Defines a relation between an argument and a result.
     /// </summary>
     public class Function<TArg, TRes>
     {
