@@ -7,7 +7,7 @@ namespace DUIP
     /// <summary>
     /// Represents a finite, uninterpreted sequence of bytes.
     /// </summary>
-    public class Data
+    public abstract class Data
     {
         /// <summary>
         /// Gets the size in bytes of the data.

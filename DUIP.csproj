@@ -41,6 +41,7 @@
   </Target>
   -->
   <ItemGroup>
+    <Compile Include="Core\Data.cs" />
     <Compile Include="Core\Function.cs" />
     <Compile Include="Core\Type.cs" />
     <Compile Include="Data\Handle.cs" />

@@ -186,14 +186,26 @@ namespace DUIP.UI
                 this._Size = this._Font.GetSize(Name);
             }
 
-            public void Render(RenderContext Context, Point Position)
+            /// <summary>
+            /// Gets the font for this character.
+            /// </summary>
+            public Font Font
             {
-                Disposable<Figure> glyph = this._Font.GetGlyph(this._Name);
-                using (Context.Translate(Position))
+                get
                 {
-                    ((Figure)glyph).Render(Context);
+                    return this._Font;
                 }
-                glyph.Dispose();
+            }
+
+            /// <summary>
+            /// Gets the name for this character.
+            /// </summary>
+            public char Name
+            {
+                get
+                {
+                    return this._Name;
+                }
             }
 
             public override Point Size
@@ -219,16 +231,45 @@ namespace DUIP.UI
 
         public override void Render(RenderContext Context)
         {
+            Font font = null;
+            Font.Drawer fontdrawer = null;
+
             foreach (Flow.Line line in this._Lines)
             {
                 foreach (Flow.Item item in line.Items)
                 {
+                    // Draw character
                     _CharItem ci = item as _CharItem;
                     if (ci != null)
                     {
-                        ci.Render(Context, ci.GetPosition(line, this._Size, this._FlowStyle));
+                        if (ci.Font != font)
+                        {
+                            if (fontdrawer != null)
+                            {
+                                fontdrawer.End(Context);
+                            }
+                            font = ci.Font;
+                            fontdrawer = font.GetDrawer();
+                            fontdrawer.Begin(Context);
+                        }
+                        fontdrawer.Draw(Context, ci.Name, ci.GetPosition(line, this._Size, this._FlowStyle));
+                        continue;
+                    }
+                    else
+                    {
+                        font = null;
+                        if (fontdrawer != null)
+                        {
+                            fontdrawer.End(Context);
+                        }
                     }
                 }
+            }
+
+            // Make sure not to leave a font drawer open
+            if (fontdrawer != null)
+            {
+                fontdrawer.End(Context);
             }
         }
 

@@ -16,6 +16,48 @@ namespace DUIP.UI
             this._Color = Color;
         }
 
+        public override Font.Drawer GetDrawer()
+        {
+            return new Drawer(this);
+        }
+
+        /// <summary>
+        /// A drawer for a bitmap font.
+        /// </summary>
+        public new class Drawer : Font.Drawer
+        {
+            public Drawer(BitmapFont Font)
+            {
+                this._Font = Font;
+            }
+
+            public override void Begin(RenderContext Context)
+            {
+                Context.SetColor(this._Font._Color);
+                Context.SetTexture(this._Font._Typeface.Texture);
+                Context.DrawQuads();
+            }
+
+            public override void Draw(RenderContext Context, char Char, Point Offset)
+            {
+                double scale = this._Font._Scale;
+                BitmapTypeface.Glyph gly;
+                if (this._Font._Typeface.GlyphMap.TryGetValue(Char, out gly))
+                {
+                    Rectangle src = gly.Source;
+                    Rectangle dst = Rectangle.FromOffsetSize(-gly.LayoutOffset * scale + Offset, src.Size * scale);
+                    Context.OutputTexturedQuad(src, dst);
+                }
+            }
+
+            public override void End(RenderContext Context)
+            {
+                Context.Pop();
+            }
+
+            private BitmapFont _Font;
+        }
+
         public override IEnumerable<char> Characters
         {
             get

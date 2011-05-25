@@ -17,6 +17,64 @@ namespace DUIP.UI
         public abstract Disposable<Figure> GetGlyph(char Char);
 
         /// <summary>
+        /// Gets a drawer for this font.
+        /// </summary>
+        public virtual Drawer GetDrawer()
+        {
+            return new DefaultDrawer(this);
+        }
+
+        /// <summary>
+        /// Draws glyphs from a single font consecutively.
+        /// </summary>
+        public abstract class Drawer
+        {
+            /// <summary>
+            /// Begins drawing on the given context.
+            /// </summary>
+            public virtual void Begin(RenderContext Context)
+            {
+
+            }
+
+            /// <summary>
+            /// Draws a glyph for a character at the given offset.
+            /// </summary>
+            public virtual void Draw(RenderContext Context, char Char, Point Offset)
+            {
+
+            }
+
+            /// <summary>
+            /// Ends drawing on the given context.
+            /// </summary>
+            public virtual void End(RenderContext Context)
+            {
+
+            }
+        }
+
+        /// <summary>
+        /// A drawer for a font used when no other is defined.
+        /// </summary>
+        public sealed class DefaultDrawer : Drawer
+        {
+            public DefaultDrawer(Font Font)
+            {
+                this._Font = Font;
+            }
+
+            public override void Draw(RenderContext Context, char Char, Point Offset)
+            {
+                Disposable<Figure> glyph = this._Font.GetGlyph(Char);
+                ((Figure)glyph).WithTranslate(Offset).Render(Context);
+                glyph.Dispose();
+            }
+
+            private Font _Font;
+        }
+
+        /// <summary>
         /// Gets the size of the layout rectangle for the given character for use in spacing and alignment purposes. If this font
         /// does not include the character, a size of (0.0, 0.0) is returned.
         /// </summary>

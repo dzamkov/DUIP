@@ -357,6 +357,15 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Removes the last effect that was applied to the context. This is the same as calling dispose on the object
+        /// returned from the function that applied the effect.
+        /// </summary>
+        public void Pop()
+        {
+            this._PopEffect();
+        }
+
+        /// <summary>
         /// Does what it says.
         /// </summary>
         private class _PopOnDispose : IDisposable
