@@ -124,11 +124,11 @@ namespace DUIP
         /// <summary>
         /// Opens the file at this path as data. If no file exists, null will be returned.
         /// </summary>
-        public FileData Open()
+        public FileMemory Open()
         {
             try
             {
-                return new FileData(this);
+                return new FileMemory(this);
             }
             catch
             {
@@ -139,13 +139,13 @@ namespace DUIP
         /// <summary>
         /// Creates a file with this path. The file will be able to be read and modified.
         /// </summary>
-        public FileData Create(long Size)
+        public FileMemory Create(long Size)
         {
             try
             {
                 FileStream fs = File.Open(this, FileMode.Create, FileAccess.ReadWrite);
                 fs.SetLength(Size);
-                return new FileData(this, fs);
+                return new FileMemory(this, fs);
             }
             catch
             {
@@ -225,16 +225,16 @@ namespace DUIP
     }
 
     /// <summary>
-    /// Data from a file on the filesystem. Note that file data should be closed manually when no longer needed.
+    /// Data on a file on the filesystem. Note that file data should (but are not required to) be closed manually when no longer needed.
     /// </summary>
-    public class FileData : Data
+    public class FileMemory : Memory
     {
-        public FileData(Path Path)
+        public FileMemory(Path Path)
         {
             this._Path = Path;
         }
 
-        public FileData(Path Path, FileStream FileStream)
+        public FileMemory(Path Path, FileStream FileStream)
         {
             this._Path = Path;
             this._FileStream = FileStream;
@@ -318,7 +318,7 @@ namespace DUIP
         /// </summary>
         private class _InStream : InStream
         {
-            public _InStream(long Position, FileData File)
+            public _InStream(long Position, FileMemory File)
             {
                 this._Position = Position;
                 this._File = File;
@@ -350,7 +350,7 @@ namespace DUIP
             }
 
             private long _Position;
-            private FileData _File;
+            private FileMemory _File;
         }
 
         /// <summary>
@@ -358,7 +358,7 @@ namespace DUIP
         /// </summary>
         private class _OutStream : OutStream
         {
-            public _OutStream(FileData File)
+            public _OutStream(FileMemory File)
             {
                 this._File = File;
                 this._File._WriteStream = true;
@@ -384,7 +384,7 @@ namespace DUIP
                 this._File._WriteStream = false;
             }
 
-            private FileData _File;
+            private FileMemory _File;
         }
 
         /// <summary>
@@ -443,7 +443,7 @@ namespace DUIP
         }
 
         private static int _MaxOpenFiles = 20;
-        private static Dictionary<string, FileData> _OpenFiles = new Dictionary<string, FileData>();
+        private static Dictionary<string, FileMemory> _OpenFiles = new Dictionary<string, FileMemory>();
 
         private int _ReadStreams;
         private bool _WriteStream;

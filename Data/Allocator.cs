@@ -5,16 +5,16 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// A representation of storage space that allows the allocation and deallocation of fixed-size mutable data.
+    /// A representation of storage space that allows the allocation and deallocation of fixed-size mutable memory.
     /// </summary>
-    /// <typeparam name="T">A pointer to allocated data in the allocator.</typeparam>
+    /// <typeparam name="T">A pointer to allocated memory in the allocator.</typeparam>
     public abstract class Allocator<T>
     {
         /// <summary>
-        /// Allocates data with the given size. The resulting data will be null if there is no
+        /// Allocates memory with the given size. The resulting memory will be null if there is no
         /// space for allocation available.
         /// </summary>
-        public abstract Data Allocate(long Size, out T Pointer);
+        public abstract Memory Allocate(long Size, out T Pointer);
 
         /// <summary>
         /// Gets the maximum size for which an allocation can succeed.
@@ -28,38 +28,20 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Stores the provided data somewhere in the allocator and gives a pointer to the data in
-        /// the allocator. The resulting data will be null if there is no space for allocation available.
-        /// </summary>
-        public virtual T Store(ref Data Data)
-        {
-            T ptr;
-            Data k = this.Allocate(Data.Size, out ptr);
-            if (k != null)
-            {
-                k.Modify().Write(Data.Read(), Data.Size);
-                Data = k;
-                return ptr;
-            }
-            Data = null;
-            return ptr;
-        }
-
-        /// <summary>
-        /// Gets the data at the given pointer. The size of the returned data may be larger than the size of the allocated
+        /// Gets the memory at the given pointer. The size of the returned data may be larger than the size of the allocated
         /// data, in which case, the extra bytes are safe to use.
         /// </summary>
-        public abstract Data Lookup(T Pointer);
+        public abstract Memory Lookup(T Pointer);
 
         /// <summary>
-        /// Deallocates the data with the given pointer. After this is called, the corresponding data
+        /// Deallocates the memory with the given pointer. After this is called, the corresponding memory
         /// may no longer be used.
         /// </summary>
         public abstract void Deallocate(T Pointer);
     }
 
     /// <summary>
-    /// An allocator that stores data as files in a directory. Data in this kind of allocator will persist between
+    /// An allocator that stores memory as files in a directory. Memory in this kind of allocator will persist between
     /// instances and processes.
     /// </summary>
     public class DirectoryAllocator : Allocator<int>
@@ -99,7 +81,7 @@ namespace DUIP
             }
         }
 
-        public override Data Allocate(long Size, out int Pointer)
+        public override Memory Allocate(long Size, out int Pointer)
         {
             Path fpath;
             do
@@ -111,7 +93,7 @@ namespace DUIP
             return fpath.Create(Size);
         }
 
-        public override Data Lookup(int Pointer)
+        public override Memory Lookup(int Pointer)
         {
             return this._GetFile(Pointer).Open();
         }

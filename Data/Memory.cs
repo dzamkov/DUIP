@@ -5,116 +5,87 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// A simple stream that writes to a byte list.
+    /// A data source that can be read or modified with streams.
     /// </summary>
-    public class MemoryOutStream : OutStream
+    public abstract class Memory
     {
-        public MemoryOutStream(List<byte> Data)
-        {
-            this._Data = Data;
-        }
+        /// <summary>
+        /// Creates a stream to read the memory or returns null if not possible.
+        /// </summary>
+        public abstract InStream Read();
 
-        public MemoryOutStream()
+        /// <summary>
+        /// Creates a stream to read this memory, starting at the given position.
+        /// </summary>
+        public virtual InStream Read(long Start)
         {
-            this._Data = new List<byte>();
+            InStream r = this.Read();
+            if (r != null)
+            {
+                r.Advance(Start);
+                return r;
+            }
+            return null;
         }
 
         /// <summary>
-        /// Gets the current data for the stream.
+        /// Gets the size, in bytes, of the memory.
         /// </summary>
-        public List<byte> Data
+        public abstract long Size { get; }
+
+        /// <summary>
+        /// Creates a stream to modify the memory beginning at the given position. The modifing stream may not go over the
+        /// bounds of the memory. Null is returned if the data can not be modified.
+        /// </summary>
+        public virtual OutStream Modify(long Start)
+        {
+            return null;
+        }
+
+        /// <summary>
+        /// Creates a stream to modify the memory from the beginning.
+        /// </summary>
+        public OutStream Modify()
+        {
+            return Modify(0);
+        }
+
+        /// <summary>
+        /// Gets if this memory is immutable. Immutable memory can not be modified using the "Modify" method or by some external method.
+        /// </summary>
+        public virtual bool Immutable
         {
             get
             {
-                return this._Data;
+                return true;
             }
         }
 
         /// <summary>
-        /// Creates an in stream to read the data written to this stream.
-        /// </summary>
-        public MemoryInStream Read
+        /// Gets a partion of this memory.
+        /// </summary>-
+        public PartionMemory Partion(long Start, long Size)
         {
-            get
-            {
-                return new MemoryInStream(this._Data);
-            }
+            return new PartionMemory(this, Start, Size);
         }
-
-        public override void Write(byte Data)
-        {
-            this._Data.Add(Data);
-        }
-
-        private List<byte> _Data;
-    }
-    
-    /// <summary>
-    /// A simple stream that reads from a list of bytes.
-    /// </summary>
-    public class MemoryInStream : InStream
-    {
-        public MemoryInStream(List<byte> Data, int Index)
-        {
-            this._Data = Data;
-            this._Index = Index;
-        }
-
-        public MemoryInStream(List<byte> Data)
-        {
-            this._Data = Data;
-        }
-
-        /// <summary>
-        /// Gets the data that is read.
-        /// </summary>
-        public List<byte> Data
-        {
-            get
-            {
-                return this._Data;
-            }
-        }
-
-        /// <summary>
-        /// Gets the position in the byte list from which the next byte will be read from.
-        /// </summary>
-        public int Index
-        {
-            get
-            {
-                return this._Index;
-            }
-        }
-
-        public override byte Read()
-        {
-            return this._Data[this._Index++];
-        }
-
-        public override void Advance(long Amount)
-        {
-            this._Index += (int)Amount;
-        }
-
-        private List<byte> _Data;
-        private int _Index;
     }
 
     /// <summary>
-    /// Data whose source is a byte list.
+    /// A memory representation of a contiguous subset of some other memory.
     /// </summary>
-    public class MemoryData : Data
+    public class PartionMemory : Memory
     {
-        public MemoryData(List<byte> Source)
+        public PartionMemory(Memory Source, long Start, long Size)
         {
             this._Source = Source;
+            this._Start = Start;
+            this._Size = Size;
         }
 
         /// <summary>
-        /// Gets the source byte list for this data.
+        /// Gets the source data for this partion.
         /// </summary>
-        public List<byte> Source
+        public Memory Source
         {
             get
             {
@@ -124,22 +95,37 @@ namespace DUIP
 
         public override InStream Read()
         {
-            return new MemoryInStream(this._Source);
+            return this._Source.Read(this._Start);
         }
 
         public override InStream Read(long Start)
         {
-            return new MemoryInStream(this._Source, (int)Start);
+            return this._Source.Read(this._Start + Start);
+        }
+
+        public override bool Immutable
+        {
+            get
+            {
+                return this._Source.Immutable;
+            }
         }
 
         public override long Size
         {
             get
             {
-                return (long)this._Source.Count;
+                return this._Size;
             }
         }
 
-        private List<byte> _Source;
+        public override OutStream Modify(long Start)
+        {
+            return this._Source.Modify(this._Start + Start);
+        }
+
+        private Memory _Source;
+        private long _Start;
+        private long _Size;
     }
 }

@@ -34,7 +34,15 @@ namespace DUIP
     }
 
     /// <summary>
-    /// The generalized form of a type with no specific instance type.
+    /// A kind of composition type that is entirely defined by named properties (possibly interrelated).
+    /// </summary>
+    public abstract class Struct<T> : Type<T>
+    {
+
+    }
+
+    /// <summary>
+    /// The generalized form of a type with no specific instance type. Contains function for creating 
     /// </summary>
     public class Type
     {

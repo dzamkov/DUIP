@@ -5,16 +5,16 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// A high-level interface to data.
+    /// A high-level interface to memory.
     /// </summary>
     /// <remarks>There are certain terms used in the context of handles. "Scheme" refers to information that can
-    /// not be stored in data and must be supplied to the handle. A "Plan" is information needed to initialize the
+    /// not be stored in memory and must be supplied to the handle. A "Plan" is information needed to initialize the
     /// data of a handle for the first time.</remarks>
     public interface IHandle
     {
         /// <summary>
-        /// Gets the data source for this handle.
+        /// Gets the memory source for this handle.
         /// </summary>
-        Data Source { get; }
+        Memory Source { get; }
     }
 }

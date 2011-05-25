@@ -70,8 +70,6 @@ namespace DUIP
             mf.Show();
             DateTime lastupdate = DateTime.Now;
 
-            const double fpssmooth = 1.0;
-            double fps = 60.0;
             while (mf.Visible)
             {
                 WorldDisplay view = mf.WorldDisplay;

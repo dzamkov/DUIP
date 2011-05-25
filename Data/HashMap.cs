@@ -300,7 +300,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Gets the location of the given bucket in the data for the map.
+        /// Gets the location of the given bucket in the memory for the map.
         /// </summary>
         public long GetBucketOffset(long Bucket)
         {
@@ -366,7 +366,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Updates the header in the data for the hashmap with the header stored in this interface.
+        /// Updates the header in the memory for the hashmap with the header stored in this interface.
         /// </summary>
         private void _UpdateHeader()
         {
@@ -375,7 +375,7 @@ namespace DUIP
             str.Finish();
         }
 
-        public Data Source
+        public Memory Source
         {
             get
             {
@@ -406,10 +406,10 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Initializes an empty hashmap in the given data. The size of the data should be at or greater than the required
+        /// Initializes an empty hashmap in the given memory. The size of the data should be at or greater than the required
         /// size for the hashmap as computed by the plan.
         /// </summary>
-        public static HashMap<TKey, T> Create(Data Source, Plan Plan)
+        public static HashMap<TKey, T> Create(Memory Source, Plan Plan)
         {
             // Fill data with an empty map
             Header h = new Header()
@@ -441,9 +441,9 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Restores a hashmap from data given the data source and the scheme.
+        /// Restores a hashmap from data given the memory source and the scheme.
         /// </summary>
-        public static HashMap<TKey, T> Restore(Data Source, Scheme Scheme)
+        public static HashMap<TKey, T> Restore(Memory Source, Scheme Scheme)
         {
             // Get the header
             InStream str = Source.Read();
@@ -483,7 +483,7 @@ namespace DUIP
             public Scheme Scheme;
 
             /// <summary>
-            /// Gets the total size of the data needed by the hashmap described with this plan.
+            /// Gets the total size of memory needed by the hashmap described with this plan.
             /// </summary>
             public long TotalSize
             {
@@ -511,7 +511,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Header for a hashmap in data.
+        /// Header for a hashmap in memory.
         /// </summary>
         public struct Header
         {
@@ -761,7 +761,7 @@ namespace DUIP
             }
         }
 
-        private Data _Source;
+        private Memory _Source;
         private Header _Header;
         private Scheme _Scheme;
     }
