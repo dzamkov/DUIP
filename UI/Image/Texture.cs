@@ -152,27 +152,27 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Creates a texture by rendering a view of the given figure.
+        /// Creates a texture by rendering a view of the given scene.
         /// </summary>
-        public static Texture Create(Figure Figure, View View, Format Format, int Width, int Height)
+        public static Texture Create(Action<RenderContext> Scene, View View, Format Format, int Width, int Height)
         {
             Texture tex = Texture.Create(Format, Width, Height);
             Texture.SetFilterMode(TextureMinFilter.Linear, TextureMagFilter.Linear);
-            Render(Figure, View, tex._ID, Width, Height);
+            Render(Scene, View, tex._ID, Width, Height);
             return tex;
         }
 
         /// <summary>
         /// Render a figure to the currently-bound texture (with the given id).
         /// </summary>
-        public static void Render(Figure Figure, View View, uint ID, int Width, int Height)
+        public static void Render(Action<RenderContext> Scene, View View, uint ID, int Width, int Height)
         {
             int fbo;
             GL.GenFramebuffers(1, out fbo);
             GL.BindFramebuffer(FramebufferTarget.FramebufferExt, fbo);
             GL.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.ColorAttachment0Ext, TextureTarget.Texture2D, ID, 0);
             RenderContext context = new RenderContext(View, Width, Height, false);
-            Figure.Render(context);
+            Scene(context);
             GL.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
             GL.DeleteFramebuffers(1, ref fbo);
         }

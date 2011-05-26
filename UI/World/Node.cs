@@ -18,7 +18,7 @@ namespace DUIP.UI
             this._Content = Content;
             this._Position = Position;
             this._Velocity = Velocity;
-            this._Texture = Texture.Create(this.Content, new View(this.Content.Bounds), Texture.Format.BGRA32, 256, 256);
+            this._Texture = Texture.Create(this.Content.Render, new View(Rectangle.FromOffsetSize(Point.Origin, this.Content.Size)), Texture.Format.BGRA32, 256, 256);
 
             this._Texture.Bind();
             Texture.GenerateMipmap();
@@ -264,10 +264,10 @@ namespace DUIP.UI
     /// <summary>
     /// Content a node can display.
     /// </summary>
-    public abstract class Content : Figure
+    public abstract class Content
     {
         /// <summary>
-        /// Gets the size of the content when rendered.
+        /// Gets the size of the content for rendering and layout.
         /// </summary>
         public abstract Point Size { get; }
 
@@ -282,12 +282,12 @@ namespace DUIP.UI
             return this;
         }
 
-        public sealed override Rectangle Bounds
+        /// <summary>
+        /// Renders this content to the given context.
+        /// </summary>
+        public virtual void Render(RenderContext Context)
         {
-            get
-            {
-                return new Rectangle(Point.Origin, this.Size);
-            }
+
         }
     }
 }
