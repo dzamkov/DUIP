@@ -43,6 +43,18 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Spawns a node for the given content near or at the given location.
+        /// </summary>
+        public Node Spawn(Disposable<Content> Content, Point Location)
+        {
+            Visual vis = Content.Object.CreateVisual();
+            Point size = vis.Size;
+            Node node = new Node(Content, vis, Location - size * 0.5, Point.Zero);
+            this.Spawn(node);
+            return node;
+        }
+
+        /// <summary>
         /// Places the given node into the world, displacing other nodes as needed.
         /// </summary>
         public void Spawn(Node Node)

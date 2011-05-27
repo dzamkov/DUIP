@@ -11,14 +11,15 @@ namespace DUIP.UI
     /// <summary>
     /// A dynamic graphical, rectangular representation of a logical object.
     /// </summary>
-    public class Node
+    public class Node : IDisposable
     {
-        public Node(Disposable<Content> Content, Point Position, Point Velocity)
+        public Node(Disposable<Content> Content, Disposable<Visual> Visual, Point Position, Point Velocity)
         {
             this._Content = Content;
+            this._Visual = Visual;
             this._Position = Position;
             this._Velocity = Velocity;
-            this._Texture = Texture.Create(this.Content.Render, new View(Rectangle.FromOffsetSize(Point.Origin, this.Content.Size)), Texture.Format.BGRA32, 256, 256);
+            this._Texture = Texture.Create(this.Visual.Render, new View(Rectangle.FromOffsetSize(Point.Origin, this.Visual.Size)), Texture.Format.BGRA32, 256, 256);
 
             this._Texture.Bind();
             Texture.GenerateMipmap();
@@ -43,18 +44,29 @@ namespace DUIP.UI
         {
             get
             {
-                return ((Content)this._Content).Size;
+                return ((Visual)this._Visual).Size;
             }
         }
 
         /// <summary>
-        /// Gets the content for the node.
+        /// Gets the content this node represents.
         /// </summary>
         public Content Content
         {
             get
             {
                 return this._Content;
+            }
+        }
+
+        /// <summary>
+        /// Gets the visual displayed by the node.
+        /// </summary>
+        public Visual Visual
+        {
+            get
+            {
+                return this._Visual;
             }
         }
 
@@ -95,7 +107,7 @@ namespace DUIP.UI
         {
             this._Position += this._Velocity * Time;
             this._Velocity *= Math.Pow(World.Damping, Time);
-            this._Content = ((Content)this._Content).Update(this, Probes, Time);
+            this._Visual = ((Visual)this._Visual).Update(this, Probes, Time);
 
             // Handle dragging
             if (this._DragState == null)
@@ -223,7 +235,7 @@ namespace DUIP.UI
                     if (zoom < 4.0)
                     {
                         double alpha = (zoom - 1.0) / (4.0 - 1.0);
-                        ((Content)this._Content).Render(Context);
+                        ((Visual)this._Visual).Render(Context);
                         this._Texture.CreateFigure(new Rectangle(Point.Origin, this.Size), Color.RGBA(1.0, 1.0, 1.0, alpha)).Render(Context);
                     }
                     else
@@ -233,7 +245,7 @@ namespace DUIP.UI
                 }
                 else
                 {
-                    ((Content)this._Content).Render(Context);
+                    ((Visual)this._Visual).Render(Context);
                 }
             }
         }
@@ -254,36 +266,43 @@ namespace DUIP.UI
             public Point Offset;
         }
 
+        public void Dispose()
+        {
+            this._Content.Dispose();
+            this._Visual.Dispose();
+        }
+
         private Texture _Texture;
         private Point _Position;
         private Point _Velocity;
         private DragState _DragState;
         private Disposable<Content> _Content;
+        private Disposable<Visual> _Visual;
     }
 
     /// <summary>
-    /// Content a node can display.
+    /// A visual representation of content that can be placed within a node.
     /// </summary>
-    public abstract class Content
+    public abstract class Visual
     {
         /// <summary>
-        /// Gets the size of the content for rendering and layout.
+        /// Gets the size of the visual for rendering and layout.
         /// </summary>
         public abstract Point Size { get; }
 
         /// <summary>
-        /// Updates the state of the content by the given amount of time while receiving input from probes. Returns the
-        /// new state of the content. If the interface for the content changes, the older interface will be disposed.
+        /// Updates the state of the visual by the given amount of time while receiving input from probes. Returns an interface to the
+        /// new state of the visual. If the interface for the visual changes, the older interface will be disposed.
         /// </summary>
-        /// <param name="Node">The node this content is in.</param>
+        /// <param name="Node">The node this visual is in.</param>
         /// <param name="Probes">The probes in the world.</param>
-        public virtual Disposable<Content> Update(Node Node, IEnumerable<Probe> Probes, double Time)
+        public virtual Disposable<Visual> Update(Node Node, IEnumerable<Probe> Probes, double Time)
         {
             return this;
         }
 
         /// <summary>
-        /// Renders this content to the given context.
+        /// Renders this visual to the given context.
         /// </summary>
         public virtual void Render(RenderContext Context)
         {

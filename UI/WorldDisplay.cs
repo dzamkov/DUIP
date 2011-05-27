@@ -34,51 +34,8 @@ namespace DUIP.UI
             this._Probe = new Probe();
             this._MakeView();
 
-            BitmapTypeface typeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Arial"), DUIP.UI.Font.ASCIICharacters, FontStyle.Regular, 3, 60.0f, 512);
-            BitmapFont font = typeface.GetFont(0.05, Color.Black);
-
-            FlowBlock testflow = new FlowBlock
-            {
-                Style = new FlowStyle
-                {
-                    Direction = FlowDirection.RightDown,
-                    Justification = FlowJustification.Justify,
-                    LineAlignment = Alignment.Center,
-                    LineSpacing = 0.00,
-                    LineSize = 0.01
-                }
-            };
-            testflow.AddText(
-                "Lorem ipsum dolor sit amet, consec tetur adipis cing elit. Nunc sus cipit phare tra nunc, " +
-                "sit amet fauc ibus risus sceler isque ac. Etiam condi mentum justo quis dolor vehi cula ac volut pat " +
-                "tortor adi piscing. Donec tinci dunt quam quis orci pel lent esque feug iat. Fusce eget nisi ac mi " +
-                "trist ique port titor. Aliq uam et males uada elit. Suspen disse elei fend hend rerit semper. ", font);
-
-            Block testblock = testflow
-                .WithPad(0.05)
-                .WithSize(1.0, 1.0)
-                .WithBorder(new Border
-                {
-                    Color = Color.RGB(0.8, 0.2, 0.2),
-                    Weight = 0.04,
-                })
-                .WithBackground(Color.RGB(0.9, 0.5, 0.5));
-
-            Rectangle sizerange = new Rectangle(1.0, 1.0, 3.0, 3.0);
-
-            List<Node> nodes = new List<Node>();
-            for (int t = 0; t < 10; t++)
-            {
-                Node node = new Node((Control)testblock.CreateControl(sizerange, null), new Point(t * 2.0 - 10.0, 0.0), Point.Zero);
-                this._World.Spawn(node);
-                nodes.Add(node);
-            }
-
-            Arc arc = new Arc(
-                new Arc.EndPoint(nodes[5], Direction.Right, 0.5),
-                new Arc.EndPoint(nodes[6], Direction.Left, 0.5),
-                0.03, Color.RGBA(0.5, 0.2, 0.2, 0.6));
-            this._World.Spawn(arc);
+            StaticContent<Data> testcontent = new StaticContent<Data>(null, new DataType());
+            this._World.Spawn(testcontent, Point.Origin);
         }
 
         /// <summary>

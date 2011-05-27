@@ -7,9 +7,9 @@ namespace DUIP.UI
     /// <summary>
     /// A dynamic, displayable, instance of a block within a world.
     /// </summary>
-    public abstract class Control : Content
+    public abstract class Control : Visual
     {
-        public sealed override Disposable<Content> Update(Node Node, IEnumerable<Probe> Probes, double Time)
+        public sealed override Disposable<Visual> Update(Node Node, IEnumerable<Probe> Probes, double Time)
         {
             this.Update(Node.Position, Probes, Time);
             return this;

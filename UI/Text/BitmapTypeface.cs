@@ -64,7 +64,7 @@ namespace DUIP.UI
         /// amount of bitmap space needed. This has no relation to the size of displayed glyphs.</param>
         /// <param name="Size">The edge-length in pixels, of the created bitmap.</param>
         /// <param name="CharacterPadding">The amount of padding, in pixels, to put around characters in the texture.</param>
-        public static BitmapTypeface Create(
+        public static Disposable<BitmapTypeface> Create(
             FontFamily Family, IEnumerable<char> Characters, FontStyle Style, int CharacterPadding,
             float FontSize, int Size)
         {
