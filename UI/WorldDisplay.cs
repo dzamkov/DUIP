@@ -36,7 +36,7 @@ namespace DUIP.UI
             this._Probe = new Probe();
             this._MakeView();
 
-            StaticContent<Data> testcontent = new StaticContent<Data>(null, new DataType());
+            StaticContent<Data> testcontent = new StaticContent<Data>(null, Type.Data);
             this._World.Spawn(testcontent, Point.Origin);
         }
 

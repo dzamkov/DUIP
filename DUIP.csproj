@@ -90,6 +90,7 @@
     <Compile Include="Util\Disposable.cs" />
     <Compile Include="Util\Maybe.cs" />
     <Compile Include="Util\Ref.cs" />
+    <Compile Include="Util\Registry.cs" />
     <Compile Include="Util\Void.cs" />
     <Compile Include="Util\ID.cs" />
     <Compile Include="Data\Allocator.cs" />

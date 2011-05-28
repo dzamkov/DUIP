@@ -42,10 +42,35 @@ namespace DUIP
     }
 
     /// <summary>
-    /// The generalized form of a type with no specific instance type. Contains function for creating 
+    /// The generalized form of a type with no specific instance type. Contains function for creating types.
     /// </summary>
-    public class Type
+    public abstract class Type
     {
+        /// <summary>
+        /// Gets if the two given types are equivalent.
+        /// </summary>
+        public static bool Equal(Type A, Type B)
+        {
+            return A == B;
+        }
 
+        /// <summary>
+        /// Gets the type for data.
+        /// </summary>
+        public static DataType Data
+        {
+            get
+            {
+                return DataType.Singleton;
+            }
+        }
+
+        /// <summary>
+        /// Creates a function type for the given argument and result types.
+        /// </summary>
+        public static Type Function(Type Argument, Type Result)
+        {
+            return FunctionType.Get(Argument, Result);
+        }
     }
 }

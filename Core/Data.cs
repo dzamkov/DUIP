@@ -25,6 +25,16 @@ namespace DUIP
     /// </summary>
     public class DataType : Type<Data>
     {
+        private DataType()
+        {
+
+        }
+
+        /// <summary>
+        /// The only instance of this class.
+        /// </summary>
+        public static readonly DataType Singleton = new DataType();
+
         public override bool Equal(Data A, Data B)
         {
             long size = A.Size;

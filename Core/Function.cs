@@ -7,7 +7,7 @@ namespace DUIP
     /// <summary>
     /// Defines a relation between an argument and a result.
     /// </summary>
-    public class Function<TArg, TRes>
+    public class Function
     {
 
     }
@@ -15,9 +15,40 @@ namespace DUIP
     /// <summary>
     /// A type for a relation (or rather, a specific definition of a relation) between an argument and a result of certain types.
     /// </summary>
-    public class FunctionType<TArg, TRes> : Type<Function<TArg, TRes>>
+    public class FunctionType : Type<Function>
     {
-        public override bool Equal(Function<TArg, TRes> A, Function<TArg, TRes> B)
+        private FunctionType()
+        {
+
+        }
+
+        /// <summary>
+        /// Gets a function type for the given argument and result types.
+        /// </summary>
+        public static FunctionType Get(Type Argument, Type Result)
+        {
+            foreach (FunctionType type in _Types)
+            {
+                if (Type.Equal(type._Argument, Argument) && Type.Equal(type._Result, Result))
+                {
+                    return type;
+                }
+            }
+            FunctionType ntype = new FunctionType
+            {
+                _Argument = Argument,
+                _Result = Result
+            };
+            _Types.Register(ntype);
+            return ntype;
+        }
+
+        /// <summary>
+        /// A registry of available function types.
+        /// </summary>
+        private static Registry<FunctionType> _Types = new Registry<FunctionType>();
+
+        public override bool Equal(Function A, Function B)
         {
             return A == B;
         }
@@ -25,7 +56,7 @@ namespace DUIP
         /// <summary>
         /// Gets the type required for an argument to a function of this type.
         /// </summary>
-        public Type<TArg> Argument
+        public Type Argument
         {
             get
             {
@@ -36,7 +67,7 @@ namespace DUIP
         /// <summary>
         /// Gets the type of a result from a function of this type.
         /// </summary>
-        public Type<TRes> Result
+        public Type Result
         {
             get
             {
@@ -47,12 +78,12 @@ namespace DUIP
         /// <summary>
         /// Evaluates a given function (of this type) for a given argument.
         /// </summary>
-        public TRes Evaluate(Function<TArg, TRes> Function, TArg Argument)
+        public TRes Evaluate<TArg, TRes>(Function Function, TArg Argument)
         {
             throw new NotImplementedException();
         }
 
-        private Type<TArg> _Argument;
-        private Type<TRes> _Result;
+        private Type _Argument;
+        private Type _Result;
     }   
 }
