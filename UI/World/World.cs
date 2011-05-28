@@ -79,6 +79,21 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Gets the node at the given point, or null if no node occupies the point.
+        /// </summary>
+        public Node NodeAtPoint(Point Point)
+        {
+            foreach (Node node in this._Nodes)
+            {
+                if (node.Area.Occupies(Point))
+                {
+                    return node;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Updates the state of the world by the given amount of time.
         /// </summary>
         public void Update(IEnumerable<Probe> Probes, double Time)

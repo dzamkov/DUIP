@@ -117,6 +117,69 @@ namespace DUIP.UI
             }
         }
 
+        protected override void OnMouseClick(MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                WPoint point = new WPoint(e.X, e.Y);
+                Point pos = this._Project(point);
+                this._Probe.UpdatePosition(pos);
+                ContextMenuStrip cms = this.BuildContextMenu(pos);
+                if (cms != null)
+                {
+                    cms.Show(this, point);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates a context menu for interaction with the given world position, or returns null if no context menu is to be shown.
+        /// </summary>
+        public ContextMenuStrip BuildContextMenu(Point Point)
+        {
+            ContextMenuStrip cms = new ContextMenuStrip();
+
+            Node node = this._World.NodeAtPoint(Point);
+            if (node != null)
+            {
+                cms.Items.Add("Hide").Click += delegate
+                {
+                    this._World.Despawn(node);
+                };
+
+                object data = Content.Export(node.Content);
+                if (data != null)
+                {
+                    cms.Items.Add("Copy").Click += delegate
+                    {
+                        Clipboard.SetDataObject(data, true);
+                        return;
+                    };
+                }
+            }
+
+
+            Disposable<Content> curclipboard = Content.Import(Clipboard.GetDataObject());
+            if (!curclipboard.IsNull)
+            {
+                bool selected = false;
+                cms.Items.Add("Paste").Click += delegate
+                {
+                    selected = true;
+                    this._World.Spawn(curclipboard, Point);
+                };
+                cms.Closed += delegate
+                {
+                    if (!selected)
+                    {
+                        curclipboard.Dispose();
+                    }
+                };
+            }
+
+            return cms;
+        }
+
         protected override void OnMouseWheel(MouseEventArgs e)
         {
             this._WheelDelta += e.Delta;

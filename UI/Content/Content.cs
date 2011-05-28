@@ -33,10 +33,9 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a data object that represents the given content.
         /// </summary>
-        public static DataObject Export(Content Content)
+        public static object Export(Content Content)
         {
-            DataObject data = new DataObject();
-            return data;
+            return "Hellos";
         }
     }
 }
