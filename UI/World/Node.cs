@@ -60,13 +60,17 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets the visual displayed by the node.
+        /// Gets or sets the visual displayed by the node.
         /// </summary>
         public Visual Visual
         {
             get
             {
                 return this._Visual;
+            }
+            set
+            {
+                this._Visual = value;
             }
         }
 

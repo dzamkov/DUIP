@@ -57,6 +57,8 @@
     <Compile Include="UI\Image\Figure.cs" />
     <Compile Include="UI\Image\Image.cs" />
     <Compile Include="UI\Image\RenderContext.cs" />
+    <Compile Include="UI\Transfer\Item.cs" />
+    <Compile Include="UI\Transfer\String.cs" />
     <Compile Include="UI\World\Arc.cs" />
     <Compile Include="UI\Block\Align.cs" />
     <Compile Include="UI\Block\Background.cs" />

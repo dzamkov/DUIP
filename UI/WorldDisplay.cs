@@ -147,19 +147,19 @@ namespace DUIP.UI
                     this._World.Despawn(node);
                 };
 
-                object data = Content.Export(node.Content);
-                if (data != null)
+                Transfer.Item item = Content.Export(node.Content);
+                if (item != null)
                 {
                     cms.Items.Add("Copy").Click += delegate
                     {
-                        Clipboard.SetDataObject(data, true);
+                        item.SetClipboard();
                         return;
                     };
                 }
             }
 
 
-            Disposable<Content> curclipboard = Content.Import(Clipboard.GetDataObject());
+            Disposable<Content> curclipboard = Content.Import(Transfer.Item.FromClipboard());
             if (!curclipboard.IsNull)
             {
                 bool selected = false;
@@ -187,14 +187,14 @@ namespace DUIP.UI
 
         protected override void OnDragEnter(DragEventArgs e)
         {
-            this._DragContent = Content.Import(e.Data);
+            this._DragContent = Content.Import(Transfer.Item.FromDataObject(e.Data));
             if (this._DragContent.IsNull)
             {
                 e.Effect = DragDropEffects.None;
             }
             else
             {
-                e.Effect = DragDropEffects.Move;
+                e.Effect = DragDropEffects.Copy;
             }
         }
 

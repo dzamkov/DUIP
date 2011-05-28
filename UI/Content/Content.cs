@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Forms;
 
 namespace DUIP.UI
 {
@@ -16,26 +15,26 @@ namespace DUIP.UI
         public abstract Disposable<Visual> CreateVisual();
 
         /// <summary>
-        /// Creates content for the given data object, or returns null if not possible.
+        /// Creates an item through which the given content can be transfered, or returns null if not possible.
         /// </summary>
-        public static Disposable<Content> Import(IDataObject Object)
+        public static Transfer.Item Export(Content Content)
         {
-            string[] formats = Object.GetFormats();
-            object filename = Object.GetData("FileName");
-            if (filename != null)
-            {
-                return new StaticContent<Data>(null, null);
-            }
-
-            return null;
+            return new Transfer.StringItem("Test");
         }
 
         /// <summary>
-        /// Creates a data object that represents the given content.
+        /// Imports content from a transferable item, or returns null if not possible.
         /// </summary>
-        public static object Export(Content Content)
+        public static Disposable<Content> Import(Transfer.Item Item)
         {
-            return "Hellos";
+            if (Item is Transfer.StringItem)
+            {
+                return new StaticContent<Data>(null, null);
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 }
