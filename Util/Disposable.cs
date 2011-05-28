@@ -24,6 +24,17 @@ namespace DUIP
             }
         }
 
+        /// <summary>
+        /// Gets if this is null.
+        /// </summary>
+        public bool IsNull
+        {
+            get
+            {
+                return this.Object == null;
+            }
+        }
+
         public static implicit operator T(Disposable<T> Disposable)
         {
             return Disposable.Object;

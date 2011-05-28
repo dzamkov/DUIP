@@ -101,6 +101,49 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Gets the node being dragged by the given probe, or null if the probe is not dragging a node.
+        /// </summary>
+        public static Node Dragged(Probe Probe)
+        {
+            Node node = Probe.Lock as Node;
+            if (node._DragState != null && node._DragState.Probe == Probe)
+            {
+                return node;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Sets the probe that is dragging this node, along with the target offset of the probe from the node. The probe will
+        /// need to be active to maintain dragging.
+        /// </summary>
+        public void SetDrag(Probe Probe, Point Offset)
+        {
+            if (this._DragState != null)
+            {
+                this._DragState.Probe.Lock = null;
+            }
+            this._DragState = new DragState
+            {
+                Probe = Probe,
+                Offset = Offset
+            };
+            Probe.Lock = this;
+        }
+
+        /// <summary>
+        /// Insures that the node is not being dragged by any probes.
+        /// </summary>
+        public void CancelDrag()
+        {
+            if (this._DragState != null)
+            {
+                this._DragState.Probe.Lock = null;
+                this._DragState = null;
+            }
+        }
+
+        /// <summary>
         /// Independently updates the state of this node.
         /// </summary>
         public void Update(World World, IEnumerable<Probe> Probes, double Time)
@@ -119,12 +162,7 @@ namespace DUIP.UI
                     {
                         if (probe.Use(this) && probe.Active)
                         {
-                            this._DragState = new DragState
-                            {
-                                Probe = probe,
-                                Offset = pos - this._Position
-                            };
-                            probe.Lock();
+                            this.SetDrag(probe, pos - this._Position);
                         }
                     }
                 }
@@ -142,15 +180,15 @@ namespace DUIP.UI
                         }
                         else
                         {
-                            probe.Release();
-                            this._DragState = null;
+                            this.CancelDrag();
                         }
                         probefound = true;
+                        break;
                     }
                 }
                 if (!probefound)
                 {
-                    this._DragState = null;
+                    this.CancelDrag();
                 }
             }
         }

@@ -16,20 +16,15 @@ namespace DUIP.UI
         public abstract bool Active { get; }
 
         /// <summary>
+        /// Gets or sets the object that has locked the probe for exclusive use, or null if the probe is available for all objects.
+        /// </summary>
+        public abstract object Lock { get; set; }
+
+        /// <summary>
         /// Determines wether the probe can be used by the given object in the current frame. Once a probe is used in a frame,
         /// it may not be used again until the next frame.
         /// </summary>
         public abstract bool Use(object Object);
-
-        /// <summary>
-        /// Locks the probe, making it unavailable for use by any object other than the one that is currently using it.
-        /// </summary>
-        public abstract void Lock();
-
-        /// <summary>
-        /// Releases a lock on the probe by the object currently using it.
-        /// </summary>
-        public abstract void Release();
 
         /// <summary>
         /// Gets the position of the probe in the world.

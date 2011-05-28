@@ -8,6 +8,8 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
+using WPoint = System.Drawing.Point;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -95,7 +97,8 @@ namespace DUIP.UI
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            this._Probe.UpdatePosition(this._GetMousePosition(e.X, e.Y));
+            WPoint loc = e.Location;
+            this._Probe.UpdatePosition(this._Project(loc));
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -119,9 +122,36 @@ namespace DUIP.UI
             this._WheelDelta += e.Delta;
         }
 
-        protected override void OnDragEnter(DragEventArgs drgevent)
+        protected override void OnDragEnter(DragEventArgs e)
         {
-            this._HasProbe = true;
+            this._DragContent = Content.Import(e.Data);
+            if (this._DragContent.IsNull)
+            {
+                e.Effect = DragDropEffects.None;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.Move;
+            }
+        }
+
+        protected override void OnDragDrop(DragEventArgs e)
+        {
+            if (!this._DragContent.IsNull)
+            {
+                this.TopLevelControl.Focus();
+                this._World.Spawn(this._DragContent, this._Project(this.PointToClient(new WPoint(e.X, e.Y))));
+                this._DragContent = null;
+            }
+        }
+
+        protected override void OnDragLeave(EventArgs e)
+        {
+            if (!this._DragContent.IsNull)
+            {
+                this._DragContent.Dispose();
+                this._DragContent = null;
+            }
         }
 
         /// <summary>
@@ -161,6 +191,18 @@ namespace DUIP.UI
                 }
             }
 
+            public override object Lock
+            {
+                get
+                {
+                    return this._Lock;
+                }
+                set
+                {
+                    this._Lock = value;
+                }
+            }
+
             public override bool Use(object Object)
             {
                 if (this._User == null)
@@ -172,16 +214,6 @@ namespace DUIP.UI
                     }
                 }
                 return false;
-            }
-
-            public override void Lock()
-            {
-                this._Lock = this._User;
-            }
-
-            public override void Release()
-            {
-                this._Lock = null;
             }
 
             public override Point Position
@@ -207,15 +239,16 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets the position of the mouse in world coordinates by the given offset in the client area of the view.
+        /// Gets the world position of a point in coordinates relative to the client area of this control.
         /// </summary>
-        private Point _GetMousePosition(int X, int Y)
+        private Point _Project(WPoint Point)
         {
-            return this._View.Project(new Point(X / (double)this.Width, Y / (double)this.Height));
+            return this._View.Project(new Point(Point.X / (double)this.Width, Point.Y / (double)this.Height));
         }
 
         private int _WheelDelta;
 
+        private Disposable<Content> _DragContent;
         private Probe _Probe;
         private bool _HasProbe;
 

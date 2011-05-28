@@ -55,6 +55,14 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Despawns a node, removing it from the world.
+        /// </summary>
+        public void Despawn(Node Node)
+        {
+            this._Nodes.Remove(Node);
+        }
+
+        /// <summary>
         /// Places the given node into the world, displacing other nodes as needed.
         /// </summary>
         public void Spawn(Node Node)
