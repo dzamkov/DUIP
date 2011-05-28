@@ -13,10 +13,22 @@ namespace DUIP.UI
     /// </summary>
     public class World
     {
-        public World()
+        public World(Theme Theme)
         {
             this._Arcs = new List<Arc>();
             this._Nodes = new List<Node>();
+            this._Theme = Theme;
+        }
+
+        /// <summary>
+        /// Gets the visual theme for the world.
+        /// </summary>
+        public Theme Theme
+        {
+            get
+            {
+                return this._Theme;
+            }
         }
 
         /// <summary>
@@ -47,7 +59,7 @@ namespace DUIP.UI
         /// </summary>
         public Node Spawn(Disposable<Content> Content, Point Location)
         {
-            Visual vis = Content.Object.CreateVisual();
+            Visual vis = Content.Object.CreateVisual(this._Theme);
             Point size = vis.Size;
             Node node = new Node(Content, vis, Location - size * 0.5, Point.Zero);
             this.Spawn(node);
@@ -137,5 +149,6 @@ namespace DUIP.UI
 
         private List<Arc> _Arcs;
         private List<Node> _Nodes;
+        private Theme _Theme;
     }
 }

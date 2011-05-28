@@ -16,24 +16,13 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Sets the theme to be used by the control.
-        /// </summary>
-        public virtual Theme Theme
-        {
-            set
-            {
-                return;
-            }
-        }
-
-        /// <summary>
         /// Sets the allowable size range for the control. Each point in the rectangle given represents a valid size.
         /// </summary>
         public virtual Rectangle SizeRange
         {
             set
             {
-                return;
+                throw new NotImplementedException();
             }
         }
 

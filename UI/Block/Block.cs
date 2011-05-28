@@ -10,9 +10,9 @@ namespace DUIP.UI
     public abstract class Block
     {
         /// <summary>
-        /// Creates a dynamic control (instance) of this block with the given parameters.
+        /// Creates a dynamic control (instance) of this block within the given size range.
         /// </summary>
-        public abstract Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme);
+        public abstract Disposable<Control> CreateControl(Rectangle SizeRange);
 
         /// <summary>
         /// Applies the given border to this block.
@@ -71,6 +71,17 @@ namespace DUIP.UI
             {
                 return SpaceBlock.Singleton;
             }
+        }
+
+        /// <summary>
+        /// Gets a block that displays the given text.
+        /// </summary>
+        public static FlowBlock Text(string String, Font Font, FlowStyle FlowStyle)
+        {
+            FlowBlock fb = new FlowBlock();
+            fb.Style = FlowStyle;
+            fb.AddText(String, Font, true);
+            return fb;
         }
     }
 }

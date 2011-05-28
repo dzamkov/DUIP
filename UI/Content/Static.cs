@@ -15,47 +15,19 @@ namespace DUIP.UI
             this._Type = Type;
         }
 
-        public override Disposable<Visual> CreateVisual()
+        public override Disposable<Visual> CreateVisual(Theme Theme)
         {
-            // Use a generic control for now
-            if (_Typeface.Object == null)
-            {
-                _Typeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Arial"), Font.ASCIICharacters, System.Drawing.FontStyle.Regular, 3, 60.0f, 512);
-            }
-            BitmapFont font = _Typeface.Object.GetFont(0.05, Color.Black);
+            // Get the block for the content
+            Block block = this._Type.CreateBlock(Theme, this._Value);
 
-            FlowBlock testflow = new FlowBlock
-            {
-                Style = new FlowStyle
-                {
-                    Direction = FlowDirection.RightDown,
-                    Justification = FlowJustification.Justify,
-                    LineAlignment = Alignment.Center,
-                    LineSpacing = 0.00,
-                    LineSize = 0.01
-                }
-            };
-            testflow.AddText(
-                "Lorem ipsum dolor sit amet, consec tetur adipis cing elit. Nunc sus cipit phare tra nunc, " +
-                "sit amet fauc ibus risus sceler isque ac. Etiam condi mentum justo quis dolor vehi cula ac volut pat " +
-                "tortor adi piscing. Donec tinci dunt quam quis orci pel lent esque feug iat. Fusce eget nisi ac mi " +
-                "trist ique port titor. Aliq uam et males uada elit. Suspen disse elei fend hend rerit semper. ", font);
-
-            Block testblock = testflow
-                .WithPad(0.05)
-                .WithSize(1.0, 1.0)
-                .WithBorder(new Border
-                {
-                    Color = Color.RGB(0.8, 0.2, 0.2),
-                    Weight = 0.04,
-                })
-                .WithBackground(Color.RGB(0.9, 0.5, 0.5));
-
-            Rectangle sizerange = new Rectangle(1.0, 1.0, 3.0, 3.0);
-
-            return (Control)testblock.CreateControl(sizerange, null);
+            // Apply border and background and create control
+            Border border; Color background;
+            Theme.GetNodeStyle(out border, out background);
+            block = block.WithBorder(border);
+            block = block.WithBackground(background);
+            Rectangle sizerange = new Rectangle(1.0, 1.0, 5.0, 5.0);
+            return (Control)block.CreateControl(sizerange);
         }
-        private static Disposable<BitmapTypeface> _Typeface = null;
 
         /// <summary>
         /// Gets the value for this content.

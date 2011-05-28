@@ -43,11 +43,12 @@
   <ItemGroup>
     <Compile Include="Core\Data.cs" />
     <Compile Include="Core\Function.cs" />
+    <Compile Include="Core\String.cs" />
     <Compile Include="Core\Type.cs" />
     <Compile Include="Data\Handle.cs" />
     <Compile Include="Data\Map.cs" />
     <Compile Include="UI\Ambience\Ambience.cs" />
-    <Compile Include="UI\Block\Theme.cs" />
+    <Compile Include="UI\Theme.cs" />
     <Compile Include="UI\Content\Content.cs" />
     <Compile Include="UI\Content\Static.cs" />
     <Compile Include="UI\Curve.cs" />
@@ -91,6 +92,7 @@
     <Compile Include="Util\Maybe.cs" />
     <Compile Include="Util\Ref.cs" />
     <Compile Include="Util\Registry.cs" />
+    <Compile Include="Util\Relation.cs" />
     <Compile Include="Util\Void.cs" />
     <Compile Include="Util\ID.cs" />
     <Compile Include="Data\Allocator.cs" />

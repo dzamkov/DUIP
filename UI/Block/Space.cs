@@ -19,9 +19,9 @@ namespace DUIP.UI
         /// </summary>
         public static readonly SpaceBlock Singleton = new SpaceBlock();
 
-        public override Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme)
+        public override Disposable<Control> CreateControl(Rectangle SizeRange)
         {
-            return new SpaceControl(SizeRange, Theme);
+            return new SpaceControl(SizeRange);
         }
     }
 
@@ -30,7 +30,7 @@ namespace DUIP.UI
     /// </summary>
     public class SpaceControl : Control
     {
-        public SpaceControl(Rectangle SizeRange, Theme Theme)
+        public SpaceControl(Rectangle SizeRange)
         {
             this._Size = SizeRange.TopLeft;
         }

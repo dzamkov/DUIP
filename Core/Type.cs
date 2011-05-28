@@ -31,6 +31,14 @@ namespace DUIP
             }
             return Maybe<T>.Nothing;
         }
+
+        /// <summary>
+        /// Creates a static block to be used to visualize an instance of this type.
+        /// </summary>
+        public virtual UI.Block CreateBlock(UI.Theme Theme, T Instance)
+        {
+            return UI.Block.Space;
+        }
     }
 
     /// <summary>
@@ -62,6 +70,17 @@ namespace DUIP
             get
             {
                 return DataType.Singleton;
+            }
+        }
+
+        /// <summary>
+        /// Gets the type for strings.
+        /// </summary>
+        public static StringType String
+        {
+            get
+            {
+                return StringType.Singleton;
             }
         }
 

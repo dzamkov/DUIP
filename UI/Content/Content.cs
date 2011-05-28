@@ -12,14 +12,20 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a visual representation of this content to be used within a node.
         /// </summary>
-        public abstract Disposable<Visual> CreateVisual();
+        public abstract Disposable<Visual> CreateVisual(Theme Theme);
 
         /// <summary>
         /// Creates an item through which the given content can be transfered, or returns null if not possible.
         /// </summary>
         public static Transfer.Item Export(Content Content)
         {
-            return new Transfer.StringItem("Test");
+            StaticContent<string> sc = Content as StaticContent<string>;
+            if (sc != null)
+            {
+                return new Transfer.StringItem(sc.Value);
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -27,14 +33,13 @@ namespace DUIP.UI
         /// </summary>
         public static Disposable<Content> Import(Transfer.Item Item)
         {
-            if (Item is Transfer.StringItem)
+            Transfer.StringItem si = Item as Transfer.StringItem;
+            if (si != null)
             {
-                return new StaticContent<Data>(null, null);
+                return new StaticContent<string>(si.String, Type.String);
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
     }
 }

@@ -102,9 +102,9 @@ namespace DUIP.UI
             this.AddText(String, Font, true);
         }
 
-        public override Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme)
+        public override Disposable<Control> CreateControl(Rectangle SizeRange)
         {
-            return new FlowControl(this, SizeRange, Theme);
+            return new FlowControl(this, SizeRange);
         }
 
         private FlowStyle _Style;
@@ -116,7 +116,7 @@ namespace DUIP.UI
     /// </summary>
     public class FlowControl : Control
     {
-        public FlowControl(FlowBlock Block, Rectangle SizeRange, Theme Theme)
+        public FlowControl(FlowBlock Block, Rectangle SizeRange)
         {
             this._FlowStyle = Block.Style;
             double minorsize, majorsize;
@@ -127,7 +127,7 @@ namespace DUIP.UI
             List<Flow.Item> items = new List<Flow.Item>();
             foreach (FlowBlock.Item it in Block.Items)
             {
-                _Append(it, items, this._FlowStyle, SizeRange, Theme);
+                _Append(it, items, this._FlowStyle, SizeRange);
             }
             this._Lines = Flow.Layout(items, this._FlowStyle, minorsize, out majorsize);
             majorsize = Math.Max(minsize.Y, Math.Min(maxsize.Y, majorsize));
@@ -138,12 +138,13 @@ namespace DUIP.UI
         /// <summary>
         /// Appends a flowblock item to a list of layout items.
         /// </summary>
-        private static void _Append(FlowBlock.Item Item, List<Flow.Item> Items, FlowStyle Style, Rectangle SizeRange, Theme Theme)
+        private static void _Append(FlowBlock.Item Item, List<Flow.Item> Items, FlowStyle Style, Rectangle SizeRange)
         {
             // Text
             var text = Item as FlowBlock.Item.Text;
             if (text != null)
             {
+                Font font = text.Font;
                 if (text.GroupWords)
                 {
                     List<Flow.Item> curgroup = new List<Flow.Item>();
@@ -156,19 +157,23 @@ namespace DUIP.UI
                                 Items.Add(new Flow.GroupItem(curgroup));
                                 curgroup = new List<Flow.Item>();
                             }
-                            Items.Add(new _CharItem(text.Font, ' '));
+                            Items.Add(new _CharItem(font, ' '));
                         }
                         else
                         {
-                            curgroup.Add(new _CharItem(text.Font, c));
+                            curgroup.Add(new _CharItem(font, c));
                         }
+                    }
+                    if (curgroup.Count > 0)
+                    {
+                        Items.Add(new Flow.GroupItem(curgroup));
                     }
                 }
                 else
                 {
                     foreach (char c in text.String)
                     {
-                        Items.Add(new _CharItem(text.Font, c));
+                        Items.Add(new _CharItem(font, c));
                     }
                 }
             }

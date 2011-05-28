@@ -50,10 +50,10 @@ namespace DUIP.UI
             }
         }
 
-        public override Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme)
+        public override Disposable<Control> CreateControl(Rectangle SizeRange)
         {
             Compass<double> pad = this._Padding;
-            return new PadControl(pad, this._Inner.CreateControl(GetInnerSizeRange(SizeRange, pad), Theme));
+            return new PadControl(pad, this._Inner.CreateControl(GetInnerSizeRange(SizeRange, pad)));
         }
 
         /// <summary>

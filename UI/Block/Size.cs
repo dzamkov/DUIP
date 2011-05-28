@@ -56,9 +56,9 @@ namespace DUIP.UI
             }
         }
 
-        public override Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme)
+        public override Disposable<Control> CreateControl(Rectangle SizeRange)
         {
-            return new SizeControl(this._SizeRange, SizeRange, this._Inner.CreateControl(GetInnerSizeRange(this._SizeRange, SizeRange), Theme));
+            return new SizeControl(this._SizeRange, SizeRange, this._Inner.CreateControl(GetInnerSizeRange(this._SizeRange, SizeRange)));
         }
 
         /// <summary>
@@ -114,14 +114,6 @@ namespace DUIP.UI
             set
             {
                 this.Inner.SizeRange = SizeBlock.GetInnerSizeRange(this._LimitSizeRange, value);    
-            }
-        }
-
-        public override Theme Theme
-        {
-            set
-            {
-                this.Inner.Theme = value;
             }
         }
 

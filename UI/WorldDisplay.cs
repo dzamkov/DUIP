@@ -32,11 +32,11 @@ namespace DUIP.UI
             RenderContext.Initialize();
             this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
             this._Background = new OceanAmbience(new Random());
-            this._World = new World();
+            this._World = new World(new Theme());
             this._Probe = new Probe();
             this._MakeView();
 
-            StaticContent<Data> testcontent = new StaticContent<Data>(null, Type.Data);
+            Content testcontent = new StaticContent<string>("Hello world", Type.String);
             this._World.Spawn(testcontent, Point.Origin);
         }
 

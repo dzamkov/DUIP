@@ -50,9 +50,9 @@ namespace DUIP.UI
             }
         }
 
-        public override Disposable<Control> CreateControl(Rectangle SizeRange, Theme Theme)
+        public override Disposable<Control> CreateControl(Rectangle SizeRange)
         {
-            return new BackgroundControl(this._Color, this._Inner.CreateControl(SizeRange, Theme));
+            return new BackgroundControl(this._Color, this._Inner.CreateControl(SizeRange));
         }
 
         private Color _Color;
@@ -94,14 +94,6 @@ namespace DUIP.UI
             set
             {
                 this.Inner.SizeRange = value;
-            }
-        }
-
-        public override Theme Theme
-        {
-            set
-            {
-                this.Inner.Theme = value;
             }
         }
 
