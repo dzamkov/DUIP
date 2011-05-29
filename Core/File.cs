@@ -144,8 +144,7 @@ namespace DUIP
 
         public override UI.Block CreateBlock(UI.Theme Theme, File Instance)
         {
-            return UI.Block.Text(Instance.Name, Theme.GetFont(UI.FontPurpose.General), Theme.FlowStyle)
-                .WithPad(Theme.TextPadding);
+            return Theme.GetTextBlock(Instance.Name);
         }
     }
 }

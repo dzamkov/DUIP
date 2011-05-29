@@ -170,14 +170,7 @@ namespace DUIP
         /// </summary>
         public FileMemory Open()
         {
-            try
-            {
-                return new FileMemory(SysFile.Open(this, FileMode.Open, FileAccess.ReadWrite));
-            }
-            catch
-            {
-                return null;
-            }
+            return FileMemory.Open(this);
         }
 
         /// <summary>
@@ -185,16 +178,7 @@ namespace DUIP
         /// </summary>
         public FileMemory Create(long Size)
         {
-            try
-            {
-                FileStream fs = SysFile.Open(this, FileMode.Create, FileAccess.ReadWrite);
-                fs.SetLength(Size);
-                return new FileMemory(fs);
-            }
-            catch
-            {
-                return null;
-            }
+            return FileMemory.Create(this, Size);
         }
 
         private static FileAccess _GetAccess(bool Read, bool Write)

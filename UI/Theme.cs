@@ -64,6 +64,13 @@ namespace DUIP.UI
             }
         }
 
+        /// <summary>
+        /// Gets a block that displays the given text.
+        /// </summary>
+        public Block GetTextBlock(string Text)
+        {
+            return Block.Text(Text, this.GetFont(FontPurpose.General), this.FlowStyle).WithPad(this.TextPadding);
+        }
 
         private BitmapTypeface _DefaultTypeface;
     }

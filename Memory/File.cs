@@ -8,28 +8,108 @@ namespace DUIP
     /// <summary>
     /// Memory for a file on the filesystem.
     /// </summary>
-    public class FileMemory : Memory, IDisposable
+    public class FileMemory : Memory
     {
-        public FileMemory(FileStream FileStream)
+        private FileMemory(Path Path)
         {
-            this._FileStream = FileStream;
+            this._Path = Path;
+        }
+
+        /// <summary>
+        /// Gets the file memory for the file at the given path. Returns null if there is a problem opening the file.
+        /// </summary>
+        public static FileMemory Open(Path Path)
+        {
+            FileMemory fm;
+            if (!_Files.TryGetValue(Path, out fm))
+            {
+                fm = new FileMemory(Path);
+                if (!fm.Open())
+                {
+                    return null;
+                }
+                _Files[Path] = fm;
+            }
+            return fm;
+        }
+
+        /// <summary>
+        /// Creates a file at the given path and return file memory for it. Returns null if there is a problem creating the file.
+        /// </summary>
+        public static FileMemory Create(Path Path, long Size)
+        {
+            try
+            {
+                FileStream fs = System.IO.File.Open(Path, FileMode.Create, FileAccess.ReadWrite);
+                try
+                {
+                    fs.SetLength(Size);
+                    FileMemory fm = new FileMemory(Path);
+                    fm._FileStream = fs;
+                    return _Files[Path] = fm;
+                }
+                finally
+                {
+                    fs.Close();
+                    fs.Dispose();
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Insures the associated file is open and ready for reading and writing. Returns 
+        /// wether the file is (or was) open.
+        /// </summary>
+        public bool Open()
+        {
+            if (this._FileStream == null)
+            {
+                try
+                {
+                    this._FileStream = System.IO.File.Open(this._Path, FileMode.Open, FileAccess.ReadWrite);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Tries closing the associated file, releasing filesystem resources. The file will be reopened when needed. Returns 
+        /// wether the file is (or was) closed.
+        /// </summary>
+        public bool Close()
+        {
+            if (this._FileStream != null)
+            {
+                this._FileStream.Close();
+                this._FileStream.Dispose();
+                this._FileStream = null;
+            }
+            return true;
         }
 
         public override InStream Read()
         {
-            return new _InStream(0, this);
+            return this.Open() ? new _InStream(0, this) : null;
         }
 
         public override OutStream Modify(long Start)
         {
-            return new _OutStream(Start, this);
+            return this.Open() ? new _OutStream(Start, this) : null;
         }
 
         public override long Size
         {
             get
             {
-                return this._FileStream.Length;
+                return this.Open() ? this._FileStream.Length : 0;
             }
         }
 
@@ -42,6 +122,7 @@ namespace DUIP
             {
                 this._Position = Position;
                 this._File = File;
+                this._File._Users++;
             }
 
             public override byte Read()
@@ -63,6 +144,11 @@ namespace DUIP
                 this._File._FileStream.Read(Buffer, Offset, Length);
             }
 
+            public override void Finish()
+            {
+                this._File._Users--;
+            }
+
             private long _Position;
             private FileMemory _File;
         }
@@ -76,6 +162,7 @@ namespace DUIP
             {
                 this._File = File;
                 this._Position = Position;
+                this._File._Users++;
             }
 
             public override void Write(byte Data)
@@ -97,6 +184,11 @@ namespace DUIP
                 this._Position += Amount;
             }
 
+            public override void Finish()
+            {
+                this._File._Users--;
+            }
+
             private long _Position;
             private FileMemory _File;
         }
@@ -112,12 +204,10 @@ namespace DUIP
             }
         }
 
-        public void Dispose()
-        {
-            this._FileStream.Close();
-            this._FileStream.Dispose();
-        }
+        private static Dictionary<string, FileMemory> _Files = new Dictionary<string, FileMemory>();
 
+        private int _Users;
+        private Path _Path;
         private FileStream _FileStream;
     }
 
