@@ -7,52 +7,119 @@ namespace DUIP
     /// <summary>
     /// Represents a static, named container of information that can be imported from or exported to a filesystem.
     /// </summary>
-    public abstract class File
+    public sealed class File
     {
-        /// <summary>
-        /// Gets the name of this file.
-        /// </summary>
-        public abstract string Name { get; }
-    }
+        private File()
+        {
 
-    /// <summary>
-    /// A file that contains a collection of related files.
-    /// </summary>
-    public abstract class FolderFile : File
-    {
+        }
+
         /// <summary>
-        /// Gets the file in this folder with the given name, or null if no such file exists.
+        /// Creates a file with the given data.
         /// </summary>
-        public virtual File this[string Name]
+        public static File CreateDataFile(string Name, Data Data)
+        {
+            return new File
+            {
+                _Name = Name,
+                _Data = Data
+            };
+        }
+
+        /// <summary>
+        /// Creates a folder with the given subfiles.
+        /// </summary>
+        public static File CreateFolder(string Name, IEnumerable<File> Files)
+        {
+            return new File
+            {
+                _Name = Name,
+                _Subfiles = 
+                        (from File f in Files
+                        orderby f.Name ascending
+                        select f).ToArray() // Order the files by name for faster search and folder comparision
+            };
+        }
+
+        /// <summary>
+        /// Gets if the given files have equivalent names and contents.
+        /// </summary>
+        public static bool Equal(File A, File B)
+        {
+            return A.Name == B.Name && EqualContent(A, B);
+        }
+
+        /// <summary>
+        /// Gets if the given files have equivalent contents.
+        /// </summary>
+        public static bool EqualContent(File A, File B)
+        {
+            if (A._Subfiles != null)
+            {
+                if (B._Subfiles != null)
+                {
+                    if (A._Subfiles.Length != B._Subfiles.Length)
+                    {
+                        return false;
+                    }
+                    for (int t = 0; t < A._Subfiles.Length; t++)
+                    {
+                        // Compare names of subfiles first to put off costly content checking
+                        if (A._Subfiles[t].Name != B._Subfiles[t].Name)
+                        {
+                            return false;
+                        }
+                    }
+                    for (int t = 0; t < A._Subfiles.Length; t++)
+                    {
+                        if (!EqualContent(A._Subfiles[t], B._Subfiles[t]))
+                        {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                return false;
+            }
+
+            if (A._Data != null)
+            {
+                if (B._Data != null)
+                {
+                    return Data.Equal(A._Data, B._Data);
+                }
+                return false;
+            }
+
+            // Hopefully, this will never be happen
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the name of the file.
+        /// </summary>
+        public string Name
         {
             get
             {
-                foreach(File f in this.Files)
-                {
-                    if(f.Name == Name)
-                    {
-                        return f;
-                    }
-                }
-                return null;
+                return this._Name;
             }
         }
 
         /// <summary>
-        /// Gets the files in this folder.
+        /// Gets wether this file is a folder (contains other files).
         /// </summary>
-        public abstract IEnumerable<File> Files { get; }
-    }
+        public bool Folder
+        {
+            get
+            {
+                return this._Subfiles != null;
+            }
+        }
 
-    /// <summary>
-    /// A file that contains uninterpreted data.
-    /// </summary>
-    public abstract class DataFile : File
-    {
-        /// <summary>
-        /// Gets the data for this file.
-        /// </summary>
-        public abstract Data Data { get; }
+        private string _Name;
+        private Data _Data;
+        private File[] _Subfiles;
     }
 
     /// <summary>
@@ -72,43 +139,7 @@ namespace DUIP
 
         public sealed override bool Equal(File A, File B)
         {
-            // Compare names
-            if (A.Name != B.Name)
-            {
-                return false;
-            }
-
-            // Compare as folders
-            FolderFile ffa = A as FolderFile;
-            if (ffa != null)
-            {
-                FolderFile ffb = B as FolderFile;
-                if (ffb != null)
-                {
-                    foreach (File asubfile in ffa.Files)
-                    {
-                        File bsubfile = ffb[asubfile.Name];
-                        if (bsubfile == null || !this.Equal(asubfile, bsubfile))
-                        {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-                return false;
-            }
-
-            // Compare as data files
-            DataFile dfa = A as DataFile;
-            if (dfa != null)
-            {
-                DataFile dfb = B as DataFile;
-                if (dfb != null)
-                {
-                    return Type.Data.Equal(dfa.Data, dfb.Data);
-                }
-                return false;
-            }
+            
 
             // Safe answer
             return false;

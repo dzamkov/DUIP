@@ -23,7 +23,7 @@ namespace DUIP
         /// </summary>
         public virtual void Read(byte[] Buffer, int Offset, int Length)
         {
-            for (int t = 0; t < Length; t++)
+            while(--Length >= 0)
             {
                 Buffer[Offset++] = this.Read();
             }
@@ -365,5 +365,115 @@ namespace DUIP
         }
 
         private long _Count;
+    }
+
+    /// <summary>
+    /// A stream that reads from a buffer (an array of bytes).
+    /// </summary>
+    public sealed class BufferInStream : InStream
+    {
+        public BufferInStream(byte[] Buffer, long Position)
+        {
+            this._Buffer = Buffer;
+            this._Position = Position;
+        }
+
+        /// <summary>
+        /// Gets the buffer this stream is reading from.
+        /// </summary>
+        public byte[] Buffer
+        {
+            get
+            {
+                return this._Buffer;
+            }
+        }
+
+        /// <summary>
+        /// Gets the current position of this stream within the buffer.
+        /// </summary>
+        public long Position
+        {
+            get
+            {
+                return this._Position;
+            }
+        }
+
+        public override byte Read()
+        {
+            return this._Buffer[this._Position++];
+        }
+
+        public override void Read(byte[] Buffer, int Offset, int Length)
+        {
+            while (--Length >= 0)
+            {
+                Buffer[Offset++] = this._Buffer[this._Position++];
+            }
+        }
+
+        public override void Advance(long Amount)
+        {
+            this._Position += Amount;
+        }
+
+        private byte[] _Buffer;
+        private long _Position;
+    }
+
+    /// <summary>
+    /// A stream that writes to a buffer (an array of bytes).
+    /// </summary>
+    public sealed class BufferOutStream : OutStream
+    {
+        public BufferOutStream(byte[] Buffer, long Position)
+        {
+            this._Buffer = Buffer;
+            this._Position = Position;
+        }
+
+        /// <summary>
+        /// Gets the buffer this stream is reading from.
+        /// </summary>
+        public byte[] Buffer
+        {
+            get
+            {
+                return this._Buffer;
+            }
+        }
+
+        /// <summary>
+        /// Gets the current position of this stream within the buffer.
+        /// </summary>
+        public long Position
+        {
+            get
+            {
+                return this._Position;
+            }
+        }
+
+        public override void Write(byte Data)
+        {
+            this._Buffer[this._Position++] = Data;
+        }
+
+        public override void Write(byte[] Buffer, int Offset, int Length)
+        {
+            while (Length-- > 0)
+            {
+                this._Buffer[this._Position++] = Buffer[Offset++];
+            }
+        }
+
+        public override void Advance(long Amount)
+        {
+            this._Position += Amount;
+        }
+
+        private byte[] _Buffer;
+        private long _Position;
     }
 }

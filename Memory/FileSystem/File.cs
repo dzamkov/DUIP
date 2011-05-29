@@ -44,7 +44,6 @@ namespace DUIP.FileSystem
             {
                 this._Position = Position;
                 this._File = File;
-                this._File._ReadStreams++;
             }
 
             public override byte Read()
@@ -115,22 +114,12 @@ namespace DUIP.FileSystem
             }
         }
 
-        public override bool Immutable
-        {
-            get
-            {
-                return !this._FileStream.CanWrite;
-            }
-        }
-
         public void Dispose()
         {
             this._FileStream.Close();
             this._FileStream.Dispose();
         }
 
-        private int _ReadStreams;
-        private bool _WriteStream;
         private FileStream _FileStream;
     }
 

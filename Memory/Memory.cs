@@ -51,22 +51,40 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Gets if this memory is immutable. Immutable memory can not be modified using the "Modify" method or by some external method.
-        /// </summary>
-        public virtual bool Immutable
+        /// Gets a partion of this memory.
+        /// </summary>-
+        public PartionMemory GetPartion(long Start, long Size)
         {
-            get
-            {
-                return true;
-            }
+            return new PartionMemory(this, Start, Size);
         }
 
         /// <summary>
-        /// Gets a partion of this memory.
-        /// </summary>-
-        public PartionMemory Partion(long Start, long Size)
+        /// Gets a data from a section of this memory in its current state, or returns null if not possible. The resulting data must be immutable and all
+        /// read calls on the data must succeed.
+        /// </summary>
+        public virtual Data GetData(long Start, long Size)
         {
-            return new PartionMemory(this, Start, Size);
+            InStream str = this.Read(Start);
+            if (str != null)
+            {
+                // Creating a buffer is the only way to insure data can not be modified.
+                try
+                {
+                    int isize = checked((int)Size);
+                    byte[] buffer = new byte[isize];
+                    str.Read(buffer, 0, isize);
+                    return new BufferData(buffer);
+                }
+                catch (OverflowException)
+                {
+                    return null;
+                }
+                finally
+                {
+                    str.Finish();
+                }
+            }
+            return null;
         }
     }
 
@@ -103,14 +121,6 @@ namespace DUIP
             return this._Source.Read(this._Start + Start);
         }
 
-        public override bool Immutable
-        {
-            get
-            {
-                return this._Source.Immutable;
-            }
-        }
-
         public override long Size
         {
             get
@@ -122,6 +132,11 @@ namespace DUIP
         public override OutStream Modify(long Start)
         {
             return this._Source.Modify(this._Start + Start);
+        }
+
+        public override Data GetData(long Start, long Size)
+        {
+            return this._Source.GetData(this._Start + Start, Size);
         }
 
         private Memory _Source;
