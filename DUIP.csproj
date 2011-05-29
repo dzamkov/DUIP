@@ -46,8 +46,7 @@
     <Compile Include="Core\Function.cs" />
     <Compile Include="Core\String.cs" />
     <Compile Include="Core\Type.cs" />
-    <Compile Include="Memory\FileSystem\DirectoryAllocator.cs" />
-    <Compile Include="Memory\FileSystem\Path.cs" />
+    <Compile Include="Memory\Path.cs" />
     <Compile Include="Memory\Handle.cs" />
     <Compile Include="Memory\Map.cs" />
     <Compile Include="UI\Ambience\Ambience.cs" />
@@ -61,6 +60,7 @@
     <Compile Include="UI\Image\Figure.cs" />
     <Compile Include="UI\Image\Image.cs" />
     <Compile Include="UI\Image\RenderContext.cs" />
+    <Compile Include="UI\Transfer\File.cs" />
     <Compile Include="UI\Transfer\Item.cs" />
     <Compile Include="UI\Transfer\String.cs" />
     <Compile Include="UI\World\Arc.cs" />
@@ -101,7 +101,7 @@
     <Compile Include="Memory\Allocator.cs" />
     <Compile Include="Memory\HashMap.cs" />
     <Compile Include="Util\Equality.cs" />
-    <Compile Include="Memory\FileSystem\File.cs" />
+    <Compile Include="Memory\File.cs" />
     <Compile Include="Memory\Memory.cs" />
     <Compile Include="Util\Math\BigInt.cs" />
     <Compile Include="Util\Ordering.cs" />

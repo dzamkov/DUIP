@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 
-namespace DUIP.FileSystem
+namespace DUIP
 {
-    using File = System.IO.File;
+    using SysPath = System.IO.Path;
+    using SysFile = System.IO.File;
 
     /// <summary>
     /// A file path on the file system.
@@ -24,7 +25,7 @@ namespace DUIP.FileSystem
         {
             get
             {
-                return this._Path + System.IO.Path.DirectorySeparatorChar + File;
+                return this._Path + SysPath.DirectorySeparatorChar + File;
             }
         }
 
@@ -35,7 +36,29 @@ namespace DUIP.FileSystem
         {
             get
             {
-                return System.IO.Path.GetDirectoryName(this) ?? this;
+                return SysPath.GetDirectoryName(this) ?? this;
+            }
+        }
+
+        /// <summary>
+        /// Gets the name of the file or folder at this path.
+        /// </summary>
+        public string Name
+        {
+            get
+            {
+                return SysPath.GetFileName(this);
+            }
+        }
+
+        /// <summary>
+        /// Gets the files (and folders) in the directory at this path.
+        /// </summary>
+        public IEnumerable<Path> Subfiles
+        {
+            get
+            {
+                throw new NotImplementedException();
             }
         }
 
@@ -46,7 +69,7 @@ namespace DUIP.FileSystem
         {
             get
             {
-                return Directory.Exists(this) || File.Exists(this);
+                return Directory.Exists(this) || SysFile.Exists(this);
             }
         }
 
@@ -68,7 +91,7 @@ namespace DUIP.FileSystem
         {
             get
             {
-                return File.Exists(this);
+                return SysFile.Exists(this);
             }
         }
 
@@ -97,7 +120,7 @@ namespace DUIP.FileSystem
         {
             if (this.FileExists)
             {
-                File.Delete(this);
+                SysFile.Delete(this);
                 return true;
             }
             if (this.DirectoryExists)
@@ -124,13 +147,32 @@ namespace DUIP.FileSystem
         }
 
         /// <summary>
+        /// Gets a file representation of the contents at this path, or null if the path does not exist.
+        /// </summary>
+        public File GetFile()
+        {
+            if (this.DirectoryExists)
+            {
+                return File.CreateFolder(this.Name,
+                    from file in this.Subfiles
+                    select file.GetFile());
+            }
+            if (this.FileExists)
+            {
+                FileMemory fm = this.Open();
+                return File.CreateDataFile(this.Name, fm.GetData(0, fm.Size));
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Opens the file at this path as data. If no file exists, null will be returned.
         /// </summary>
         public FileMemory Open()
         {
             try
             {
-                return new FileMemory(File.Open(this, FileMode.Open, FileAccess.ReadWrite));
+                return new FileMemory(SysFile.Open(this, FileMode.Open, FileAccess.ReadWrite));
             }
             catch
             {
@@ -145,7 +187,7 @@ namespace DUIP.FileSystem
         {
             try
             {
-                FileStream fs = File.Open(this, FileMode.Create, FileAccess.ReadWrite);
+                FileStream fs = SysFile.Open(this, FileMode.Create, FileAccess.ReadWrite);
                 fs.SetLength(Size);
                 return new FileMemory(fs);
             }
@@ -175,7 +217,7 @@ namespace DUIP.FileSystem
         {
             try
             {
-                return new FileInStream(File.OpenRead(this));
+                return new FileInStream(SysFile.OpenRead(this));
             }
             catch
             {
@@ -190,7 +232,7 @@ namespace DUIP.FileSystem
         {
             try
             {
-                return new FileOutStream(File.Open(this, FileMode.Create, FileAccess.Write));
+                return new FileOutStream(SysFile.Open(this, FileMode.Create, FileAccess.Write));
             }
             catch
             {
@@ -205,7 +247,7 @@ namespace DUIP.FileSystem
         {
             try
             {
-                return new FileOutStream(File.Open(this, FileMode.Append, FileAccess.Write));
+                return new FileOutStream(SysFile.Open(this, FileMode.Append, FileAccess.Write));
             }
             catch
             {

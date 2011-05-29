@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 
-namespace DUIP.FileSystem
+namespace DUIP
 {
-    using File = System.IO.File;
-
     /// <summary>
     /// Memory for a file on the filesystem.
     /// </summary>

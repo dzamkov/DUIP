@@ -39,6 +39,12 @@ namespace DUIP.UI
                 return new StaticContent<string>(si.String, Type.String);
             }
 
+            Transfer.FileItem fi = Item as Transfer.FileItem;
+            if (fi != null)
+            {
+                return new StaticContent<File>(fi.GetFile(), Type.File);
+            }
+
             return null;
         }
     }

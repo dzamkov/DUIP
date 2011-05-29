@@ -182,7 +182,7 @@ namespace DUIP
 
         public override bool Equal(Data A, Data B)
         {
-            return Data.Equal(A, B);
+            return DUIP.Data.Equal(A, B);
         }
     }
 }

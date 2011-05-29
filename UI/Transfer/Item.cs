@@ -15,10 +15,18 @@ namespace DUIP.UI.Transfer
         /// </summary>
         public static Item FromClipboard()
         {
-            string text = Clipboard.GetText();
-            if (text != null)
+            if (Clipboard.ContainsText())
             {
-                return new StringItem(text);
+                return new StringItem(Clipboard.GetText());
+            }
+
+            if (Clipboard.ContainsFileDropList())
+            {
+                var files = Clipboard.GetFileDropList();
+                if (files.Count == 1)
+                {
+                    return new StandardFileItem(files[0]);
+                }
             }
 
             return null;
@@ -29,10 +37,18 @@ namespace DUIP.UI.Transfer
         /// </summary>
         public static Item FromDataObject(IDataObject Object)
         {
+            string[] formats = Object.GetFormats();
+
             string text = Object.GetData("Text") as string;
             if (text != null)
             {
                 return new StringItem(text);
+            }
+
+            string[] file = (Object.GetData("FileNameW") as string[]) ?? (Object.GetData("FileName") as string[]);
+            if (file != null && file.Length == 1)
+            {
+                return new StandardFileItem(file[0]);
             }
 
             return null;

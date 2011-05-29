@@ -139,10 +139,13 @@ namespace DUIP
 
         public sealed override bool Equal(File A, File B)
         {
-            
+            return DUIP.File.Equal(A, B);
+        }
 
-            // Safe answer
-            return false;
+        public override UI.Block CreateBlock(UI.Theme Theme, File Instance)
+        {
+            return UI.Block.Text(Instance.Name, Theme.GetFont(UI.FontPurpose.General), Theme.FlowStyle)
+                .WithPad(Theme.TextPadding);
         }
     }
 }
