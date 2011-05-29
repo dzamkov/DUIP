@@ -42,9 +42,12 @@
   -->
   <ItemGroup>
     <Compile Include="Core\Data.cs" />
+    <Compile Include="Core\File.cs" />
     <Compile Include="Core\Function.cs" />
     <Compile Include="Core\String.cs" />
     <Compile Include="Core\Type.cs" />
+    <Compile Include="Data\FileSystem\DirectoryAllocator.cs" />
+    <Compile Include="Data\FileSystem\Path.cs" />
     <Compile Include="Data\Handle.cs" />
     <Compile Include="Data\Map.cs" />
     <Compile Include="UI\Ambience\Ambience.cs" />
@@ -98,7 +101,7 @@
     <Compile Include="Data\Allocator.cs" />
     <Compile Include="Data\HashMap.cs" />
     <Compile Include="Util\Equality.cs" />
-    <Compile Include="Data\File.cs" />
+    <Compile Include="Data\FileSystem\File.cs" />
     <Compile Include="Data\Memory.cs" />
     <Compile Include="Util\Math\BigInt.cs" />
     <Compile Include="Util\Ordering.cs" />

@@ -16,23 +16,6 @@ namespace DUIP
         public abstract bool Equal(T A, T B);
 
         /// <summary>
-        /// Merges the change from Base to A and Base to B and applies them to Base, taking into
-        /// account the intentions of the type. Returns nothing if a logical merging is not possible or attempted.
-        /// </summary>
-        public virtual Maybe<T> Merge(T Base, T A, T B)
-        {
-            if (this.Equal(Base, A))
-            {
-                return B;
-            }
-            if (this.Equal(Base, B))
-            {
-                return A;
-            }
-            return Maybe<T>.Nothing;
-        }
-
-        /// <summary>
         /// Creates a static block to be used to visualize an instance of this type.
         /// </summary>
         public virtual UI.Block CreateBlock(UI.Theme Theme, T Instance)
@@ -81,6 +64,17 @@ namespace DUIP
             get
             {
                 return StringType.Singleton;
+            }
+        }
+
+        /// <summary>
+        /// Gets the type for files.
+        /// </summary>
+        public static FileType File
+        {
+            get
+            {
+                return FileType.Singleton;
             }
         }
 

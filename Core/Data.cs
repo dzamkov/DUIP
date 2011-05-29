@@ -54,11 +54,5 @@ namespace DUIP
             }
             return true;
         }
-
-        public override Maybe<Data> Merge(Data Base, Data A, Data B)
-        {
-            // Make no attempt to merge, or even equate data. The process is usually unnecessary.
-            return Maybe<Data>.Nothing;
-        }
     }
 }

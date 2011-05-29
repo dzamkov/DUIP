@@ -141,9 +141,9 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Loads a texture from a file.
+        /// Loads a texture from a file on the filesystem.
         /// </summary>
-        public static Texture Load(Path Path)
+        public static Texture Load(FileSystem.Path Path)
         {
             using (Bitmap bm = new Bitmap(Path))
             {
@@ -198,9 +198,9 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Creates a texture by sampling an image while using the given path for caching.
+        /// Creates a texture by sampling an image while using the given filesystem path for caching.
         /// </summary>
-        public static Texture CacheCreate<TImage>(Path Cache, Func<TImage> Image, Rectangle Area, int Width, int Height)
+        public static Texture CacheCreate<TImage>(FileSystem.Path Cache, Func<TImage> Image, Rectangle Area, int Width, int Height)
             where TImage : IImage
         {
             if (Cache.FileExists)
