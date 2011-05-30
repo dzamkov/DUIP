@@ -122,7 +122,8 @@ namespace DUIP.UI
                     // Create texture
                     Texture tex = Texture.Create(bd, Texture.Format.A8, false);
 
-                    // Create mipmaps (using sinc filter to give more sharpness than the default box filter).
+                    // Create mipmaps (using lancsoz filter to give more sharpness than the default box filter).
+                    double[] filter = _CreateLanczosFilter(6, 6.0);
                     unsafe
                     {
                         byte* source = (byte*)bd.Scan0.ToPointer();
@@ -133,7 +134,7 @@ namespace DUIP.UI
                         while (tsize > 0)
                         {
                             int nsize = tsize / 2;
-                            _Downsample(source, temp, dest, tsize);
+                            _Downsample(filter, source, temp, dest, tsize);
                             Texture.SetImage(Texture.Format.A8, level, nsize, nsize, new IntPtr(dest));
 
                             // Swap source and destination buffers
@@ -157,20 +158,18 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Downsamples the square bitmap in Source by a factor of 4 (2 on each axis) and outputs the result to Dest. Requires the use of a temporary
-        /// buffer with a size half that of the source buffer.
+        /// Creates a windowed lanczos filter for downsampling.
         /// </summary>
-        private static unsafe void _Downsample(byte* Source, byte* Temp, byte* Dest, int Size)
+        private static double[] _CreateLanczosFilter(int Size, double Radius)
         {
-            double[] filter = new double[6];
+            double[] filter = new double[Size];
 
             // Create filter
-            double len = filter.Length;
             double tot = 0.0;
             for (int t = 0; t < filter.Length; t++)
             {
                 double par = Math.PI * (t * 0.5 + 0.25);
-                double val = len * Math.Sin(par) * Math.Sin(par / len) / (par * par);
+                double val = Radius * Math.Sin(par) * Math.Sin(par / Radius) / (par * par);
                 filter[t] = val;
                 tot += val;
             }
@@ -182,7 +181,16 @@ namespace DUIP.UI
                 filter[t] *= mult;
             }
 
+            return filter;
+        }
 
+        /// <summary>
+        /// Downsamples the square bitmap in Source by a factor of 4 (2 on each axis) and outputs the result to Dest. Requires the use of a temporary
+        /// buffer with a size half that of the source buffer.
+        /// </summary>
+        private static unsafe void _Downsample(double[] Filter, byte* Source, byte* Temp, byte* Dest, int Size)
+        {
+          
             int hsize = Size / 2;
 
             // Horizontal filter from Source to Temp
@@ -192,11 +200,11 @@ namespace DUIP.UI
                 byte* destscan = Temp + (hsize * y);
                 for (int x = 0; x < hsize; x++)
                 {
-                    tot = 0.0;
+                    double tot = 0.0;
                     int rx = x * 2;
-                    for (int r = 0; r < filter.Length; r++)
+                    for (int r = 0; r < Filter.Length; r++)
                     {
-                        double f = filter[r];
+                        double f = Filter[r];
                         int sx = rx - r;
                         int ex = rx + r + 1;
                         if (sx >= 0)
@@ -220,11 +228,11 @@ namespace DUIP.UI
                 byte* destoff = Dest + x;
                 for (int y = 0; y < hsize; y++)
                 {
-                    tot = 0.0;
+                    double tot = 0.0;
                     int ry = y * 2;
-                    for (int r = 0; r < filter.Length; r++)
+                    for (int r = 0; r < Filter.Length; r++)
                     {
-                        double f = filter[r];
+                        double f = Filter[r];
                         int sy = ry - r;
                         int ey = ry + r + 1;
                         if (sy >= 0)
