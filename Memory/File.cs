@@ -86,13 +86,20 @@ namespace DUIP
         /// </summary>
         public bool Close()
         {
-            if (this._FileStream != null)
+            if (this._Users > 0)
             {
-                this._FileStream.Close();
-                this._FileStream.Dispose();
-                this._FileStream = null;
+                return false;
             }
-            return true;
+            else
+            {
+                if (this._FileStream != null)
+                {
+                    this._FileStream.Close();
+                    this._FileStream.Dispose();
+                    this._FileStream = null;
+                }
+                return true;
+            }
         }
 
         public override InStream Read()

@@ -15,6 +15,29 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Gets the total data size of the file in bytes, assuming it takes no data to store file names.
+        /// </summary>
+        public long Size
+        {
+            get
+            {
+                if (this._Data != null)
+                {
+                    return this._Data.Size;
+                }
+                else
+                {
+                    long size = 0;
+                    foreach (File file in this._Subfiles)
+                    {
+                        size += file.Size;
+                    }
+                    return size;
+                }
+            }
+        }
+
+        /// <summary>
         /// Creates a file with the given data.
         /// </summary>
         public static File CreateDataFile(string Name, Data Data)
@@ -144,7 +167,7 @@ namespace DUIP
 
         public override UI.Block CreateBlock(UI.Theme Theme, File Instance)
         {
-            return Theme.GetTextBlock(Instance.Name);
+            return Theme.GetTextBlock(Instance.Name + " : " + Instance.Size.ToString());
         }
     }
 }

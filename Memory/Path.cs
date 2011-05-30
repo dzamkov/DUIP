@@ -58,7 +58,11 @@ namespace DUIP
         {
             get
             {
-                throw new NotImplementedException();
+                IEnumerable<string> files = Directory.GetFiles(this);
+                IEnumerable<string> folders = Directory.GetDirectories(this);
+                return
+                    from file in files.Concat(folders)
+                    select (Path)file;
             }
         }
 
