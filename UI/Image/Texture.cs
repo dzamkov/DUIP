@@ -316,10 +316,7 @@ namespace DUIP.UI
                 TextureEnvParameter.TextureEnvMode,
                 (float)TextureEnvMode.Modulate);
 
-            GL.TexImage2D(TextureTarget.Texture2D,
-                0, Format.PixelInternalFormat,
-                Data.Width, Data.Height, 0,
-                Format.PixelFormat, Format.PixelType, Data.Scan0);
+            SetImage(Format, 0, Data.Width, Data.Height, Data.Scan0);
 
             Texture tex = new Texture(id);
             if (Mipmap)
@@ -332,6 +329,16 @@ namespace DUIP.UI
                 SetFilterMode(TextureMinFilter.Linear, TextureMagFilter.Linear);
             }
             return new Texture(id);
+        }
+
+        /// <summary>
+        /// Sets the image of a certain mipmap level of the current texture from a pointer to image data.
+        /// </summary>
+        public static void SetImage(Format Format, int Level, int Width, int Height, IntPtr Data)
+        {
+            GL.TexImage2D(TextureTarget.Texture2D,
+                Level, Format.PixelInternalFormat, Width, Height, 0,
+                Format.PixelFormat, Format.PixelType, Data);
         }
 
         public void Dispose()

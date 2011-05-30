@@ -655,7 +655,7 @@ namespace DUIP.UI
                 {
                     minminorsize = Math.Max(line.UsedLength, minminorsize);
                 }
-                minorsize = minminorsize;
+                minorsize = Math.Max(minminorsize, SizeRange.Left);
 
                 // Compare scores
                 double score = _GetScore(minorsize, majorsize, SizeRange, Style);

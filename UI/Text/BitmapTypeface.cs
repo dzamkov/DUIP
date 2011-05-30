@@ -62,7 +62,7 @@ namespace DUIP.UI
         /// <param name="Characters">The characters to include in the bitmap font.</param>
         /// <param name="FontSize">The size in pixels to use for the font in the bitmap. This affects the quality of the displayed characters and the
         /// amount of bitmap space needed. This has no relation to the size of displayed glyphs.</param>
-        /// <param name="Size">The edge-length in pixels, of the created bitmap.</param>
+        /// <param name="Size">The edge-length in pixels, of the created bitmap. This should be a power of two.</param>
         /// <param name="CharacterPadding">The amount of padding, in pixels, to put around characters in the texture.</param>
         public static Disposable<BitmapTypeface> Create(
             FontFamily Family, IEnumerable<char> Characters, FontStyle Style, int CharacterPadding,
@@ -120,11 +120,124 @@ namespace DUIP.UI
                     }
 
                     // Create texture
-                    Texture tex = Texture.Create(bd, Texture.Format.A8, true);
+                    Texture tex = Texture.Create(bd, Texture.Format.A8, false);
+
+                    // Create mipmaps (using sinc filter to give more sharpness than the default box filter).
+                    unsafe
+                    {
+                        byte* source = (byte*)bd.Scan0.ToPointer();
+                        byte* temp = source + (Size * Size);
+                        byte* dest = temp + (Size * Size / 2);
+                        int level = 1;
+                        int tsize = Size;
+                        while (tsize > 0)
+                        {
+                            int nsize = tsize / 2;
+                            _Downsample(source, temp, dest, tsize);
+                            Texture.SetImage(Texture.Format.A8, level, nsize, nsize, new IntPtr(dest));
+
+                            // Swap source and destination buffers
+                            byte* t = source;
+                            source = dest;
+                            dest = t;
+
+                            level++;
+                            tsize = nsize;
+                        }
+                    }
+
+
                     bm.UnlockBits(bd);
 
+                    Texture.SetFilterMode(TextureMinFilter.LinearMipmapLinear, TextureMagFilter.Linear);
                     Texture.SetWrapMode(TextureWrapMode.Clamp, TextureWrapMode.Clamp);
                     return new BitmapTypeface(tex, glyphmap, (double)Size / (double)FontSize);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Downsamples the square bitmap in Source by a factor of 4 (2 on each axis) and outputs the result to Dest. Requires the use of a temporary
+        /// buffer with a size half that of the source buffer.
+        /// </summary>
+        private static unsafe void _Downsample(byte* Source, byte* Temp, byte* Dest, int Size)
+        {
+            double[] filter = new double[6];
+
+            // Create filter
+            double len = filter.Length;
+            double tot = 0.0;
+            for (int t = 0; t < filter.Length; t++)
+            {
+                double par = Math.PI * (t * 0.5 + 0.25);
+                double val = len * Math.Sin(par) * Math.Sin(par / len) / (par * par);
+                filter[t] = val;
+                tot += val;
+            }
+
+            // Normalize
+            double mult = 0.5 / tot;
+            for (int t = 0; t < filter.Length; t++)
+            {
+                filter[t] *= mult;
+            }
+
+
+            int hsize = Size / 2;
+
+            // Horizontal filter from Source to Temp
+            for (int y = 0; y < Size; y++)
+            {
+                byte* sourcescan = Source + (Size * y);
+                byte* destscan = Temp + (hsize * y);
+                for (int x = 0; x < hsize; x++)
+                {
+                    tot = 0.0;
+                    int rx = x * 2;
+                    for (int r = 0; r < filter.Length; r++)
+                    {
+                        double f = filter[r];
+                        int sx = rx - r;
+                        int ex = rx + r + 1;
+                        if (sx >= 0)
+                        {
+                            tot += sourcescan[sx] * f;
+                        }
+                        if (ex < Size)
+                        {
+                            tot += sourcescan[ex] * f;
+                        }
+                    }
+                    byte res = (byte)Math.Min(Math.Max(tot, 0.0), 255.0);
+                    destscan[x] = res;
+                }
+            }
+
+            // Vertical filter from Temp to Dest
+            for (int x = 0; x < hsize; x++)
+            {
+                byte* sourceoff = Temp + x;
+                byte* destoff = Dest + x;
+                for (int y = 0; y < hsize; y++)
+                {
+                    tot = 0.0;
+                    int ry = y * 2;
+                    for (int r = 0; r < filter.Length; r++)
+                    {
+                        double f = filter[r];
+                        int sy = ry - r;
+                        int ey = ry + r + 1;
+                        if (sy >= 0)
+                        {
+                            tot += sourceoff[sy * hsize] * f;
+                        }
+                        if (ey < Size)
+                        {
+                            tot += sourceoff[ey * hsize] * f;
+                        }
+                    }
+                    byte res = (byte)Math.Min(Math.Max(tot, 0.0), 255.0);
+                    destoff[y * hsize] = res;
                 }
             }
         }

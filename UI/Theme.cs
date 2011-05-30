@@ -11,7 +11,7 @@ namespace DUIP.UI
     {
         public Theme()
         {
-            this._DefaultTypeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Arial"), Font.ASCIICharacters, System.Drawing.FontStyle.Regular, 3, 60.0f, 512);
+            this._DefaultTypeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Arial"), Font.ASCIICharacters, System.Drawing.FontStyle.Regular, 8, 45.0f, 512);
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace DUIP.UI
                 return new FlowStyle
                 {
                     Direction = FlowDirection.RightDown,
-                    Justification = FlowJustification.Ragged,
+                    Justification = FlowJustification.Justify,
                     LineAlignment = Alignment.Center,
                     LineSpacing = 0.00,
                     LineSize = 0.01
