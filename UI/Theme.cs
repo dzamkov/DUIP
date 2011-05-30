@@ -45,7 +45,7 @@ namespace DUIP.UI
                 return new FlowStyle
                 {
                     Direction = FlowDirection.RightDown,
-                    Justification = FlowJustification.Justify,
+                    Justification = FlowJustification.Ragged,
                     LineAlignment = Alignment.Center,
                     LineSpacing = 0.00,
                     LineSize = 0.01

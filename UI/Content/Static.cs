@@ -25,7 +25,7 @@ namespace DUIP.UI
             Theme.GetNodeStyle(out border, out background);
             block = block.WithBorder(border);
             block = block.WithBackground(background);
-            Rectangle sizerange = new Rectangle(1.0, 1.0, 5.0, 5.0);
+            Rectangle sizerange = new Rectangle(0.1, 0.1, 5.0, 5.0);
             return (Control)block.CreateControl(sizerange);
         }
 

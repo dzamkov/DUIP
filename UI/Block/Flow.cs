@@ -119,20 +119,17 @@ namespace DUIP.UI
         public FlowControl(FlowBlock Block, Rectangle SizeRange)
         {
             this._FlowStyle = Block.Style;
-            double minorsize, majorsize;
             Point minsize = SizeRange.TopLeft.Shift(this._FlowStyle.MinorAxis);
             Point maxsize = SizeRange.BottomRight.Shift(this._FlowStyle.MinorAxis);
-            minorsize = minsize.X;
 
-            List<Flow.Item> items = new List<Flow.Item>();
+            this._Items = new List<Flow.Item>();
             foreach (FlowBlock.Item it in Block.Items)
             {
-                _Append(it, items, this._FlowStyle, SizeRange);
+                _Append(it, this._Items, this._FlowStyle, SizeRange);
             }
-            this._Lines = Flow.Layout(items, this._FlowStyle, minorsize, out majorsize);
-            majorsize = Math.Max(minsize.Y, Math.Min(maxsize.Y, majorsize));
 
-            this._Size = new Point(minorsize, majorsize).Shift(this._FlowStyle.MinorAxis);
+            this._Lines = Flow.Layout(this._Items, this._FlowStyle, new Rectangle(minsize, maxsize), out this._Size);
+            this._Size = this._Size.Shift(this._FlowStyle.MinorAxis);
         }
 
         /// <summary>
@@ -278,6 +275,7 @@ namespace DUIP.UI
             }
         }
 
+        private List<Flow.Item> _Items;
         private List<Flow.Line> _Lines;
         private FlowStyle _FlowStyle;
         private Point _Size;
@@ -617,7 +615,89 @@ namespace DUIP.UI
         /// <param name="MajorSize">The size required on the major axis to place all items.</param>
         public static List<Line> Layout(IEnumerable<Item> Items, FlowStyle Style, double MinorSize, out double MajorSize)
         {
-            // Build lines
+            List<Line> lines = _BuildLines(Items, Style, MinorSize);
+            _LayoutLines(lines, Style, MinorSize, out MajorSize);
+            return lines;
+        }
+
+        /// <summary>
+        /// Performs layout on a collection of flow items while selecting an aesthetically pleasing
+        /// size within the given size range (with the minor axis being X, and the major axis being Y). 
+        /// Returns a list of the lines the items are arranged in. Returns null if no possible 
+        /// arrangement to fit all the items is found.
+        /// </summary>
+        public static List<Line> Layout(IEnumerable<Item> Items, FlowStyle Style, Rectangle SizeRange, out Point Size)
+        {
+            // Try minimizing score by selecting a good minor size.
+            double bestscore = double.PositiveInfinity;
+            double bestsize = 0.0;
+            List<Line> best = null;
+            double minorsize = SizeRange.Right;
+            while (true)
+            {
+                List<Line> lines = _BuildLines(Items, Style, minorsize);
+                if (lines == null)
+                {
+                    break;
+                }
+
+                // Get the major size required for the layout
+                double majorsize = _GetMajorSize(lines, Style);
+                if (majorsize > SizeRange.Bottom)
+                {
+                    break;
+                }
+                majorsize = Math.Max(majorsize, SizeRange.Top);
+
+                // Set the minor size to be as small as possible while still containing the same lines.
+                double minminorsize = 0.0;
+                foreach (Line line in lines)
+                {
+                    minminorsize = Math.Max(line.UsedLength, minminorsize);
+                }
+                minorsize = minminorsize;
+
+                // Compare scores
+                double score = _GetScore(minorsize, majorsize, SizeRange, Style);
+                if (score < bestscore)
+                {
+                    bestscore = score;
+                    bestsize = minorsize;
+                    best = lines;
+                }
+
+                // Continue with the next minor size, if possible
+                minorsize = minorsize * 0.9;
+                if (minorsize < SizeRange.Left)
+                {
+                    break;
+                }
+            }
+
+            if (best != null)
+            {
+                double majorsize;
+                _LayoutLines(best, Style, bestsize, out majorsize);
+                Size = new Point(bestsize, majorsize);
+                return best;
+            }
+            Size = Point.Zero;
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the aesthetic score of the given layout. The lower the score, the better the layout.
+        /// </summary>
+        private static double _GetScore(double MinorSize, double MajorSize, Rectangle SizeRange, FlowStyle Style)
+        {
+            return (MinorSize - SizeRange.Left) * (MajorSize - SizeRange.Top);
+        }
+
+        /// <summary>
+        /// Tries arranging the given items into lines using the given style and minor size. Returns null if not possible.
+        /// </summary>
+        private static List<Line> _BuildLines(IEnumerable<Item> Items, FlowStyle Style, double MinorSize)
+        {
             List<Line> lines = new List<Line>();
             Line curline = null;
             foreach (Item item in Items)
@@ -626,24 +706,44 @@ namespace DUIP.UI
                 {
                     curline = new Line(Style);
                     lines.Add(curline);
-                    curline._TryAppend(item, MinorSize, Style);
+                    if (!curline._TryAppend(item, MinorSize, Style))
+                    {
+                        return null;
+                    }
                 }
             }
+            return lines;
+        }
 
-            // Layout lines
+        /// <summary>
+        /// Performs layout on lines and items within them.
+        /// </summary>
+        private static void _LayoutLines(IEnumerable<Line> Lines, FlowStyle Style, double MinorSize, out double MajorSize)
+        {
             double majorposition = 0.0;
             double majorsize = 0.0;
-            foreach (Line line in lines)
+            foreach (Line line in Lines)
             {
                 line._Layout(majorposition, MinorSize, Style);
                 majorsize = majorposition + line.MajorSize;
                 majorposition = majorsize + Style.LineSpacing;
             }
             MajorSize = majorsize;
+        }
 
-
-            // Return lines
-            return lines;
+        /// <summary>
+        /// Gets the major size needed to display the given lines using the given style.
+        /// </summary>
+        private static double _GetMajorSize(IEnumerable<Line> Lines, FlowStyle Style)
+        {
+            double majorposition = 0.0;
+            double majorsize = 0.0;
+            foreach (Line line in Lines)
+            {
+                majorsize = majorposition + line.MajorSize;
+                majorposition = majorsize + Style.LineSpacing;
+            }
+            return majorsize;
         }
     }
 }

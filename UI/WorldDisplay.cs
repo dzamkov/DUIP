@@ -36,7 +36,9 @@ namespace DUIP.UI
             this._Probe = new Probe();
             this._MakeView();
 
-            Content testcontent = new StaticContent<string>("Hello world", Type.String);
+            Content testcontent = new StaticContent<string>(
+                @"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla aliquet diam euismod nulla scelerisque gravida non vel urna. Ut semper quam id justo blandit malesuada. Morbi id libero at enim facilisis ultricies. Duis ac ipsum non turpis rhoncus interdum a eu massa. Ut viverra, orci in gravida venenatis, augue lectus rhoncus risus, congue sagittis orci erat id ligula. Donec vulputate ipsum vitae magna elementum pharetra. Aenean eget condimentum metus. Vivamus egestas, nulla vel rhoncus convallis, nisl nibh sodales ligula, eget hendrerit ligula turpis nec quam. Mauris nec dolor et metus sodales lobortis id quis ligula. Praesent dapibus dignissim justo et mattis. Curabitur vel porttitor nibh. Nulla erat purus, auctor vel rutrum ut, sodales eu ligula. Aliquam ipsum diam, congue non laoreet at, dapibus non nisl. In in diam erat, ac tincidunt urna. Vestibulum nunc massa, interdum a malesuada eu, gravida ut purus. Duis pharetra dui sit amet nisi iaculis ullamcorper. Pellentesque malesuada ornare aliquet."
+                , Type.String);
             this._World.Spawn(testcontent, Point.Origin);
         }
 
