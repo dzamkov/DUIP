@@ -53,7 +53,21 @@ namespace DUIP.UI
 
         public override Disposable<Control> CreateControl(Rectangle SizeRange)
         {
+            BackgroundBlock bb = this._Inner as BackgroundBlock;
+            if (bb != null)
+            {
+                return CreateBorderBackgroundControl(this._Border, bb.Color, SizeRange, bb.Inner);
+            }
+
             return new BorderControl(this._Border, this._Inner.CreateControl(GetInnerSizeRange(SizeRange, this._Border)));
+        }
+
+        /// <summary>
+        /// Creates a control that combines a border and a background.
+        /// </summary>
+        public static Disposable<Control> CreateBorderBackgroundControl(Border Border, Color Background, Rectangle SizeRange, Block Inner)
+        {
+            return new BorderBackgroundControl(Border, Background, Inner.CreateControl(GetInnerSizeRange(SizeRange, Border)));
         }
 
         /// <summary>
@@ -88,6 +102,17 @@ namespace DUIP.UI
             get
             {
                 return this._Inner;
+            }
+        }
+
+        /// <summary>
+        /// Gets the border this control applies.
+        /// </summary>
+        public Border Border
+        {
+            get
+            {
+                return this._Border;
             }
         }
 
@@ -127,15 +152,23 @@ namespace DUIP.UI
 
             // Draw borders
             Point size = this.Inner.Size + new Point(w * 2.0, w * 2.0);
+            RenderBorders(Context, this._Border.Color, size, w);
+        }
 
+        /// <summary>
+        /// Draws borders with the given parameters.
+        /// </summary>
+        public static void RenderBorders(RenderContext Context, Color Color, Point Size, double Weight)
+        {
+            double hw = Weight * 0.5;
             Context.ClearTexture();
-            Context.SetColor(this._Border.Color);
-            using (Context.DrawLines(w))
+            Context.SetColor(Color);
+            using (Context.DrawLines(Weight))
             {
-                Context.OutputLine(new Point(hw, 0.0), new Point(hw, size.Y));
-                Context.OutputLine(new Point(0.0, hw), new Point(size.X, hw));
-                Context.OutputLine(new Point(size.X - hw, 0.0), new Point(size.X - hw, size.Y));
-                Context.OutputLine(new Point(0.0, size.Y - hw), new Point(size.X, size.Y - hw));
+                Context.OutputLine(new Point(hw, 0.0), new Point(hw, Size.Y));
+                Context.OutputLine(new Point(0.0, hw), new Point(Size.X, hw));
+                Context.OutputLine(new Point(Size.X - hw, 0.0), new Point(Size.X - hw, Size.Y));
+                Context.OutputLine(new Point(0.0, Size.Y - hw), new Point(Size.X, Size.Y - hw));
             }
         }
 
@@ -146,6 +179,48 @@ namespace DUIP.UI
 
         private Disposable<Control> _Inner;
         private Border _Border;
+    }
+
+    /// <summary>
+    /// A control that includes both a border and a background combined for improved efficency and fewer visual artifacts.
+    /// </summary>
+    public class BorderBackgroundControl : BorderControl
+    {
+        public BorderBackgroundControl(Border Border, Color Background, Disposable<Control> Inner)
+            : base(Border, Inner)
+        {
+            this._Background = Background;
+        }
+
+        /// <summary>
+        /// Gets the background this control applies.
+        /// </summary>
+        public Color Background
+        {
+            get
+            {
+                return this._Background;
+            }
+        }
+
+        public override void Render(RenderContext Context)
+        {
+            double w = this.Border.Weight;
+            double dw = w * 2.0;
+            double hw = w * 0.5;
+            Point size = this.Inner.Size + new Point(dw, dw);
+
+            Context.ClearTexture();
+            Context.SetColor(this._Background);
+            Context.DrawQuad(new Rectangle(hw, hw, size.X - hw, size.Y - hw));
+            using (Context.Translate(new Point(w, w)))
+            {
+                this.Inner.Render(Context);
+            }
+            RenderBorders(Context, this.Border.Color, size, w);
+        }
+
+        private Color _Background;
     }
 
     /// <summary>

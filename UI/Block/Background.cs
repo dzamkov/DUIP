@@ -52,6 +52,12 @@ namespace DUIP.UI
 
         public override Disposable<Control> CreateControl(Rectangle SizeRange)
         {
+            BorderBlock bb = this._Inner as BorderBlock;
+            if (bb != null)
+            {
+                return BorderBlock.CreateBorderBackgroundControl(bb.Border, this._Color, SizeRange, bb.Inner);
+            }
+
             return new BackgroundControl(this._Color, this._Inner.CreateControl(SizeRange));
         }
 
@@ -107,6 +113,7 @@ namespace DUIP.UI
             Context.ClearTexture();
             Context.SetColor(this._Color);
             Context.DrawQuad(new Rectangle(Point.Origin, this.Inner.Size));
+
             this.Inner.Render(Context);
         }
 

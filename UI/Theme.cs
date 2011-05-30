@@ -29,10 +29,10 @@ namespace DUIP.UI
         {
             Border = new Border
             {
-                Color = Color.RGB(0.8, 0.2, 0.2),
+                Color = Color.RGB(0.2, 0.2, 0.2),
                 Weight = 0.04,
             };
-            Background = Color.RGB(0.9, 0.5, 0.5);
+            Background = Color.RGB(1.0, 1.0, 1.0);
         }
 
         /// <summary>
