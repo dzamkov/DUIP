@@ -690,7 +690,8 @@ namespace DUIP.UI
         /// </summary>
         private static double _GetScore(double MinorSize, double MajorSize, Rectangle SizeRange, FlowStyle Style)
         {
-            return (MinorSize - SizeRange.Left) * (MajorSize - SizeRange.Top);
+            double aspectratio = MinorSize / MajorSize;
+            return (MinorSize - SizeRange.Left) * (MajorSize - SizeRange.Top) * (aspectratio + 1.0 / aspectratio);
         }
 
         /// <summary>
