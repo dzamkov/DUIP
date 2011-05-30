@@ -167,7 +167,20 @@ namespace DUIP
 
         public override UI.Block CreateBlock(UI.Theme Theme, File Instance)
         {
-            return Theme.GetTextBlock(Instance.Name + " : " + Instance.Size.ToString());
+            UI.GridBlock gb = new UI.GridBlock(2, 2);
+            gb.Seperator = new UI.Border
+            {
+                Color = UI.Color.RGB(0.2, 0.2, 0.2),
+                Weight = 0.02
+            };
+
+            UI.FlowFitMode fitmode = UI.FlowFitMode.Compact;
+            gb[0, 0] = Theme.GetTextBlock("Name", fitmode);
+            gb[1, 0] = Theme.GetTextBlock(Instance.Name, fitmode);
+            gb[0, 1] = Theme.GetTextBlock("Size", fitmode);
+            gb[1, 1] = Theme.GetTextBlock(Instance.Size.ToString(), fitmode);
+
+            return gb;
         }
     }
 }

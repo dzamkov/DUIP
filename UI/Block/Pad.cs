@@ -101,6 +101,14 @@ namespace DUIP.UI
             }
         }
 
+        public override Rectangle SizeRange
+        {
+            set
+            {
+                this.Inner.SizeRange = PadBlock.GetInnerSizeRange(value, this._Padding);
+            }
+        }
+
         public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
         {
             Compass<double> pad = this._Padding;

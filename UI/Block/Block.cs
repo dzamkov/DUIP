@@ -72,16 +72,5 @@ namespace DUIP.UI
                 return SpaceBlock.Singleton;
             }
         }
-
-        /// <summary>
-        /// Gets a block that displays the given text.
-        /// </summary>
-        public static FlowBlock Text(string String, Font Font, FlowStyle FlowStyle)
-        {
-            FlowBlock fb = new FlowBlock();
-            fb.Style = FlowStyle;
-            fb.AddText(String, Font, true);
-            return fb;
-        }
     }
 }

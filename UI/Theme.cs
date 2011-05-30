@@ -45,7 +45,7 @@ namespace DUIP.UI
                 return new FlowStyle
                 {
                     Direction = FlowDirection.RightDown,
-                    Justification = FlowJustification.Justify,
+                    Justification = FlowJustification.Ragged,
                     LineAlignment = Alignment.Center,
                     LineSpacing = 0.00,
                     LineSize = 0.01
@@ -67,9 +67,13 @@ namespace DUIP.UI
         /// <summary>
         /// Gets a block that displays the given text.
         /// </summary>
-        public Block GetTextBlock(string Text)
+        public Block GetTextBlock(string Text, FlowFitMode FitMode)
         {
-            return Block.Text(Text, this.GetFont(FontPurpose.General), this.FlowStyle).WithPad(this.TextPadding);
+            FlowBlock fb = new FlowBlock();
+            fb.Style = this.FlowStyle;
+            fb.FitMode = FitMode;
+            fb.AddText(Text, this.GetFont(FontPurpose.General));
+            return fb.WithPad(this.TextPadding);
         }
 
         private BitmapTypeface _DefaultTypeface;

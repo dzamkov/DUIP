@@ -43,6 +43,14 @@ namespace DUIP.UI
             }
         }
 
+        public override Rectangle SizeRange
+        {
+            set
+            {
+                this._Size = value.TopLeft;
+            }
+        }
+
         public override void Render(RenderContext Context)
         {
             

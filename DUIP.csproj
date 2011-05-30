@@ -50,6 +50,7 @@
     <Compile Include="Memory\Handle.cs" />
     <Compile Include="Memory\Map.cs" />
     <Compile Include="UI\Ambience\Ambience.cs" />
+    <Compile Include="UI\Block\Grid.cs" />
     <Compile Include="UI\Theme.cs" />
     <Compile Include="UI\Content\Content.cs" />
     <Compile Include="UI\Content\Static.cs" />

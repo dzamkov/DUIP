@@ -14,10 +14,11 @@ namespace DUIP.UI
             this._Items = new List<Item>();
         }
 
-        public FlowBlock(FlowStyle Style, IEnumerable<Item> Items)
+        public FlowBlock(FlowStyle Style, FlowFitMode FitMode, IEnumerable<Item> Items)
         {
             this._Style = Style;
             this._Items = new List<Item>(Items);
+            this._FitMode = FitMode;
         }
 
         /// <summary>
@@ -43,6 +44,21 @@ namespace DUIP.UI
             set
             {
                 this._Style = value;
+            }
+        }
+        
+        /// <summary>
+        /// Gets or sets the fitting mode used to create flow layouts.
+        /// </summary>
+        public FlowFitMode FitMode
+        {
+            get
+            {
+                return this._FitMode;
+            }
+            set
+            {
+                this._FitMode = value;
             }
         }
 
@@ -107,6 +123,7 @@ namespace DUIP.UI
             return new FlowControl(this, SizeRange);
         }
 
+        private FlowFitMode _FitMode;
         private FlowStyle _Style;
         private List<Item> _Items;
     }
@@ -118,18 +135,19 @@ namespace DUIP.UI
     {
         public FlowControl(FlowBlock Block, Rectangle SizeRange)
         {
-            this._FlowStyle = Block.Style;
-            Point minsize = SizeRange.TopLeft.Shift(this._FlowStyle.MinorAxis);
-            Point maxsize = SizeRange.BottomRight.Shift(this._FlowStyle.MinorAxis);
-
+            this._Block = Block;
             this._Items = new List<Flow.Item>();
             foreach (FlowBlock.Item it in Block.Items)
             {
-                _Append(it, this._Items, this._FlowStyle, SizeRange);
+                _Append(it, this._Items, this.Style, SizeRange);
             }
 
-            this._Lines = Flow.Layout(this._Items, this._FlowStyle, new Rectangle(minsize, maxsize), out this._Size);
-            this._Size = this._Size.Shift(this._FlowStyle.MinorAxis);
+            FlowStyle style = Block.Style;
+            Axis minoraxis = style.MinorAxis;
+            SizeRange.TopLeft = SizeRange.TopLeft.Shift(minoraxis);
+            SizeRange.BottomRight = SizeRange.BottomRight.Shift(minoraxis);
+            this._Lines = Flow.Layout(this._Items, style, this._Block.FitMode, SizeRange, out this._Size, out this._MajorSize);
+            this._Size = this._Size.Shift(minoraxis);
         }
 
         /// <summary>
@@ -173,6 +191,17 @@ namespace DUIP.UI
                         Items.Add(new _CharItem(font, c));
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Gets the flow style used by this control.
+        /// </summary>
+        public FlowStyle Style
+        {
+            get
+            {
+                return this._Block.Style;
             }
         }
 
@@ -231,53 +260,88 @@ namespace DUIP.UI
             }
         }
 
+        public override Rectangle SizeRange
+        {
+            set
+            {
+                const double thres = 0.00001;
+
+                FlowStyle style = this._Block.Style;
+                Axis minoraxis = style.MinorAxis;
+                Rectangle nsizerange = value;
+                nsizerange.TopLeft = nsizerange.TopLeft.Shift(minoraxis);
+                nsizerange.BottomRight = nsizerange.BottomRight.Shift(minoraxis);
+                Point size = this._Size.Shift(minoraxis);
+
+                if (Math.Abs(size.X - nsizerange.Left) < thres &&
+                    Math.Abs(size.X - nsizerange.Right) < thres &&
+                    this._MajorSize < value.Bottom + thres)
+                {
+                    // Layout does not need to be changed, we can simply expand or shorten the layout as needed.
+                    size.Y = Math.Max(this._MajorSize, value.Top);
+                }
+                else
+                {
+                    this._Lines = Flow.Layout(this._Items, style, this._Block.FitMode, nsizerange, out size, out this._MajorSize); 
+                }
+
+                this._Size = size.Shift(minoraxis);
+            }
+        }
+
         public override void Render(RenderContext Context)
         {
-            Font font = null;
-            Font.Drawer fontdrawer = null;
-
-            foreach (Flow.Line line in this._Lines)
+            // If the layout is invalid, no rendering will be performed
+            if (this._Lines != null)
             {
-                foreach (Flow.Item item in line.Items)
+                Font font = null;
+                Font.Drawer fontdrawer = null;
+                FlowStyle style = this.Style;
+
+                foreach (Flow.Line line in this._Lines)
                 {
-                    // Draw character
-                    _CharItem ci = item as _CharItem;
-                    if (ci != null)
+                    foreach (Flow.Item item in line.Items)
                     {
-                        if (ci.Font != font)
+                        // Draw character
+                        _CharItem ci = item as _CharItem;
+                        if (ci != null)
                         {
+                            if (ci.Font != font)
+                            {
+                                if (fontdrawer != null)
+                                {
+                                    fontdrawer.End(Context);
+                                }
+                                font = ci.Font;
+                                fontdrawer = font.GetDrawer();
+                                fontdrawer.Begin(Context);
+                            }
+                            fontdrawer.Draw(Context, ci.Name, ci.GetPosition(line, this._Size, style));
+                            continue;
+                        }
+                        else
+                        {
+                            font = null;
                             if (fontdrawer != null)
                             {
                                 fontdrawer.End(Context);
                             }
-                            font = ci.Font;
-                            fontdrawer = font.GetDrawer();
-                            fontdrawer.Begin(Context);
-                        }
-                        fontdrawer.Draw(Context, ci.Name, ci.GetPosition(line, this._Size, this._FlowStyle));
-                        continue;
-                    }
-                    else
-                    {
-                        font = null;
-                        if (fontdrawer != null)
-                        {
-                            fontdrawer.End(Context);
                         }
                     }
                 }
-            }
 
-            // Make sure not to leave a font drawer open
-            if (fontdrawer != null)
-            {
-                fontdrawer.End(Context);
+                // Make sure not to leave a font drawer open
+                if (fontdrawer != null)
+                {
+                    fontdrawer.End(Context);
+                }
             }
         }
 
         private List<Flow.Item> _Items;
         private List<Flow.Line> _Lines;
-        private FlowStyle _FlowStyle;
+        private FlowBlock _Block;
+        private double _MajorSize;
         private Point _Size;
     }
 
@@ -376,6 +440,22 @@ namespace DUIP.UI
         /// Items are aligned only to the end of a line.
         /// </summary>
         ReverseRagged,
+    }
+
+    /// <summary>
+    /// Gives a possible method to determine the size of a flow layout.
+    /// </summary>
+    public enum FlowFitMode
+    {
+        /// <summary>
+        /// The size of the flow layout is choosen so that the fewest amount of lines are used.
+        /// </summary>
+        Compact,
+
+        /// <summary>
+        /// The size of the flow layout is choosen to be (for general purposes) aesthetically pleasing and readable.
+        /// </summary>
+        Best
     }
 
     /// <summary>
@@ -621,12 +701,47 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Performs layout on a collection of flow items using the given fitting mode. Returns null if no possible arrangement to fit all the items is found.
+        /// </summary>
+        public static List<Line> Layout(IEnumerable<Item> Items, FlowStyle Style, FlowFitMode Mode, Rectangle SizeRange, out Point Size, out double MajorSize)
+        {
+            switch (Mode)
+            {
+                case FlowFitMode.Compact:
+                    return LayoutCompact(Items, Style, SizeRange, out Size, out MajorSize);
+                default:
+                    return LayoutBest(Items, Style, SizeRange, out Size, out MajorSize);
+            }
+        }
+
+        /// <summary>
+        /// Performs layout on a collection of flow items while selecting the smallest possible major (first priority) and
+        /// minor sizes. Returns null if no possible arrangement to fit all the items is found.
+        /// </summary>
+        /// <param name="MajorSize">The smallest possible major size that can keep the layout.</param>
+        public static List<Line> LayoutCompact(IEnumerable<Item> Items, FlowStyle Style, Rectangle SizeRange, out Point Size, out double MajorSize)
+        {
+            List<Line> lines = _BuildLines(Items, Style, SizeRange.Right);
+            if (lines == null)
+            {
+                Size = Point.Zero;
+                MajorSize = 0.0;
+                return null;
+            }
+            double minorsize = Math.Max(_GetMinMinorSize(lines), SizeRange.Left);
+            _LayoutLines(lines, Style, minorsize, out MajorSize);
+            Size = new Point(minorsize, Math.Max(MajorSize, SizeRange.Top));
+            return lines;
+        }
+
+        /// <summary>
         /// Performs layout on a collection of flow items while selecting an aesthetically pleasing
         /// size within the given size range (with the minor axis being X, and the major axis being Y). 
         /// Returns a list of the lines the items are arranged in. Returns null if no possible 
         /// arrangement to fit all the items is found.
         /// </summary>
-        public static List<Line> Layout(IEnumerable<Item> Items, FlowStyle Style, Rectangle SizeRange, out Point Size)
+        /// <param name="MajorSize">The smallest possible major size that can keep the layout.</param>
+        public static List<Line> LayoutBest(IEnumerable<Item> Items, FlowStyle Style, Rectangle SizeRange, out Point Size, out double MajorSize)
         {
             // Try minimizing score by selecting a good minor size.
             double bestscore = double.PositiveInfinity;
@@ -648,14 +763,7 @@ namespace DUIP.UI
                     break;
                 }
                 majorsize = Math.Max(majorsize, SizeRange.Top);
-
-                // Set the minor size to be as small as possible while still containing the same lines.
-                double minminorsize = 0.0;
-                foreach (Line line in lines)
-                {
-                    minminorsize = Math.Max(line.UsedLength, minminorsize);
-                }
-                minorsize = Math.Max(minminorsize, SizeRange.Left);
+                minorsize = Math.Max(_GetMinMinorSize(lines), SizeRange.Left);
 
                 // Compare scores
                 double score = _GetScore(minorsize, majorsize, SizeRange, Style);
@@ -676,12 +784,12 @@ namespace DUIP.UI
 
             if (best != null)
             {
-                double majorsize;
-                _LayoutLines(best, Style, bestsize, out majorsize);
-                Size = new Point(bestsize, majorsize);
+                _LayoutLines(best, Style, bestsize, out MajorSize);
+                Size = new Point(bestsize, Math.Max(MajorSize, SizeRange.Top));
                 return best;
             }
             Size = Point.Zero;
+            MajorSize = 0.0;
             return null;
         }
 
@@ -745,6 +853,19 @@ namespace DUIP.UI
                 majorposition = majorsize + Style.LineSpacing;
             }
             return majorsize;
+        }
+
+        /// <summary>
+        /// Gets the smallest minor size needed to contain all of the given lines.
+        /// </summary>
+        private static double _GetMinMinorSize(IEnumerable<Line> Lines)
+        {
+            double minminorsize = 0.0;
+            foreach (Line line in Lines)
+            {
+                minminorsize = Math.Max(minminorsize, line.UsedLength);
+            }
+            return minminorsize;
         }
     }
 }

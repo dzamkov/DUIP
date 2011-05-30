@@ -129,7 +129,7 @@ namespace DUIP.UI
         {
             set
             {
-                this.Inner.SizeRange = value;
+                this.Inner.SizeRange = BorderBlock.GetInnerSizeRange(value, this._Border);
             }
         }
 
