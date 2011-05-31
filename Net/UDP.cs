@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 
-namespace DUIP
+namespace DUIP.Net
 {
     /// <summary>
     /// UDP helper class.

@@ -5,7 +5,7 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A content representation static instance of a certain type, possibly mirrored on a network.
+    /// A content representation of a static instance of a certain type.
     /// </summary>
     public class StaticContent<T> : Content
     {
