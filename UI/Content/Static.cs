@@ -18,12 +18,21 @@ namespace DUIP.UI
         public override Disposable<Control> CreateControl(Theme Theme)
         {
             Control space = SpaceControl.Singleton;
-            Control border = new BorderControl(new Border
+            Control border = new BorderControl
             {
-                Color = Color.RGB(0.2, 0.2, 0.2),
-                Weight = 0.01,
-            }, space);
-            return border;
+                Inner = space,
+                Border = new Border
+                {
+                    Color = Color.RGB(0.2, 0.2, 0.2),
+                    Weight = 0.01,
+                }
+            };
+            Control size = new SizeControl
+            {
+                Inner = border,
+                LimitSizeRange = new Rectangle(1.0, 1.0, 2.0, 2.0)
+            };
+            return size;
         }
 
         /// <summary>

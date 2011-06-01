@@ -9,6 +9,11 @@ namespace DUIP.UI
     /// </summary>
     public class BorderControl : Control, IDisposable
     {
+        public BorderControl()
+        {
+
+        }
+
         public BorderControl(Border Border, Disposable<Control> Inner)
         {
             this._Border = Border;
