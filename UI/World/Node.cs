@@ -13,18 +13,29 @@ namespace DUIP.UI
     /// </summary>
     public class Node : IDisposable
     {
-        public Node(Disposable<Content> Content, Disposable<Visual> Visual, Point Position, Point Velocity)
+        public Node(Disposable<Content> Content, Disposable<Control> Control, Point Position, Point Velocity)
         {
             this._Content = Content;
-            this._Visual = Visual;
+            this._Control = Control;
             this._Position = Position;
             this._Velocity = Velocity;
-            this._Texture = Texture.Create(this.Visual.Render, new View(Rectangle.FromOffsetSize(Point.Origin, this.Visual.Size)), Texture.Format.BGRA32, 256, 256);
-
-            this._Texture.Bind();
-            Texture.GenerateMipmap();
-            Texture.SetFilterMode(TextureMinFilter.LinearMipmapLinear, TextureMagFilter.Linear);
+            this._Layout = this._Control.Object.CreateLayout(SizeRange, out this._Size);
         }
+
+        public Node(Disposable<Content> Content, Disposable<Control> Control, Control.Layout Layout, Point Size, Point Position, Point Velocity)
+        {
+            this._Content = Content;
+            this._Control = Control;
+            this._Position = Position;
+            this._Velocity = Velocity;
+            this._Layout = Layout;
+            this._Size = Size;
+        }
+
+        /// <summary>
+        /// Gets the size range available for a node.
+        /// </summary>
+        public static Rectangle SizeRange = new Rectangle(0.1, 0.1, 5.0, 5.0);
 
         /// <summary>
         /// Gets the area this node covers.
@@ -44,7 +55,7 @@ namespace DUIP.UI
         {
             get
             {
-                return ((Visual)this._Visual).Size;
+                return this._Size;
             }
         }
 
@@ -60,17 +71,13 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets or sets the visual displayed by the node.
+        /// Gets the control displayed by the node.
         /// </summary>
-        public Visual Visual
+        public Control Control
         {
             get
             {
-                return this._Visual;
-            }
-            set
-            {
-                this._Visual = value;
+                return this._Control;
             }
         }
 
@@ -154,7 +161,7 @@ namespace DUIP.UI
         {
             this._Position += this._Velocity * Time;
             this._Velocity *= Math.Pow(World.Damping, Time);
-            this._Visual = ((Visual)this._Visual).Update(this, Probes, Time);
+            this._Layout.Update(this._Position, Probes, Time);
 
             // Handle dragging
             if (this._DragState == null)
@@ -271,24 +278,7 @@ namespace DUIP.UI
         {
             using (Context.Translate(this._Position))
             {
-                double zoom = Context.View.Zoom;
-                if (zoom > 1.0)
-                {
-                    if (zoom < 4.0)
-                    {
-                        double alpha = (zoom - 1.0) / (4.0 - 1.0);
-                        ((Visual)this._Visual).Render(Context);
-                        this._Texture.CreateFigure(new Rectangle(Point.Origin, this.Size), Color.RGBA(1.0, 1.0, 1.0, alpha)).Render(Context);
-                    }
-                    else
-                    {
-                        this._Texture.CreateFigure(new Rectangle(Point.Origin, this.Size)).Render(Context);
-                    }
-                }
-                else
-                {
-                    ((Visual)this._Visual).Render(Context);
-                }
+                this._Layout.Render(Context);
             }
         }
 
@@ -311,44 +301,15 @@ namespace DUIP.UI
         public void Dispose()
         {
             this._Content.Dispose();
-            this._Visual.Dispose();
+            this._Control.Dispose();
         }
 
-        private Texture _Texture;
         private Point _Position;
         private Point _Velocity;
         private DragState _DragState;
         private Disposable<Content> _Content;
-        private Disposable<Visual> _Visual;
-    }
-
-    /// <summary>
-    /// A visual representation of content that can be placed within a node.
-    /// </summary>
-    public abstract class Visual
-    {
-        /// <summary>
-        /// Gets the size of the visual for rendering and layout.
-        /// </summary>
-        public abstract Point Size { get; }
-
-        /// <summary>
-        /// Updates the state of the visual by the given amount of time while receiving input from probes. Returns an interface to the
-        /// new state of the visual. If the interface for the visual changes, the older interface will be disposed.
-        /// </summary>
-        /// <param name="Node">The node this visual is in.</param>
-        /// <param name="Probes">The probes in the world.</param>
-        public virtual Disposable<Visual> Update(Node Node, IEnumerable<Probe> Probes, double Time)
-        {
-            return this;
-        }
-
-        /// <summary>
-        /// Renders this visual to the given context.
-        /// </summary>
-        public virtual void Render(RenderContext Context)
-        {
-
-        }
+        private Disposable<Control> _Control;
+        private Control.Layout _Layout;
+        private Point _Size;
     }
 }

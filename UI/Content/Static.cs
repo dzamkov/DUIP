@@ -15,18 +15,15 @@ namespace DUIP.UI
             this._Type = Type;
         }
 
-        public override Disposable<Visual> CreateVisual(Theme Theme)
+        public override Disposable<Control> CreateControl(Theme Theme)
         {
-            // Get the block for the content
-            Block block = this._Type.CreateBlock(Theme, this._Value);
-
-            // Apply border and background and create control
-            Border border; Color background;
-            Theme.GetNodeStyle(out border, out background);
-            block = block.WithBorder(border);
-            block = block.WithBackground(background);
-            Rectangle sizerange = new Rectangle(0.1, 0.1, 5.0, 5.0);
-            return (Control)block.CreateControl(sizerange);
+            Control space = SpaceControl.Singleton;
+            Control border = new BorderControl(new Border
+            {
+                Color = Color.RGB(0.2, 0.2, 0.2),
+                Weight = 0.01,
+            }, space);
+            return border;
         }
 
         /// <summary>

@@ -59,9 +59,10 @@ namespace DUIP.UI
         /// </summary>
         public Node Spawn(Disposable<Content> Content, Point Location)
         {
-            Visual vis = Content.Object.CreateVisual(this._Theme);
-            Point size = vis.Size;
-            Node node = new Node(Content, vis, Location - size * 0.5, Point.Zero);
+            Point size;
+            Control control = Content.Object.CreateControl(this._Theme);
+            Control.Layout layout = control.CreateLayout(Node.SizeRange, out size);
+            Node node = new Node(Content, control, layout, size, Location - size * 0.5, Point.Zero);
             this.Spawn(node);
             return node;
         }

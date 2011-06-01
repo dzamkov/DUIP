@@ -23,10 +23,5 @@ namespace DUIP
         {
             return A == B;
         }
-
-        public override UI.Block CreateBlock(UI.Theme Theme, string Instance)
-        {
-            return Theme.GetTextBlock(Instance, UI.FlowFitMode.Best);
-        }
     }
 }

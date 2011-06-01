@@ -5,348 +5,36 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A block that orders other blocks, items and commands sequentially in its interior.
-    /// </summary>
-    public class FlowBlock : Block
-    {
-        public FlowBlock()
-        {
-            this._Items = new List<Item>();
-        }
-
-        public FlowBlock(FlowStyle Style, FlowFitMode FitMode, IEnumerable<Item> Items)
-        {
-            this._Style = Style;
-            this._Items = new List<Item>(Items);
-            this._FitMode = FitMode;
-        }
-
-        /// <summary>
-        /// Gets the items within this flowblock.
-        /// </summary>
-        public IEnumerable<Item> Items
-        {
-            get
-            {
-                return this._Items;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the layout style of the flow block.
-        /// </summary>
-        public FlowStyle Style
-        {
-            get
-            {
-                return this._Style;
-            }
-            set
-            {
-                this._Style = value;
-            }
-        }
-        
-        /// <summary>
-        /// Gets or sets the fitting mode used to create flow layouts.
-        /// </summary>
-        public FlowFitMode FitMode
-        {
-            get
-            {
-                return this._FitMode;
-            }
-            set
-            {
-                this._FitMode = value;
-            }
-        }
-
-        /// <summary>
-        /// An item within a flow block.
-        /// </summary>
-        public class Item
-        {
-            /// <summary>
-            /// A visual representation of a string laid along a flow block.
-            /// </summary>
-            public class Text : Item
-            {
-                /// <summary>
-                /// The string representation of the text.
-                /// </summary>
-                public string String;
-
-                /// <summary>
-                /// The font used to display the text.
-                /// </summary>
-                public Font Font;
-
-                /// <summary>
-                /// Are characters within words grouped in the same line?
-                /// </summary>
-                public bool GroupWords;
-            }
-        }
-
-        /// <summary>
-        /// Appends an item to the end of this flowblock.
-        /// </summary>
-        public void AddItem(Item Item)
-        {
-            this._Items.Add(Item);
-        }
-
-        /// <summary>
-        /// Appends text to this flowblock.
-        /// </summary>
-        public void AddText(string String, Font Font, bool GroupWords)
-        {
-            this._Items.Add(new Item.Text
-            {
-                String = String,
-                Font = Font,
-                GroupWords = GroupWords
-            });
-        }
-
-        /// <summary>
-        /// Appends text to this flowblock.
-        /// </summary>
-        public void AddText(string String, Font Font)
-        {
-            this.AddText(String, Font, true);
-        }
-
-        public override Disposable<Control> CreateControl(Rectangle SizeRange)
-        {
-            return new FlowControl(this, SizeRange);
-        }
-
-        private FlowFitMode _FitMode;
-        private FlowStyle _Style;
-        private List<Item> _Items;
-    }
-
-    /// <summary>
-    /// A control for a flow block.
+    /// A control that displays inner controls and items arranged in lines.
     /// </summary>
     public class FlowControl : Control
     {
-        public FlowControl(FlowBlock Block, Rectangle SizeRange)
+        public FlowControl()
         {
-            this._Block = Block;
-            this._Items = new List<Flow.Item>();
-            foreach (FlowBlock.Item it in Block.Items)
-            {
-                _Append(it, this._Items, this.Style, SizeRange);
-            }
 
-            FlowStyle style = Block.Style;
-            Axis minoraxis = style.MinorAxis;
-            SizeRange.TopLeft = SizeRange.TopLeft.Shift(minoraxis);
-            SizeRange.BottomRight = SizeRange.BottomRight.Shift(minoraxis);
-            this._Lines = Flow.Layout(this._Items, style, this._Block.FitMode, SizeRange, out this._Size, out this._MajorSize);
-            this._Size = this._Size.Shift(minoraxis);
         }
 
-        /// <summary>
-        /// Appends a flowblock item to a list of layout items.
-        /// </summary>
-        private static void _Append(FlowBlock.Item Item, List<Flow.Item> Items, FlowStyle Style, Rectangle SizeRange)
+        public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
         {
-            // Text
-            var text = Item as FlowBlock.Item.Text;
-            if (text != null)
-            {
-                Font font = text.Font;
-                if (text.GroupWords)
-                {
-                    List<Flow.Item> curgroup = new List<Flow.Item>();
-                    foreach (char c in text.String)
-                    {
-                        if (c == ' ')
-                        {
-                            if (curgroup.Count > 0)
-                            {
-                                Items.Add(new Flow.GroupItem(curgroup));
-                                curgroup = new List<Flow.Item>();
-                            }
-                            Items.Add(new _CharItem(font, ' '));
-                        }
-                        else
-                        {
-                            curgroup.Add(new _CharItem(font, c));
-                        }
-                    }
-                    if (curgroup.Count > 0)
-                    {
-                        Items.Add(new Flow.GroupItem(curgroup));
-                    }
-                }
-                else
-                {
-                    foreach (char c in text.String)
-                    {
-                        Items.Add(new _CharItem(font, c));
-                    }
-                }
-            }
+            throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// Gets the flow style used by this control.
-        /// </summary>
-        public FlowStyle Style
+        private class _Layout : Layout
         {
-            get
+            public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
             {
-                return this._Block.Style;
+                throw new NotImplementedException();
+            }
+
+            public override void Render(RenderContext Context)
+            {
+                throw new NotImplementedException();
             }
         }
-
-        /// <summary>
-        /// A layout item for a character of a certain font.
-        /// </summary>
-        private class _CharItem : Flow.StandardItem
-        {
-            public _CharItem(Font Font, char Name)
-            {
-                this._Font = Font;
-                this._Name = Name;
-                this._Size = this._Font.GetSize(Name);
-            }
-
-            /// <summary>
-            /// Gets the font for this character.
-            /// </summary>
-            public Font Font
-            {
-                get
-                {
-                    return this._Font;
-                }
-            }
-
-            /// <summary>
-            /// Gets the name for this character.
-            /// </summary>
-            public char Name
-            {
-                get
-                {
-                    return this._Name;
-                }
-            }
-
-            public override Point Size
-            {
-                get
-                {
-                    return this._Size;
-                }
-            }
-
-            private Point _Size;
-            private Font _Font;
-            private char _Name;
-        }
-
-        public override Point Size
-        {
-            get
-            {
-                return this._Size;
-            }
-        }
-
-        public override Rectangle SizeRange
-        {
-            set
-            {
-                const double thres = 0.00001;
-
-                FlowStyle style = this._Block.Style;
-                Axis minoraxis = style.MinorAxis;
-                Rectangle nsizerange = value;
-                nsizerange.TopLeft = nsizerange.TopLeft.Shift(minoraxis);
-                nsizerange.BottomRight = nsizerange.BottomRight.Shift(minoraxis);
-                Point size = this._Size.Shift(minoraxis);
-
-                if (Math.Abs(size.X - nsizerange.Left) < thres &&
-                    Math.Abs(size.X - nsizerange.Right) < thres &&
-                    this._MajorSize < value.Bottom + thres)
-                {
-                    // Layout does not need to be changed, we can simply expand or shorten the layout as needed.
-                    size.Y = Math.Max(this._MajorSize, value.Top);
-                }
-                else
-                {
-                    this._Lines = Flow.Layout(this._Items, style, this._Block.FitMode, nsizerange, out size, out this._MajorSize); 
-                }
-
-                this._Size = size.Shift(minoraxis);
-            }
-        }
-
-        public override void Render(RenderContext Context)
-        {
-            // If the layout is invalid, no rendering will be performed
-            if (this._Lines != null)
-            {
-                Font font = null;
-                Font.Drawer fontdrawer = null;
-                FlowStyle style = this.Style;
-
-                foreach (Flow.Line line in this._Lines)
-                {
-                    foreach (Flow.Item item in line.Items)
-                    {
-                        // Draw character
-                        _CharItem ci = item as _CharItem;
-                        if (ci != null)
-                        {
-                            if (ci.Font != font)
-                            {
-                                if (fontdrawer != null)
-                                {
-                                    fontdrawer.End(Context);
-                                }
-                                font = ci.Font;
-                                fontdrawer = font.GetDrawer();
-                                fontdrawer.Begin(Context);
-                            }
-                            fontdrawer.Draw(Context, ci.Name, ci.GetPosition(line, this._Size, style));
-                            continue;
-                        }
-                        else
-                        {
-                            font = null;
-                            if (fontdrawer != null)
-                            {
-                                fontdrawer.End(Context);
-                            }
-                        }
-                    }
-                }
-
-                // Make sure not to leave a font drawer open
-                if (fontdrawer != null)
-                {
-                    fontdrawer.End(Context);
-                }
-            }
-        }
-
-        private List<Flow.Item> _Items;
-        private List<Flow.Line> _Lines;
-        private FlowBlock _Block;
-        private double _MajorSize;
-        private Point _Size;
     }
 
     /// <summary>
-    /// Gives information about the arrangement of items within a flow block.
+    /// Gives information about the arrangement of items within a flow control.
     /// </summary>
     /// <remarks>The minor direction is the direction items within a line follow. The major direction
     /// is the direction lines follow.</remarks>

@@ -64,18 +64,6 @@ namespace DUIP.UI
             }
         }
 
-        /// <summary>
-        /// Gets a block that displays the given text.
-        /// </summary>
-        public Block GetTextBlock(string Text, FlowFitMode FitMode)
-        {
-            FlowBlock fb = new FlowBlock();
-            fb.Style = this.FlowStyle;
-            fb.FitMode = FitMode;
-            fb.AddText(Text, this.GetFont(FontPurpose.General));
-            return fb.WithPad(this.TextPadding);
-        }
-
         private BitmapTypeface _DefaultTypeface;
     }
 
