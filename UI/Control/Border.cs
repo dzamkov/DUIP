@@ -64,15 +64,23 @@ namespace DUIP.UI
 
         public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
         {
-            Point sizepadding = this.SizePadding;
-            Layout inner = this._Inner.Object.CreateLayout(SizeRange.Translate(-this.SizePadding), out Size);
-            Size += sizepadding;
-            return new _Layout
+            BackgroundControl bc = this.Inner as BackgroundControl;
+            if (bc != null)
             {
-                Control = this,
-                Inner = inner,
-                Size = Size
-            };
+                return CreateBorderBackgroundLayout(SizeRange, this, bc, bc.Inner, out Size);
+            }
+            else
+            {
+                Point sizepadding = this.SizePadding;
+                Layout inner = this.Inner.CreateLayout(SizeRange.Translate(-sizepadding), out Size);
+                Size += sizepadding;
+                return new _Layout
+                {
+                    Control = this,
+                    Inner = inner,
+                    Size = Size
+                };
+            }
         }
 
         private class _Layout : Layout
@@ -80,7 +88,7 @@ namespace DUIP.UI
             public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
             {
                 double w = this.Control.Border.Weight;
-                this.Inner.Update(new Point(w, w), Probes, Time);
+                this.Inner.Update(Offset + new Point(w, w), Probes, Time);
             }
 
             public override void Render(RenderContext Context)
@@ -94,6 +102,53 @@ namespace DUIP.UI
             }
 
             public BorderControl Control;
+            public Layout Inner;
+            public Point Size;
+        }
+
+        /// <summary>
+        /// Creates a layout that combines a border with a background for increased performance and less visual artifacts.
+        /// </summary>
+        public static Layout CreateBorderBackgroundLayout(Rectangle SizeRange, BorderControl Border, BackgroundControl Background, Control Inner, out Point Size)
+        {
+            Point sizepadding = Border.SizePadding;
+            Layout inner = Inner.CreateLayout(SizeRange.Translate(-sizepadding), out Size);
+            Size += sizepadding;
+            return new _BorderBackgroundLayout
+            {
+                BorderControl = Border,
+                BackgroundControl = Background,
+                Inner = inner,
+                Size = Size
+            };
+        }
+
+        private class _BorderBackgroundLayout : Layout
+        {
+            public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+            {
+                double w = this.BorderControl.Border.Weight;
+                this.Inner.Update(Offset + new Point(w, w), Probes, Time);
+            }
+
+            public override void Render(RenderContext Context)
+            {
+                Border bord = this.BorderControl.Border;
+                Point size = this.Size;
+                double w = bord.Weight;
+                double hw = w * 0.5;
+                Context.ClearTexture();
+                Context.SetColor(this.BackgroundControl.Color);
+                Context.DrawQuad(new Rectangle(hw, hw, size.X - hw, size.Y - hw));
+                using (Context.Translate(new Point(bord.Weight, bord.Weight)))
+                {
+                    this.Inner.Render(Context);
+                }
+                bord.Render(Context, size);
+            }
+
+            public BorderControl BorderControl;
+            public BackgroundControl BackgroundControl;
             public Layout Inner;
             public Point Size;
         }

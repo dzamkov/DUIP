@@ -52,12 +52,20 @@ namespace DUIP.UI
 
         public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
         {
-            return new _Layout
+            BorderControl bc = this.Inner as BorderControl;
+            if (bc != null)
             {
-                Control = this,
-                Inner = this._Inner.Object.CreateLayout(SizeRange, out Size),
-                Size = Size
-            };
+                return BorderControl.CreateBorderBackgroundLayout(SizeRange, bc, this, bc.Inner, out Size);
+            }
+            else
+            {
+                return new _Layout
+                {
+                    Control = this,
+                    Inner = this.Inner.CreateLayout(SizeRange, out Size),
+                    Size = Size
+                };
+            }
         }
 
         private class _Layout : Layout
