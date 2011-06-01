@@ -24,12 +24,17 @@ namespace DUIP.UI
                 Border = new Border
                 {
                     Color = Color.RGB(0.2, 0.2, 0.2),
-                    Weight = 0.01,
+                    Weight = 0.05,
                 }
+            };
+            Control background = new BackgroundControl()
+            {
+                Inner = border,
+                Color = Color.RGB(0.95, 0.95, 0.95)
             };
             Control size = new SizeControl
             {
-                Inner = border,
+                Inner = background,
                 LimitSizeRange = new Rectangle(1.0, 1.0, 2.0, 2.0)
             };
             return size;

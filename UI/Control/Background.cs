@@ -9,6 +9,11 @@ namespace DUIP.UI
     /// </summary>
     public class BackgroundControl : Control, IDisposable
     {
+        public BackgroundControl()
+        {
+
+        }
+
         public BackgroundControl(Color Color, Disposable<Control> Inner)
         {
             this._Color = Color;
@@ -16,7 +21,7 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets the color of the background applied by this control.
+        /// Gets or sets the color of the background applied by this control.
         /// </summary>
         public Color Color
         {
@@ -24,10 +29,14 @@ namespace DUIP.UI
             {
                 return this._Color;
             }
+            set
+            {
+                this._Color = value;
+            }
         }
 
         /// <summary>
-        /// Gets the inner control for this background control. This control is displayed above the background.
+        /// Gets or sets the inner control for this background control. This control is displayed above the background.
         /// </summary>
         public Control Inner
         {
@@ -35,24 +44,40 @@ namespace DUIP.UI
             {
                 return this._Inner;
             }
+            set
+            {
+                this._Inner = value;
+            }
         }
 
         public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
         {
-            throw new NotImplementedException();
+            return new _Layout
+            {
+                Control = this,
+                Inner = this._Inner.Object.CreateLayout(SizeRange, out Size),
+                Size = Size
+            };
         }
 
         private class _Layout : Layout
         {
             public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
             {
-                throw new NotImplementedException();
+                this.Inner.Update(Offset, Probes, Time);
             }
 
             public override void Render(RenderContext Context)
             {
-                throw new NotImplementedException();
+                Context.ClearTexture();
+                Context.SetColor(this.Control.Color);
+                Context.DrawQuad(new Rectangle(Point.Origin, this.Size));
+                this.Inner.Render(Context);
             }
+
+            public BackgroundControl Control;
+            public Layout Inner;
+            public Point Size;
         }
 
         public void Dispose()
