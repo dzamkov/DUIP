@@ -14,23 +14,622 @@ namespace DUIP.UI
 
         }
 
+        /// <summary>
+        /// Gets or sets the style of the flow for the control.
+        /// </summary>
+        public FlowStyle Style
+        {
+            get
+            {
+                return this._Style;
+            }
+            set
+            {
+                this._Style = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the fit mode for the control.
+        /// </summary>
+        public FlowFitMode FitMode
+        {
+            get
+            {
+                return this._FitMode;
+            }
+            set
+            {
+                this._FitMode = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the items in the flow block.
+        /// </summary>
+        public List<FlowItem> Items
+        {
+            get
+            {
+                return this._Items;
+            }
+            set
+            {
+                this._Items = value;
+            }
+        }
+
         public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
         {
-            throw new NotImplementedException();
+            FlowStyle style = this.Style;
+            Axis minoraxis = style.MinorAxis;
+            SizeRange.TopLeft = SizeRange.TopLeft.Shift(minoraxis);
+            SizeRange.BottomRight = SizeRange.BottomRight.Shift(minoraxis);
+
+            // Determine max line size
+            double max;
+            switch (this.FitMode)
+            {
+                case FlowFitMode.Compact:
+                    max = SizeRange.Right;
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+
+            // Create lines
+            List<_PlannedLine> lines;
+            switch (style.WrapMode)
+            {
+                case FlowWrapMode.Greedy:
+                    lines = _GetLinesGreedy(this.Items, max, style);
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+
+            // Get minimum size needed to display all lines (this becomes the minor size).
+            double minor = 0.0;
+            foreach (_PlannedLine pl in lines)
+            {
+                minor = Math.Max(minor, pl.Length);
+            }
+            
+            // Build layout lines
+            double major;
+            List<_Layout.Line> layoutlines = _BuildLayout(lines, this._Items, style, minor, out major);
+
+            // Create layout
+            Size = new Point(minor, Math.Max(major, SizeRange.Top)).Shift(style.MinorAxis);
+            return new _Layout
+            {
+                Control = this,
+                Lines = layoutlines
+            };
         }
 
         private class _Layout : Layout
         {
             public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
             {
-                throw new NotImplementedException();
+
             }
 
             public override void Render(RenderContext Context)
             {
-                throw new NotImplementedException();
+                FlowStyle style = this.Control.Style;
+                Axis minoraxis = style.MinorAxis;
+                Alignment linealign = style.LineAlignment;
+
+                Font.Drawer curdrawer = null;
+                Font curfont = null;
+
+                foreach (Line line in this.Lines)
+                {
+                    double majoff = line.MajorOffset;
+                    double majsize = line.MajorSize;
+                    foreach (Item item in line.Items)
+                    {
+                        FlowItem source = item.Source;
+                        double minoff = item.MinorOffset;
+
+                        // Character item
+                        CharacterFlowItem cfi = source as CharacterFlowItem;
+                        if (cfi != null)
+                        {
+                            Font font = cfi.Font;
+                            char name = cfi.Name;
+
+                            Point size = font.GetSize(name).Shift(minoraxis);
+                            Point off = new Point(minoff, majoff + Align.AxisOffset(linealign, majsize, size.Y)).Shift(minoraxis);
+
+                            // Switch font drawers if needed
+                            if (curfont != font)
+                            {
+                                if (curdrawer != null)
+                                {
+                                    curdrawer.End(Context);
+                                }
+                                curfont = font;
+                            }
+                            if(curdrawer == null)
+                            {
+                                curdrawer = font.GetDrawer();
+                                curdrawer.Begin(Context);
+                            }
+
+                            // Draw character
+                            curdrawer.Draw(Context, name, off);
+                        }
+                    }
+                }
+
+                // Make sure to stop drawing text
+                if (curdrawer != null)
+                {
+                    curdrawer.End(Context);
+                }
+            }
+
+            /// <summary>
+            /// A line within a constructed layout.
+            /// </summary>
+            public class Line
+            {
+                /// <summary>
+                /// The offset of the line along the major axis.
+                /// </summary>
+                public double MajorOffset;
+
+                /// <summary>
+                /// The size of the line along the major axis.
+                /// </summary>
+                public double MajorSize;
+
+                /// <summary>
+                /// The items in this line.
+                /// </summary>
+                public Item[] Items;
+            }
+
+            /// <summary>
+            /// An item within a constructed layout.
+            /// </summary>
+            public struct Item
+            {
+                /// <summary>
+                /// The offset of the item along the minor axis.
+                /// </summary>
+                public double MinorOffset;
+
+                /// <summary>
+                /// The size of the item along the minor axis.
+                /// </summary>
+                public double MinorSize;
+
+                /// <summary>
+                /// The flow item this item is derived from.
+                /// </summary>
+                public FlowItem Source;
+            }
+
+            public FlowControl Control;
+            public List<Line> Lines;
+        }
+
+        /// <summary>
+        /// A description of a valid line starting at a certain item that may be added to a flow.
+        /// </summary>
+        private struct _PlannedLine
+        {
+            /// <summary>
+            /// The amount of items in this line.
+            /// </summary>
+            public int Size;
+
+            /// <summary>
+            /// The index of the first item in the following line.
+            /// </summary>
+            public int Next;
+
+            /// <summary>
+            /// The minimum length of this line along the minor axis.
+            /// </summary>
+            public double Length;
+
+            /// <summary>
+            /// Indicates wether this line is ended with a cut item.
+            /// </summary>
+            public bool Cut;
+        }
+
+        /// <summary>
+        /// Gets the possible lines that may be formed from the given items.
+        /// </summary>
+        /// <param name="Start">The item to start the lines on.</param>
+        /// <param name="Max">The maximum size of a line.</param>
+        private static IEnumerable<_PlannedLine> _GetPossibleLines(List<FlowItem> Items, int Start, double Max, FlowStyle Style)
+        {
+            int cur = Start;
+            int size = 0;
+            double len = 0.0;
+            while (cur < Items.Count)
+            {
+                // Insure line does not exceed size limit
+                if (len >= Max)
+                {
+                    yield break;
+                }
+
+                // Examine current item
+                FlowItem item = Items[cur];
+
+                // Break item
+                if (item == BreakFlowItem.Singleton)
+                {
+                    yield return new _PlannedLine
+                    {
+                        Length = len,
+                        Next = cur + 1,
+                        Size = size,
+                        Cut = false
+                    };
+                    cur++;
+                    size++;
+                    continue;
+                }
+
+                // Cut item
+                if (item == CutFlowItem.Singleton)
+                {
+                    yield return new _PlannedLine
+                    {
+                        Length = len,
+                        Next = cur + 1,
+                        Size = size,
+                        Cut = true
+                    };
+                    yield break;
+                }
+
+                // Character item
+                CharacterFlowItem cfi = item as CharacterFlowItem;
+                if (cfi != null)
+                {
+                    len += cfi.Font.GetSize(cfi.Name)[Style.MinorAxis];
+                    cur++;
+                    size++;
+                    continue;
+                }
+
+                // Space item
+                SpaceFlowItem sfi = item as SpaceFlowItem;
+                if (sfi != null)
+                {
+                    if (sfi.Breaking)
+                    {
+                        yield return new _PlannedLine
+                        {
+                            Length = len,
+                            Next = cur + 1,
+                            Size = size,
+                            Cut = false
+                        };
+                    }
+                    len += sfi.Length;
+                    cur++;
+                    size++;
+                    continue;
+                }
+            }
+
+            // End of items can act as a valid cut.
+            yield return new _PlannedLine
+            {
+                Length = len,
+                Next = Items.Count,
+                Size = size,
+                Cut = true
+            };
+        }
+
+        /// <summary>
+        /// Greedily creates a list of lines for a sequence of items, or returns null if not possible.
+        /// </summary>
+        /// <param name="Max">The maximum size of a line.</param>
+        private static List<_PlannedLine> _GetLinesGreedy(List<FlowItem> Items, double Max, FlowStyle Style)
+        {
+            int cur = 0;
+            List<_PlannedLine> lines = new List<_PlannedLine>();
+            while (cur < Items.Count)
+            {
+                bool hasline = false;
+                _PlannedLine last = new _PlannedLine();
+                foreach(_PlannedLine line in _GetPossibleLines(Items, cur, Max, Style))
+                {
+                    hasline = true;
+                    last = line;
+                }
+
+                // Exit if no lines are found.
+                if (!hasline)
+                {
+                    return null;
+                }
+
+                cur = last.Next;
+                lines.Add(last);
+            }
+            return lines;
+        }
+
+        /// <summary>
+        /// Builds the layout lines for a list of planned lines.
+        /// </summary>
+        private static List<_Layout.Line> _BuildLayout(List<_PlannedLine> Lines, List<FlowItem> Items, FlowStyle Style, double MinorSize, out double MajorSize)
+        {
+            List<_Layout.Line> lines = new List<_Layout.Line>(Lines.Count);
+            int cur = 0;
+
+            double majoroff = 0.0;
+            MajorSize = 0.0;
+
+            // Build lines
+            foreach (_PlannedLine pl in Lines)
+            {
+                _Layout.Line line = _BuildLayoutLine(cur, pl.Size, pl.Length, pl.Cut, Items, Style, MinorSize);
+                lines.Add(line);
+                cur = pl.Next;
+
+                line.MajorOffset = majoroff;
+                MajorSize = majoroff + line.MajorSize;
+                majoroff = MajorSize + Style.LineSpacing;
+            }
+
+            // Reverse line direction if needed
+            if ((int)Style.Direction % 2 > 0)
+            {
+                majoroff = MajorSize;
+                foreach (_Layout.Line line in lines)
+                {
+                    line.MajorOffset = majoroff - line.MajorSize;
+                    majoroff = line.MajorOffset - Style.LineSpacing;
+                }
+            }
+
+            return lines;
+        }
+
+        /// <summary>
+        /// Builds a layout line for a given subset of a list of items. The major offset of the line will not be set.
+        /// </summary>
+        /// <param name="Length">The known minimum length of the line.</param>
+        private static _Layout.Line _BuildLayoutLine(int Start, int Size, double Length, bool Cut, List<FlowItem> Items, FlowStyle Style, double MinorSize)
+        {
+            Axis minoraxis = Style.MinorAxis;
+            double majorsize = Style.LineSize;
+            _Layout.Item[] items = new _Layout.Item[Size];
+
+            // Add visible items while determining their sizes
+            double totalspace = 0.0;
+            for (int t = 0; t < items.Length; t++)
+            {
+                FlowItem item = Items[Start++];
+
+                // Character item
+                CharacterFlowItem cfi = item as CharacterFlowItem;
+                if (cfi != null)
+                {
+                    Point size = cfi.Font.GetSize(cfi.Name).Shift(Style.MinorAxis);
+                    majorsize = Math.Max(majorsize, size.Y);
+                    items[t] = new _Layout.Item
+                    {
+                        MinorSize = size.X,
+                        Source = cfi
+                    };
+                }
+
+                // Space item
+                SpaceFlowItem sfi = item as SpaceFlowItem;
+                if (sfi != null)
+                {
+                    totalspace += sfi.Length;
+                    items[t] = new _Layout.Item
+                    {
+                        MinorSize = sfi.Length,
+                        Source = sfi
+                    };
+                }
+            }
+
+            // If the flow is justified, adjust the sizes of spaces
+            if (Style.Justification == FlowJustification.Justify && !Cut)
+            {
+                double spacemult = (MinorSize - Length + totalspace) / totalspace;
+                for (int t = 0; t < items.Length; t++)
+                {
+                    if (items[t].Source is SpaceFlowItem)
+                    {
+                        items[t].MinorSize *= spacemult;
+                    }
+                }
+            }
+
+            // Set item offsets
+            if ((int)Style.Direction % 4 < 2)
+            {
+                double off = Style.Justification == FlowJustification.Center ? MinorSize * 0.5 - Length * 0.5 : 0.0;
+                for (int t = 0; t < items.Length; t++)
+                {
+                    items[t].MinorOffset = off;
+                    off += items[t].MinorSize;
+                }
+            }
+            else
+            {
+                double off = Style.Justification == FlowJustification.Center ? MinorSize * 0.5 + Length * 0.5 : MinorSize;
+                for (int t = 0; t < items.Length; t++)
+                {
+                    off -= items[t].MinorSize;
+                    items[t].MinorOffset = off;
+                }
+            }
+
+            return new _Layout.Line
+            {
+                MajorSize = majorsize,
+                Items = items
+            };
+        }
+
+        private FlowStyle _Style;
+        private FlowFitMode _FitMode;
+        private List<FlowItem> _Items;
+    }
+
+    /// <summary>
+    /// An item that can appear in a flow. Items can be displayable, or can have
+    /// effects on the layout of a flow.
+    /// </summary>
+    public class FlowItem
+    {
+        /// <summary>
+        /// Gets a flow item that signals a possible break between lines.
+        /// </summary>
+        public static BreakFlowItem Break
+        {
+            get
+            {
+                return BreakFlowItem.Singleton;
             }
         }
+
+        /// <summary>
+        /// Gets a flow item that ends the line it occurs on.
+        /// </summary>
+        public static CutFlowItem Cut
+        {
+            get
+            {
+                return CutFlowItem.Singleton;
+            }
+        }
+
+        /// <summary>
+        /// Creates a flow item that signals a space of a certain length.
+        /// </summary>
+        public static SpaceFlowItem Space(double Length, bool Breaking)
+        {
+            return new SpaceFlowItem
+            {
+                Length = Length,
+                Breaking = Breaking
+            };
+        }
+
+        /// <summary>
+        /// Creates a flow item that displays a glyph of a certain font.
+        /// </summary>
+        public static CharacterFlowItem Character(char Name, Font Font)
+        {
+            return new CharacterFlowItem
+            {
+                Name = Name,
+                Font = Font
+            };
+        }
+
+        /// <summary>
+        /// Creates a sequence of flow items to display the given text.
+        /// </summary>
+        public static List<FlowItem> CreateText(string Text, Font Font, double SpaceLength)
+        {
+            List<FlowItem> items = new List<FlowItem>();
+            SpaceFlowItem space = Space(SpaceLength, true);
+            for (int t = 0; t < Text.Length; t++)
+            {
+                char c = Text[t];
+                switch (c)
+                {
+                    case ' ':
+                        items.Add(space);
+                        break;
+                    case '\n':
+                        items.Add(Cut);
+                        break;
+                    default:
+                        items.Add(Character(c, Font));
+                        break;
+                }
+            }
+            return items;
+        }
+    }
+
+    /// <summary>
+    /// An invisible flow item that allows the flow to be broken into seperate lines where it occurs.
+    /// </summary>
+    public class BreakFlowItem : FlowItem
+    {
+        private BreakFlowItem()
+        {
+
+        }
+
+        /// <summary>
+        /// The only instance of this class.
+        /// </summary>
+        public static readonly BreakFlowItem Singleton = new BreakFlowItem();
+    }
+
+    /// <summary>
+    /// A flow item that forces the current line to end. If the flow is justified, the line this item is on
+    /// will be ragged.
+    /// </summary>
+    public class CutFlowItem : FlowItem
+    {
+        private CutFlowItem()
+        {
+
+        }
+
+        /// <summary>
+        /// The only instance of this class.
+        /// </summary>
+        public static readonly CutFlowItem Singleton = new CutFlowItem();
+    }
+
+    /// <summary>
+    /// A flow item that creates some spacing along the minor axis of a line.
+    /// </summary>
+    public class SpaceFlowItem : FlowItem
+    {
+        /// <summary>
+        /// Gets the length of the space. The space may be stretched in a justified flow.
+        /// </summary>
+        public double Length;
+
+        /// <summary>
+        /// Determines wether the space can act as a break between lines. If a space does cause a line break, the space will
+        /// not be visible.
+        /// </summary>
+        public bool Breaking;
+    }
+
+    /// <summary>
+    /// A flow item that displays a glyph of a certain font.
+    /// </summary>
+    public class CharacterFlowItem : FlowItem
+    {
+        /// <summary>
+        /// The name of the glyph to display.
+        /// </summary>
+        public char Name;
+
+        /// <summary>
+        /// The font to use to display the glyph.
+        /// </summary>
+        public Font Font;
     }
 
     /// <summary>
@@ -49,6 +648,11 @@ namespace DUIP.UI
         /// The direction of the flow.
         /// </summary>
         public FlowDirection Direction;
+
+        /// <summary>
+        /// The wrap mode for the flow.
+        /// </summary>
+        public FlowWrapMode WrapMode;
 
         /// <summary>
         /// The alignment of items within lines on the major axis.
@@ -123,11 +727,6 @@ namespace DUIP.UI
         /// Items are aligned only to the beginning of a line.
         /// </summary>
         Ragged,
-
-        /// <summary>
-        /// Items are aligned only to the end of a line.
-        /// </summary>
-        ReverseRagged,
     }
 
     /// <summary>
@@ -147,413 +746,18 @@ namespace DUIP.UI
     }
 
     /// <summary>
-    /// Contains functions related to flow blocks and flowing items.
+    /// Gives a possible method of choosing where to put automatic line breaks in a flow.
     /// </summary>
-    public static class Flow
+    public enum FlowWrapMode
     {
         /// <summary>
-        /// A layout item that can be placed in a flow.
+        /// Each line contains as many items as it can fit.
         /// </summary>
-        public abstract class Item
-        {
-
-        }
+        Greedy,
 
         /// <summary>
-        /// A item placed in a line that has no additional effects on the arrangement of other items.
+        /// Line breaks are choosen to give the best aesthetic results.
         /// </summary>
-        public abstract class StandardItem : Item
-        {
-            /// <summary>
-            /// Gets the size of the item.
-            /// </summary>
-            public abstract Point Size { get; }
-
-            /// <summary>
-            /// Gets the position of this item along the line it was placed in.
-            /// </summary>
-            /// <remarks>This position will start at 0.0 and ascend for successive items, regardless of the flow direction.</remarks>
-            public double MinorPosition
-            {
-                get
-                {
-                    return this._MinorPosition;
-                }
-            }
-
-            /// <summary>
-            /// Gets the position of this item in relation to the flow container, given the line the item is in, the size of the container,
-            /// and the style used for the container.
-            /// </summary>
-            public Point GetPosition(Line Line, Point ContainerSize, FlowStyle Style)
-            {
-                ContainerSize = ContainerSize.Shift(Style.MinorAxis);
-                Point size = this.Size.Shift(Style.MinorAxis);
-                double lineoffset = Align.AxisOffset(Style.LineAlignment, Line.MajorSize, size.Y);
-                return new Point(
-                    (int)Style.Direction % 4 < 2 ? this._MinorPosition : ContainerSize.X - this._MinorPosition - size.X,
-                    ((int)Style.Direction % 2 < 1 ? Line.MajorPosition : ContainerSize.Y - Line.MajorPosition - Line.MajorSize) + lineoffset).Shift(Style.MinorAxis);
-            }
-
-            internal double _MinorPosition;
-        }
-        
-        /// <summary>
-        /// An ordered collection of items to be placed on the same line.
-        /// </summary>
-        public class GroupItem : Item
-        {
-            public GroupItem()
-            {
-
-            }
-
-            public GroupItem(List<Item> Items)
-            {
-                this.Items = Items;
-            }
-
-            /// <summary>
-            /// The items of this group.
-            /// </summary>
-            public List<Item> Items;
-        }
-
-        /// <summary>
-        /// Represents a line of flowed items.
-        /// </summary>
-        public class Line
-        {
-            internal Line(FlowStyle Style)
-            {
-                this._Items = new List<Item>();
-                this._MajorSize = Style.LineSize;
-                this._UsedLength = 0.0;
-            }
-
-            /// <summary>
-            /// Gets the size of this line on the major axis.
-            /// </summary>
-            public double MajorSize
-            {
-                get
-                {
-                    return this._MajorSize;
-                }
-            }
-
-            /// <summary>
-            /// Gets the position of this line on the major axis.
-            /// </summary>
-            /// <remarks>This position will start at 0.0 and ascend for successive lines, regardless of the flow direction.</remarks>
-            public double MajorPosition
-            {
-                get
-                {
-                    return this._MajorPosition;
-                }
-            }
-
-            /// <summary>
-            /// Gets the total length along the minor axis of the items in this line.
-            /// </summary>
-            public double UsedLength
-            {
-                get
-                {
-                    return this._UsedLength;
-                }
-            }
-
-            /// <summary>
-            /// Gets the items in this line.
-            /// </summary>
-            public IEnumerable<Item> Items
-            {
-                get
-                {
-                    return this._Items;
-                }
-            }
-
-            /// <summary>
-            /// Tries appending the given item to the end of this line. Returns true if it was successfully add or false
-            /// if it can not be added.
-            /// </summary>
-            internal bool _TryAppend(Item Item, double MinorSize, FlowStyle Style)
-            {
-                StandardItem si = Item as StandardItem;
-                if (si != null)
-                {
-                    Point size = si.Size.Shift(Style.MinorAxis);
-                    double nusedlength = this._UsedLength + size.X;
-                    if (nusedlength <= MinorSize)
-                    {
-                        this._UsedLength = nusedlength;
-                        this._MajorSize = Math.Max(this._MajorSize, size.Y);
-                        this._Items.Add(si);
-                        return true;
-                    }
-                    return false;
-                }
-
-                GroupItem gi = Item as GroupItem;
-                if (gi != null)
-                {
-                    double len = 0.0;
-                    double hei = this._MajorSize;
-                    foreach (Item subitem in gi.Items)
-                    {
-                        si = subitem as StandardItem;
-                        if (si != null)
-                        {
-                            Point size = si.Size.Shift(Style.MinorAxis);
-                            len += size.X;
-                            hei = Math.Max(hei, size.Y);
-                        }
-                    }
-
-                    double nusedlength = this._UsedLength + len;
-                    if (nusedlength <= MinorSize)
-                    {
-                        this._UsedLength = nusedlength;
-                        this._MajorSize = hei;
-                        this._Items.AddRange(gi.Items);
-                        return true;
-                    }
-                    return false;
-                }
-
-                throw new NotImplementedException();
-            }
-
-            /// <summary>
-            /// Performs layout on the items in this line. The items are assumed to be final, with no more to be added in the future.
-            /// </summary>
-            internal void _Layout(double MajorPosition, double MinorSize, FlowStyle Style)
-            {
-                Axis minoraxis = Style.MinorAxis;
-                this._MajorPosition = MajorPosition;
-
-                double cur;
-                switch (Style.Justification)
-                {
-                    case FlowJustification.Ragged:
-                        cur = 0.0;
-                        foreach (Item item in this._Items)
-                        {
-                            StandardItem si = item as StandardItem;
-                            if (si != null)
-                            {
-                                si._MinorPosition = cur;
-                                cur += si.Size[minoraxis];
-                                continue;
-                            }
-                        }
-                        break;
-                    case FlowJustification.Justify:
-                        cur = 0.0;
-                        double spacing = this._UsedLength > MinorSize * 0.7 ? (MinorSize - this._UsedLength) / this._Items.Count : 0.0;
-                        foreach (Item item in this._Items)
-                        {
-                            StandardItem si = item as StandardItem;
-                            if (si != null)
-                            {
-                                si._MinorPosition = cur;
-                                cur += si.Size[minoraxis];
-                                cur += spacing;
-                                continue;
-                            }
-                        }
-                        break;
-                }
-            }
-
-
-            private List<Item> _Items;
-            private double _UsedLength;
-            private double _MajorSize;
-            private double _MajorPosition;
-        }
-
-        /// <summary>
-        /// Performs layout on a collection of flow items. Returns a list of the lines the items are arranged in.
-        /// </summary>
-        /// <param name="MinorSize">The allowable size on the minor axis for layout.</param>
-        /// <param name="MajorSize">The size required on the major axis to place all items.</param>
-        public static List<Line> Layout(IEnumerable<Item> Items, FlowStyle Style, double MinorSize, out double MajorSize)
-        {
-            List<Line> lines = _BuildLines(Items, Style, MinorSize);
-            _LayoutLines(lines, Style, MinorSize, out MajorSize);
-            return lines;
-        }
-
-        /// <summary>
-        /// Performs layout on a collection of flow items using the given fitting mode. Returns null if no possible arrangement to fit all the items is found.
-        /// </summary>
-        public static List<Line> Layout(IEnumerable<Item> Items, FlowStyle Style, FlowFitMode Mode, Rectangle SizeRange, out Point Size, out double MajorSize)
-        {
-            switch (Mode)
-            {
-                case FlowFitMode.Compact:
-                    return LayoutCompact(Items, Style, SizeRange, out Size, out MajorSize);
-                default:
-                    return LayoutBest(Items, Style, SizeRange, out Size, out MajorSize);
-            }
-        }
-
-        /// <summary>
-        /// Performs layout on a collection of flow items while selecting the smallest possible major (first priority) and
-        /// minor sizes. Returns null if no possible arrangement to fit all the items is found.
-        /// </summary>
-        /// <param name="MajorSize">The smallest possible major size that can keep the layout.</param>
-        public static List<Line> LayoutCompact(IEnumerable<Item> Items, FlowStyle Style, Rectangle SizeRange, out Point Size, out double MajorSize)
-        {
-            List<Line> lines = _BuildLines(Items, Style, SizeRange.Right);
-            if (lines == null)
-            {
-                Size = Point.Zero;
-                MajorSize = 0.0;
-                return null;
-            }
-            double minorsize = Math.Max(_GetMinMinorSize(lines), SizeRange.Left);
-            _LayoutLines(lines, Style, minorsize, out MajorSize);
-            Size = new Point(minorsize, Math.Max(MajorSize, SizeRange.Top));
-            return lines;
-        }
-
-        /// <summary>
-        /// Performs layout on a collection of flow items while selecting an aesthetically pleasing
-        /// size within the given size range (with the minor axis being X, and the major axis being Y). 
-        /// Returns a list of the lines the items are arranged in. Returns null if no possible 
-        /// arrangement to fit all the items is found.
-        /// </summary>
-        /// <param name="MajorSize">The smallest possible major size that can keep the layout.</param>
-        public static List<Line> LayoutBest(IEnumerable<Item> Items, FlowStyle Style, Rectangle SizeRange, out Point Size, out double MajorSize)
-        {
-            // Try minimizing score by selecting a good minor size.
-            double bestscore = double.PositiveInfinity;
-            double bestsize = 0.0;
-            List<Line> best = null;
-            double minorsize = SizeRange.Right;
-            while (true)
-            {
-                List<Line> lines = _BuildLines(Items, Style, minorsize);
-                if (lines == null)
-                {
-                    break;
-                }
-
-                // Get the major size required for the layout
-                double majorsize = _GetMajorSize(lines, Style);
-                if (majorsize > SizeRange.Bottom)
-                {
-                    break;
-                }
-                majorsize = Math.Max(majorsize, SizeRange.Top);
-                minorsize = Math.Max(_GetMinMinorSize(lines), SizeRange.Left);
-
-                // Compare scores
-                double score = _GetScore(minorsize, majorsize, SizeRange, Style);
-                if (score < bestscore)
-                {
-                    bestscore = score;
-                    bestsize = minorsize;
-                    best = lines;
-                }
-
-                // Continue with the next minor size, if possible
-                minorsize = minorsize * 0.9;
-                if (minorsize < SizeRange.Left)
-                {
-                    break;
-                }
-            }
-
-            if (best != null)
-            {
-                _LayoutLines(best, Style, bestsize, out MajorSize);
-                Size = new Point(bestsize, Math.Max(MajorSize, SizeRange.Top));
-                return best;
-            }
-            Size = Point.Zero;
-            MajorSize = 0.0;
-            return null;
-        }
-
-        /// <summary>
-        /// Gets the aesthetic score of the given layout. The lower the score, the better the layout.
-        /// </summary>
-        private static double _GetScore(double MinorSize, double MajorSize, Rectangle SizeRange, FlowStyle Style)
-        {
-            double aspectratio = MinorSize / MajorSize;
-            return (MinorSize - SizeRange.Left) * (MajorSize - SizeRange.Top) * (aspectratio + 1.0 / aspectratio);
-        }
-
-        /// <summary>
-        /// Tries arranging the given items into lines using the given style and minor size. Returns null if not possible.
-        /// </summary>
-        private static List<Line> _BuildLines(IEnumerable<Item> Items, FlowStyle Style, double MinorSize)
-        {
-            List<Line> lines = new List<Line>();
-            Line curline = null;
-            foreach (Item item in Items)
-            {
-                if (curline == null || !curline._TryAppend(item, MinorSize, Style))
-                {
-                    curline = new Line(Style);
-                    lines.Add(curline);
-                    if (!curline._TryAppend(item, MinorSize, Style))
-                    {
-                        return null;
-                    }
-                }
-            }
-            return lines;
-        }
-
-        /// <summary>
-        /// Performs layout on lines and items within them.
-        /// </summary>
-        private static void _LayoutLines(IEnumerable<Line> Lines, FlowStyle Style, double MinorSize, out double MajorSize)
-        {
-            double majorposition = 0.0;
-            double majorsize = 0.0;
-            foreach (Line line in Lines)
-            {
-                line._Layout(majorposition, MinorSize, Style);
-                majorsize = majorposition + line.MajorSize;
-                majorposition = majorsize + Style.LineSpacing;
-            }
-            MajorSize = majorsize;
-        }
-
-        /// <summary>
-        /// Gets the major size needed to display the given lines using the given style.
-        /// </summary>
-        private static double _GetMajorSize(IEnumerable<Line> Lines, FlowStyle Style)
-        {
-            double majorposition = 0.0;
-            double majorsize = 0.0;
-            foreach (Line line in Lines)
-            {
-                majorsize = majorposition + line.MajorSize;
-                majorposition = majorsize + Style.LineSpacing;
-            }
-            return majorsize;
-        }
-
-        /// <summary>
-        /// Gets the smallest minor size needed to contain all of the given lines.
-        /// </summary>
-        private static double _GetMinMinorSize(IEnumerable<Line> Lines)
-        {
-            double minminorsize = 0.0;
-            foreach (Line line in Lines)
-            {
-                minminorsize = Math.Max(minminorsize, line.UsedLength);
-            }
-            return minminorsize;
-        }
+        Best
     }
 }

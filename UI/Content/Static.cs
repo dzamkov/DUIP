@@ -17,27 +17,24 @@ namespace DUIP.UI
 
         public override Disposable<Control> CreateControl(Theme Theme)
         {
-            Control space = SpaceControl.Singleton;
-            Control border = new BorderControl
+            Control content = new FlowControl
             {
-                Inner = space,
-                Border = new Border
+                FitMode = FlowFitMode.Compact,
+                Style = new FlowStyle
                 {
-                    Color = Color.RGB(0.2, 0.2, 0.2),
-                    Weight = 0.05,
-                }
-            };
-            Control background = new BackgroundControl()
-            {
-                Inner = border,
-                Color = Color.RGB(0.95, 0.95, 0.95)
-            };
-            Control size = new SizeControl
-            {
-                Inner = background,
-                LimitSizeRange = new Rectangle(1.0, 1.0, 2.0, 2.0)
-            };
-            return size;
+                    Direction = FlowDirection.RightDown,
+                    Justification = FlowJustification.Justify,
+                    WrapMode = FlowWrapMode.Greedy,
+                    LineAlignment = Alignment.Up,
+                    LineSize = 0.0,
+                    LineSpacing = 0.0
+                },
+                Items = FlowItem.CreateText("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam tincidunt, lectus ut aliquet adipiscing, felis elit dapibus neque, ac venenatis neque nunc rutrum justo. Ut eu mi eu orci gravida venenatis vitae id nibh. In hac habitasse platea dictumst. Etiam auctor laoreet turpis id adipiscing. Sed ultricies, elit vel malesuada ornare, ligula mauris sagittis massa, sit amet suscipit metus diam eget mauris. Duis vitae risus leo, sed venenatis mauris. Donec magna orci, vehicula nec iaculis sit amet, rutrum eget elit. Vestibulum et leo at massa luctus condimentum eget vel odio. In arcu lorem, aliquam at blandit eget, sodales eget massa. Duis nisl erat, ornare at cursus vitae, molestie ut diam. Integer massa justo, fringilla tempus placerat at, rhoncus vitae orci. Proin laoreet lectus in enim commodo sed adipiscing diam auctor. Vestibulum a magna neque, nec pellentesque leo. Curabitur ornare, quam eu sodales semper, arcu lorem rhoncus mauris, ac porta odio arcu ut elit. Mauris interdum tristique odio non sagittis. Curabitur porta erat in mauris gravida semper. Donec magna lorem, aliquet vel volutpat sit amet, vulputate id augue. Curabitur porta eleifend velit, sed sagittis nulla mattis ut. Duis eget dignissim dui.", Theme.GetFont(FontPurpose.General), 0.01)
+            }.WithSize(new Point(2.0, 2.0));
+
+            Border border; Color background;
+            Theme.GetNodeStyle(out border, out background);
+            return content.WithPad(Theme.TextPadding).WithBorder(border).WithBackground(background);
         }
 
         /// <summary>

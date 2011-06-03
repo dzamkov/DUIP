@@ -41,5 +41,45 @@ namespace DUIP.UI
 
             }
         }
+
+        /// <summary>
+        /// Creates a control that applies a border to this control.
+        /// </summary>
+        public BorderControl WithBorder(Border Border)
+        {
+            return new BorderControl(Border, this);
+        }
+
+        /// <summary>
+        /// Creates a control that applies a background to this control.
+        /// </summary>
+        public BackgroundControl WithBackground(Color Background)
+        {
+            return new BackgroundControl(Background, this);
+        }
+
+        /// <summary>
+        /// Creates a control that limits the size range available to this control.
+        /// </summary>
+        public SizeControl WithSize(Rectangle LimitSizeRange)
+        {
+            return new SizeControl(LimitSizeRange, this);
+        }
+
+        /// <summary>
+        /// Creates a control that limits the size range available to this control.
+        /// </summary>
+        public SizeControl WithSize(Point Size)
+        {
+            return new SizeControl(new Rectangle(Size, Size), this);
+        }
+
+        /// <summary>
+        /// Creates a control that applies padding to this control.
+        /// </summary>
+        public PadControl WithPad(Compass<double> Padding)
+        {
+            return new PadControl(Padding, this);
+        }
     }
 }
