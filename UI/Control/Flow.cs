@@ -97,10 +97,10 @@ namespace DUIP.UI
             
             // Build layout lines
             double major;
-            List<_Layout.Line> layoutlines = _BuildLayout(lines, this._Items, style, minor, out major);
+            List<_Layout.Line> layoutlines = _BuildLayout(lines, this._Items, style, minor, SizeRange.Top, out major);
 
             // Create layout
-            Size = new Point(minor, Math.Max(major, SizeRange.Top)).Shift(style.MinorAxis);
+            Size = new Point(minor, major).Shift(style.MinorAxis);
             return new _Layout
             {
                 Control = this,
@@ -366,7 +366,9 @@ namespace DUIP.UI
         /// <summary>
         /// Builds the layout lines for a list of planned lines.
         /// </summary>
-        private static List<_Layout.Line> _BuildLayout(List<_PlannedLine> Lines, List<FlowItem> Items, FlowStyle Style, double MinorSize, out double MajorSize)
+        private static List<_Layout.Line> _BuildLayout(
+            List<_PlannedLine> Lines, List<FlowItem> Items, FlowStyle Style, 
+            double MinorSize, double MinMajorSize, out double MajorSize)
         {
             List<_Layout.Line> lines = new List<_Layout.Line>(Lines.Count);
             int cur = 0;
@@ -385,6 +387,7 @@ namespace DUIP.UI
                 MajorSize = majoroff + line.MajorSize;
                 majoroff = MajorSize + Style.LineSpacing;
             }
+            MajorSize = Math.Max(MajorSize, MinMajorSize);
 
             // Reverse line direction if needed
             if ((int)Style.Direction % 2 > 0)
