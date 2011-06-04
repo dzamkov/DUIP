@@ -75,7 +75,7 @@ namespace DUIP.UI
             Rectangle contentsizerange = SizeRange.Translate(-new Point(sep * (rows - 1), sep * (cols - 1)));
 
             // Create preliminary cell layouts to estimate sizes needed
-            Rectangle cellsizerange = new Rectangle(Point.Zero, contentsizerange.BottomRight);
+            Point maxcellsize = contentsizerange.BottomRight;
             double[] widths = new double[rows];
             double[] heights = new double[cols];
             Layout[,] cells = new Layout[rows, cols];
@@ -84,7 +84,7 @@ namespace DUIP.UI
                 for (int c = 0; c < cols; c++)
                 {
                     Point size;
-                    cells[r, c] = this._Cells[r, c].CreateLayout(cellsizerange, out size);
+                    cells[r, c] = this._Cells[r, c].CreateLayout(new Rectangle(new Point(widths[r], heights[c]), maxcellsize), out size);
                     widths[r] = Math.Max(widths[r], size.X);
                     heights[c] = Math.Max(heights[c], size.Y);
                 }

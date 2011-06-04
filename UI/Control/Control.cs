@@ -14,7 +14,7 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a layout with the given size.
         /// </summary>
-        public virtual Layout CreateLayout(Point Size)
+        public Layout CreateLayout(Point Size)
         {
             return this.CreateLayout(new Rectangle(Size, Size), out Size);
         }
@@ -28,9 +28,9 @@ namespace DUIP.UI
         /// Destructively updates the given layout (of this control) with the given size. The new layout will be equivalent 
         /// to the one produced with "CreateLayout".
         /// </summary>
-        public virtual void UpdateLayout(ref Layout Layout, Point Size)
+        public void UpdateLayout(ref Layout Layout, Point Size)
         {
-            Layout = CreateLayout(Size);
+            this.UpdateLayout(ref Layout, new Rectangle(Size, Size), out Size);
         }
 
         /// <summary>
