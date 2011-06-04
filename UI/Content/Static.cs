@@ -17,24 +17,39 @@ namespace DUIP.UI
 
         public override Disposable<Control> CreateControl(Theme Theme)
         {
-            Control content = new FlowControl
+            FlowStyle style = new FlowStyle
             {
-                AspectRatio = 1.0,
-                Style = new FlowStyle
-                {
-                    Direction = FlowDirection.RightDown,
-                    Justification = FlowJustification.Justify,
-                    WrapMode = FlowWrap.Greedy,
-                    LineAlignment = Alignment.Up,
-                    LineSize = 0.0,
-                    LineSpacing = 0.0
-                },
-                Items = FlowItem.CreateText("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam tincidunt, lectus ut aliquet adipiscing, felis elit dapibus neque, ac venenatis neque nunc rutrum justo. Ut eu mi eu orci gravida venenatis vitae id nibh. In hac habitasse platea dictumst. Etiam auctor laoreet turpis id adipiscing. Sed ultricies, elit vel malesuada ornare, ligula mauris sagittis massa, sit amet suscipit metus diam eget mauris. Duis vitae risus leo, sed venenatis mauris. Donec magna orci, vehicula nec iaculis sit amet, rutrum eget elit. Vestibulum et leo at massa luctus condimentum eget vel odio. In arcu lorem, aliquam at blandit eget, sodales eget massa. Duis nisl erat, ornare at cursus vitae, molestie ut diam. Integer massa justo, fringilla tempus placerat at, rhoncus vitae orci. Proin laoreet lectus in enim commodo sed adipiscing diam auctor. Vestibulum a magna neque, nec pellentesque leo. Curabitur ornare, quam eu sodales semper, arcu lorem rhoncus mauris, ac porta odio arcu ut elit. Mauris interdum tristique odio non sagittis. Curabitur porta erat in mauris gravida semper. Donec magna lorem, aliquet vel volutpat sit amet, vulputate id augue. Curabitur porta eleifend velit, sed sagittis nulla mattis ut. Duis eget dignissim dui.", Theme.GetFont(FontPurpose.General), 0.01)
+                Direction = FlowDirection.RightDown,
+                Justification = FlowJustification.Ragged,
+                WrapMode = FlowWrap.Greedy,
+                LineAlignment = Alignment.Up,
+                LineSize = 0.0,
+                LineSpacing = 0.0
             };
+
+            Func<string, Control> text = delegate(string Text)
+            {
+                return new FlowControl
+                {
+                    AspectRatio = double.PositiveInfinity,
+                    Style = style,
+                    Items = FlowItem.CreateText(Text, Theme.GetFont(FontPurpose.General), 0.01)
+                }.WithPad(Theme.TextPadding);
+            };
+
+            GridControl grid = new GridControl(8, 16);
+            grid.Seperator = new Border(0.02, Color.RGB(0.2, 0.2, 0.2));
+            for (int r = 0; r < grid.Rows; r++)
+            {
+                for (int c = 0; c < grid.Columns; c++)
+                {
+                    grid[r, c] = text(r.ToString() + " * " + c.ToString() + " = " + (r * c).ToString());
+                }
+            }
 
             Border border; Color background;
             Theme.GetNodeStyle(out border, out background);
-            return content.WithPad(Theme.TextPadding).WithBorder(border).WithBackground(background);
+            return grid.WithBorder(border).WithBackground(background);
         }
 
         /// <summary>

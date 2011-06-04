@@ -76,8 +76,15 @@ namespace DUIP.UI
             }
             else
             {
-                double pmajor;
-                minor = this._PickMinor(SizeRange.Left, SizeRange.Right, out pmajor);
+                if (SizeRange.Left == SizeRange.Right)
+                {
+                    minor = SizeRange.Left;
+                }
+                else
+                {
+                    double pmajor;
+                    minor = this._PickMinor(SizeRange.Left, SizeRange.Right, out pmajor);
+                }
             }
 
             // Create lines
@@ -93,7 +100,7 @@ namespace DUIP.UI
 
             // Get minimum minor size needed to display all lines (this becomes the new minor size).
             double lminor = minor;
-            minor = 0.0;
+            minor = SizeRange.Left;
             foreach (_PlannedLine pl in lines)
             {
                 double waste = lminor - pl.Length;
@@ -104,13 +111,22 @@ namespace DUIP.UI
             double major;
             List<_Layout.Line> layoutlines = _BuildLayout(lines, this._Items, style, minor, SizeRange.Top, out major);
 
-            // Create layout
-            Size = new Point(minor, major).Shift(style.MinorAxis);
-            return new _Layout
+            if (major <= SizeRange.Bottom)
             {
-                Control = this,
-                Lines = layoutlines
-            };
+                // Create layout
+                Size = new Point(minor, major).Shift(style.MinorAxis);
+                return new _Layout
+                {
+                    Control = this,
+                    Lines = layoutlines
+                };
+            }
+            else
+            {
+                // If a layout can not be created within the given size range, this control acts like a space control
+                Size = SizeRange.TopLeft;
+                return SpaceControl.Layout;
+            }
         }
 
         private class _Layout : Layout
@@ -328,13 +344,13 @@ namespace DUIP.UI
                 }
             }
 
-            // End of items can act as a valid cut.
+            // End of items can act as a valid break
             yield return new _PlannedLine
             {
                 Length = len,
                 Next = Items.Count,
                 Size = size,
-                Cut = true
+                Cut = false
             };
         }
 
@@ -882,7 +898,7 @@ namespace DUIP.UI
     public enum FlowWrap
     {
         /// <summary>
-        /// Each line contains as many items as it can fit.
+        /// Each line is given as many items as it can fit.
         /// </summary>
         Greedy,
 

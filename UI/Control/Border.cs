@@ -167,6 +167,12 @@ namespace DUIP.UI
     /// </summary>
     public struct Border
     {
+        public Border(double Weight, Color Color)
+        {
+            this.Weight = Weight;
+            this.Color = Color;
+        }
+
         /// <summary>
         /// An invisible border.
         /// </summary>

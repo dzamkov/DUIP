@@ -19,6 +19,17 @@ namespace DUIP.UI
         /// </summary>
         public static SpaceControl Singleton = new SpaceControl();
 
+        /// <summary>
+        /// Gets a layout that displays no content.
+        /// </summary>
+        public static new Layout Layout
+        {
+            get
+            {
+                return _Layout.Singleton;
+            }
+        }
+
         public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
         {
             Size = SizeRange.TopLeft;
