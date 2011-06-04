@@ -12,8 +12,7 @@ namespace DUIP.UI
     public abstract class Control
     {
         /// <summary>
-        /// Creates a layout for this control with the preferred size within the given size range. Layouts may be invalidated
-        /// with changes to the control they are for, including changes caused by their own "Update" method.
+        /// Creates a layout for this control with the preferred size within the given size range.
         /// </summary>
         public abstract Layout CreateLayout(Rectangle SizeRange, out Point Size);
 

@@ -30,17 +30,18 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets or sets the fit mode for the control.
+        /// Gets or sets the target aspect ratio (minor size / major size) for the flow. If set to infinity, the flow control will try
+        /// to use the smallest amount of lines possible.
         /// </summary>
-        public FlowFitMode FitMode
+        public double AspectRatio
         {
             get
             {
-                return this._FitMode;
+                return this._AspectRatio;
             }
             set
             {
-                this._FitMode = value;
+                this._AspectRatio = value;
             }
         }
 
@@ -66,32 +67,36 @@ namespace DUIP.UI
             SizeRange.TopLeft = SizeRange.TopLeft.Shift(minoraxis);
             SizeRange.BottomRight = SizeRange.BottomRight.Shift(minoraxis);
 
-            // Determine max line size
-            double max;
-            switch (this.FitMode)
+            // Determine minor size
+            double minor = 0.0;
+            double aspectratio = this._AspectRatio;
+            if (aspectratio == double.PositiveInfinity)
             {
-                case FlowFitMode.Compact:
-                    max = SizeRange.Right;
-                    break;
-                default:
-                    throw new NotImplementedException();
+                minor = SizeRange.Right;
+            }
+            else
+            {
+                double pmajor;
+                minor = this._PickMinor(SizeRange.Left, SizeRange.Right, out pmajor);
             }
 
             // Create lines
             List<_PlannedLine> lines;
             switch (style.WrapMode)
             {
-                case FlowWrapMode.Greedy:
-                    lines = _GetLinesGreedy(this.Items, max, style);
+                case FlowWrap.Greedy:
+                    lines = _GetLinesGreedy(this.Items, minor, style);
                     break;
                 default:
                     throw new NotImplementedException();
             }
 
-            // Get minimum size needed to display all lines (this becomes the minor size).
-            double minor = 0.0;
+            // Get minimum minor size needed to display all lines (this becomes the new minor size).
+            double lminor = minor;
+            minor = 0.0;
             foreach (_PlannedLine pl in lines)
             {
+                double waste = lminor - pl.Length;
                 minor = Math.Max(minor, pl.Length);
             }
             
@@ -485,8 +490,146 @@ namespace DUIP.UI
             };
         }
 
+        /// <summary>
+        /// Contains item measurements used to estimate the sizes and parameters of layouts.
+        /// </summary>
+        private class _Metrics
+        {
+            /// <summary>
+            /// The average size (in minor and major coordinates) of an item.
+            /// </summary>
+            public Point AverageSize;
+
+            /// <summary>
+            /// The maximum size (in minor and major coordinates) of an item.
+            /// </summary>
+            public Point MaximumSize;
+
+            /// <summary>
+            /// The average amount of space between breaks.
+            /// </summary>
+            public double AverageBreakSpacing;
+        }
+
+        /// <summary>
+        /// Creates metrics for this flow.
+        /// </summary>
+        private _Metrics _CreateMetrics()
+        {
+            FlowStyle style = this._Style;
+            Axis minoraxis = style.MinorAxis;
+            double linesize = style.LineSize;
+
+            Point avg = Point.Zero;
+            Point max = Point.Zero;
+            int breaks = 0;
+            foreach (FlowItem item in this._Items)
+            {
+                CharacterFlowItem cfi = item as CharacterFlowItem;
+                if (cfi != null)
+                {
+                    Point size = cfi.Font.GetSize(cfi.Name).Shift(minoraxis);
+                    size.Y = Math.Max(size.Y, linesize);
+
+                    avg += size;
+                    max.X = Math.Max(max.X, size.X);
+                    max.Y = Math.Max(max.Y, size.Y);
+                    continue;
+                }
+
+                SpaceFlowItem sfi = item as SpaceFlowItem;
+                if (sfi != null) 
+                {
+                    double len = sfi.Length;
+                    avg.X += len;
+                    max.X = Math.Max(max.X, len);
+                    if (sfi.Breaking)
+                    {
+                        breaks++;
+                    }
+                    continue;
+                }
+
+                if (item == BreakFlowItem.Singleton)
+                {
+                    breaks++;
+                }
+
+                if (item == CutFlowItem.Singleton)
+                {
+                    breaks++;
+                }
+            }
+
+            double icount = 1.0 / this._Items.Count;
+            return new _Metrics
+            {
+                AverageSize = avg * icount,
+                AverageBreakSpacing = avg.X / breaks,
+                MaximumSize = max,
+            };
+        }
+
+        /// <summary>
+        /// Gets metrics for this flow.
+        /// </summary>
+        private _Metrics _GetMetrics()
+        {
+            if (this._MetricsCache == null)
+            {
+                return this._MetricsCache = this._CreateMetrics();
+            }
+            return this._MetricsCache;
+        }
+
+        /// <summary>
+        /// Picks a minor size in order to make the resulting layout as close to the given aspect ratio as possible.
+        /// </summary>
+        /// <param name="Major">The predicted major size of the layout.</param>
+        private double _PickMinor(double Min, double Max, out double Major)
+        {
+            FlowStyle style = this._Style;
+            _Metrics metrics = this._GetMetrics();
+            int itemcount = this._Items.Count;
+            double aspectratio = this.AspectRatio;
+
+            Point avg = metrics.AverageSize;
+            Point max = metrics.MaximumSize;
+            double breakspacing = metrics.AverageBreakSpacing;
+            double linespacing = style.LineSpacing;
+
+            double totalminor = avg.X * itemcount;
+            double majorvary = max.Y - avg.Y;
+
+            // Begin guessing good values for the minor size
+            double minminor = Math.Max(Math.Max(avg.X, Min), breakspacing);
+            double maxminor = Math.Min(totalminor, Max);
+            double deltaminor = (maxminor - minminor) / 100.0;
+            double minor = minminor;
+            Major = 0.0;
+            for (double tminor = minminor; tminor <= maxminor; tminor += deltaminor)
+            {
+                double r = (tminor / totalminor);
+                double tlinesize = r * majorvary + avg.Y;
+                double twaste = breakspacing;
+                double tlines = totalminor / (tminor - twaste);
+                double tmajor = tlines * (tlinesize + linespacing) - linespacing;
+                double taspectratio = tminor / tmajor;
+
+                // If the minor value we choose is too high, stop
+                if (taspectratio > aspectratio)
+                {
+                    break;
+                }
+                minor = tminor;
+                Major = tmajor;
+            }
+            return minor;
+        }
+
+        private _Metrics _MetricsCache;
         private FlowStyle _Style;
-        private FlowFitMode _FitMode;
+        private double _AspectRatio;
         private List<FlowItem> _Items;
     }
 
@@ -655,7 +798,7 @@ namespace DUIP.UI
         /// <summary>
         /// The wrap mode for the flow.
         /// </summary>
-        public FlowWrapMode WrapMode;
+        public FlowWrap WrapMode;
 
         /// <summary>
         /// The alignment of items within lines on the major axis.
@@ -733,25 +876,9 @@ namespace DUIP.UI
     }
 
     /// <summary>
-    /// Gives a possible method to determine the size of a flow layout.
-    /// </summary>
-    public enum FlowFitMode
-    {
-        /// <summary>
-        /// The size of the flow layout is choosen so that the fewest amount of lines are used.
-        /// </summary>
-        Compact,
-
-        /// <summary>
-        /// The size of the flow layout is choosen to be (for general purposes) aesthetically pleasing and readable.
-        /// </summary>
-        Best
-    }
-
-    /// <summary>
     /// Gives a possible method of choosing where to put automatic line breaks in a flow.
     /// </summary>
-    public enum FlowWrapMode
+    public enum FlowWrap
     {
         /// <summary>
         /// Each line contains as many items as it can fit.
