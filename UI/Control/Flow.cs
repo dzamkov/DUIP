@@ -607,8 +607,9 @@ namespace DUIP.UI
             double deltaminor = (maxminor - minminor) / 100.0;
             double minor = minminor;
             Major = 0.0;
-            for (double tminor = minminor; tminor <= maxminor; tminor += deltaminor)
+            for(int t = 0; t < 100; t++)
             {
+                double tminor = minminor + t * deltaminor;
                 double r = (tminor / totalminor);
                 double tlinesize = r * majorvary + avg.Y;
                 double twaste = breakspacing;
