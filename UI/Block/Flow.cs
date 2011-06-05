@@ -124,7 +124,7 @@ namespace DUIP.UI
             List<_Layout.Line> layoutlines = _BuildLayout(lines, this._Items, style, minor, SizeRange.Top, out major);
 
             // Create a space layout if the major size exceeds the size range
-            if (major > SizeRange.Bottom)
+            if (major > SizeRange.Bottom + Block.ErrorThreshold)
             {
                 Size = SizeRange.TopLeft;
                 return SpaceBlock.Layout;
@@ -289,11 +289,11 @@ namespace DUIP.UI
             while (cur < Items.Count)
             {
                 // Insure line does not exceed size limit
-                if (len >= Prefered && hasline)
+                if (len - Block.ErrorThreshold > Prefered && hasline)
                 {
                     yield break;
                 }
-                if (len >= Max)
+                if (len - Block.ErrorThreshold > Max)
                 {
                     yield break;
                 }

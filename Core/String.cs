@@ -26,7 +26,7 @@ namespace DUIP
 
         public override UI.Block CreateBlock(string Instance, UI.Theme Theme)
         {
-            return Theme.CreateText(Instance);
+            return Theme.TextBlock(Instance);
         }
     }
 }

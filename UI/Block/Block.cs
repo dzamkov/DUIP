@@ -146,5 +146,10 @@ namespace DUIP.UI
         {
             return new PadBlock(Padding, this);
         }
+
+        /// <summary>
+        /// The allowable difference between sizes and offsets in order for them to be considered equal.
+        /// </summary>
+        public const double ErrorThreshold = 0.000001;
     }
 }

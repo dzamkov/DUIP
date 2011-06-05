@@ -9,15 +9,15 @@ namespace DUIP.UI
     /// </summary>
     public class GridBlock : Block
     {
-        public GridBlock(int Rows, int Columns)
+        public GridBlock(int Columns, int Rows)
         {
-            this._Cells = new Block[Rows, Columns];
+            this._Cells = new Block[Columns, Rows];
         }
 
         /// <summary>
-        /// Gets the amount of rows in this grid.
+        /// Gets the amount of columns in this grid.
         /// </summary>
-        public int Rows
+        public int Columns
         {
             get
             {
@@ -26,9 +26,9 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets the amount of columns in this grid.
+        /// Gets the amount of rows in this grid.
         /// </summary>
-        public int Columns
+        public int Rows
         {
             get
             {
@@ -54,60 +54,60 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets a cell in this grid.
         /// </summary>
-        public Block this[int Row, int Column]
+        public Block this[int Column, int Row]
         {
             get
             {
-                return this._Cells[Row, Column];
+                return this._Cells[Column, Row];
             }
             set
             {
-                this._Cells[Row, Column] = value;
+                this._Cells[Column, Row] = value;
             }
         }
 
         public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
         {
-            int rows = this.Rows;
             int cols = this.Columns;
+            int rows = this.Rows;
 
             double sep = this._Seperator.Weight;
-            Rectangle contentsizerange = SizeRange.Translate(-new Point(sep * (rows - 1), sep * (cols - 1)));
+            Rectangle contentsizerange = SizeRange.Translate(-new Point(sep * (cols - 1), sep * (rows - 1)));
 
             // Create preliminary cell layouts to estimate sizes needed
             Point maxcellsize = contentsizerange.BottomRight;
-            double[] widths = new double[rows];
-            double[] heights = new double[cols];
-            Layout[,] cells = new Layout[rows, cols];
-            for (int r = 0; r < rows; r++)
+            double[] widths = new double[cols];
+            double[] heights = new double[rows];
+            Layout[,] cells = new Layout[cols, rows];
+            for (int c = 0; c < cols; c++)
             {
-                for (int c = 0; c < cols; c++)
+                for (int r = 0; r < rows; r++)
                 {
                     Point size;
-                    cells[r, c] = this._Cells[r, c].CreateLayout(new Rectangle(new Point(widths[r], heights[c]), maxcellsize), out size);
-                    widths[r] = Math.Max(widths[r], size.X);
-                    heights[c] = Math.Max(heights[c], size.Y);
+                    cells[c, r] = this._Cells[c, r].CreateLayout(new Rectangle(new Point(widths[c], heights[r]), maxcellsize), out size);
+                    widths[c] = Math.Max(widths[c], size.X);
+                    heights[r] = Math.Max(heights[r], size.Y);
                 }
             }
             _AdjustSizes(widths, contentsizerange.Left, contentsizerange.Right);
             _AdjustSizes(heights, contentsizerange.Top, contentsizerange.Bottom);
 
             // Adjust cells to have the new sizes
-            for (int r = 0; r < rows; r++)
+            for (int c = 0; c < cols; c++)
             {
-                double width = widths[r];
-                for (int c = 0; c < cols; c++)
+                double width = widths[c];
+                for (int r = 0; r < rows; r++)
                 {
-                    double height = heights[c];
-                    this._Cells[r, c].UpdateLayout(ref cells[r, c], new Point(width, height));
+                    double height = heights[r];
+                    this._Cells[c, r].UpdateLayout(ref cells[c, r], new Point(width, height));
                 }
             }
 
             // Determine offsets
             double totalwidth;
             double totalheight;
-            double[] rowoffsets = _GetOffsets(widths, sep, out totalwidth);
-            double[] coloffsets = _GetOffsets(heights, sep, out totalheight);
+            double[] coloffsets = _GetOffsets(widths, sep, out totalwidth);
+            double[] rowoffsets = _GetOffsets(heights, sep, out totalheight);
 
 
             Size = new Point(totalwidth, totalheight);
@@ -115,8 +115,8 @@ namespace DUIP.UI
             {
                 Block = this,
                 Cells = cells,
-                RowOffsets = rowoffsets,
                 ColumnOffsets = coloffsets,
+                RowOffsets = rowoffsets,
                 Size = Size
             };
         }
@@ -173,13 +173,13 @@ namespace DUIP.UI
         {
             public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
             {
-                for (int r = 0; r < this.RowOffsets.Length; r++)
+                for (int c = 0; c < this.ColumnOffsets.Length; c++)
                 {
-                    double roff = this.RowOffsets[r];
-                    for (int c = 0; c < this.ColumnOffsets.Length; c++)
+                    double coff = this.ColumnOffsets[c];
+                    for (int r = 0; r < this.RowOffsets.Length; r++)
                     {
-                        double coff = this.ColumnOffsets[c];
-                        this.Cells[r, c].Update(Offset + new Point(roff, coff), Probes, Time);
+                        double roff = this.RowOffsets[r];
+                        this.Cells[c, r].Update(Offset + new Point(coff, roff), Probes, Time);
                     }
                 }
             }
@@ -187,15 +187,15 @@ namespace DUIP.UI
             public override void Render(RenderContext Context)
             {
                 // Render cells
-                for (int r = 0; r < this.RowOffsets.Length; r++)
+                for (int c = 0; c < this.ColumnOffsets.Length; c++)
                 {
-                    double roff = this.RowOffsets[r];
-                    for (int c = 0; c < this.ColumnOffsets.Length; c++)
+                    double coff = this.ColumnOffsets[c];
+                    for (int r = 0; r < this.RowOffsets.Length; r++)
                     {
-                        double coff = this.ColumnOffsets[c];
-                        using (Context.Translate(new Point(roff, coff)))
+                        double roff = this.RowOffsets[r];
+                        using (Context.Translate(new Point(coff, roff)))
                         {
-                            this.Cells[r, c].Render(Context);
+                            this.Cells[c, r].Render(Context);
                         }
                     }
                 }
@@ -209,15 +209,15 @@ namespace DUIP.UI
                     Context.SetColor(seperator.Color);
                     using (Context.DrawLines(seperator.Weight))
                     {
-                        for (int r = 1; r < this.RowOffsets.Length; r++)
-                        {
-                            double roff = this.RowOffsets[r];
-                            Context.OutputLine(new Point(roff - hw, 0.0), new Point(roff - hw, this.Size.Y));
-                        }
                         for (int c = 1; c < this.ColumnOffsets.Length; c++)
                         {
                             double coff = this.ColumnOffsets[c];
-                            Context.OutputLine(new Point(0.0, coff - hw), new Point(this.Size.X, coff - hw));
+                            Context.OutputLine(new Point(coff - hw, 0.0), new Point(coff - hw, this.Size.Y));
+                        }
+                        for (int r = 1; r < this.RowOffsets.Length; r++)
+                        {
+                            double roff = this.RowOffsets[r];
+                            Context.OutputLine(new Point(0.0, roff - hw), new Point(this.Size.X, roff - hw));
                         }
                     }
                 }

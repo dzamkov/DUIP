@@ -132,11 +132,22 @@ namespace DUIP
         /// <summary>
         /// Gets wether this file is a folder (contains other files).
         /// </summary>
-        public bool Folder
+        public bool IsFolder
         {
             get
             {
                 return this._Subfiles != null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the subfiles for this folder, or null if this is not a folder.
+        /// </summary>
+        public File[] Subfiles
+        {
+            get
+            {
+                return this._Subfiles;
             }
         }
 
@@ -163,6 +174,22 @@ namespace DUIP
         public sealed override bool Equal(File A, File B)
         {
             return DUIP.File.Equal(A, B);
+        }
+
+        public override UI.Block CreateBlock(File Instance, UI.Theme Theme)
+        {
+            List<KeyValuePair<string, UI.Block>> props = new List<KeyValuePair<string, UI.Block>>();
+
+            props.Add(new KeyValuePair<string, UI.Block>("Name", Theme.TextBlock(Instance.Name)));
+            props.Add(new KeyValuePair<string, UI.Block>("Size", Theme.DataSizeBlock(Instance.Size)));
+
+            if (Instance.IsFolder)
+            {
+                File[] subfiles = Instance.Subfiles;
+                props.Add(new KeyValuePair<string, UI.Block>("Subfiles", Theme.NumberBlock(subfiles.Length)));
+            }
+
+            return Theme.PropertyBlock(props);
         }
     }
 }
