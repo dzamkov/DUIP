@@ -97,10 +97,17 @@ namespace DUIP.UI
             switch (style.WrapMode)
             {
                 case FlowWrap.Greedy:
-                    lines = _GetLinesGreedy(this.Items, minor, style);
+                    lines = _GetLinesGreedy(this.Items, minor, SizeRange.Right, style);
                     break;
                 default:
                     throw new NotImplementedException();
+            }
+
+            // Create a space layout if lines can not be created
+            if (lines == null)
+            {
+                Size = SizeRange.TopLeft;
+                return SpaceBlock.Layout;
             }
 
             // Get minimum minor size needed to display all lines (this becomes the new minor size).
@@ -116,22 +123,20 @@ namespace DUIP.UI
             double major;
             List<_Layout.Line> layoutlines = _BuildLayout(lines, this._Items, style, minor, SizeRange.Top, out major);
 
-            if (major <= SizeRange.Bottom)
+            // Create a space layout if the major size exceeds the size range
+            if (major > SizeRange.Bottom)
             {
-                // Create layout
-                Size = new Point(minor, major).Shift(style.MinorAxis);
-                return new _Layout
-                {
-                    Block = this,
-                    Lines = layoutlines
-                };
-            }
-            else
-            {
-                // If a layout can not be created within the given size range, this block acts like a space block
                 Size = SizeRange.TopLeft;
                 return SpaceBlock.Layout;
             }
+
+            // Create layout
+            Size = new Point(minor, major).Shift(style.MinorAxis);
+            return new _Layout
+            {
+                Block = this,
+                Lines = layoutlines
+            };
         }
 
         private class _Layout : Layout
@@ -273,15 +278,21 @@ namespace DUIP.UI
         /// Gets the possible lines that may be formed from the given items.
         /// </summary>
         /// <param name="Start">The item to start the lines on.</param>
+        /// <param name="Prefered">The prefered size of a line.</param>
         /// <param name="Max">The maximum size of a line.</param>
-        private static IEnumerable<_PlannedLine> _GetPossibleLines(List<FlowItem> Items, int Start, double Max, FlowStyle Style)
+        private static IEnumerable<_PlannedLine> _GetPossibleLines(List<FlowItem> Items, int Start, double Prefered, double Max, FlowStyle Style)
         {
             int cur = Start;
             int size = 0;
             double len = 0.0;
+            bool hasline = false;
             while (cur < Items.Count)
             {
                 // Insure line does not exceed size limit
+                if (len >= Prefered && hasline)
+                {
+                    yield break;
+                }
                 if (len >= Max)
                 {
                     yield break;
@@ -300,6 +311,7 @@ namespace DUIP.UI
                         Size = size,
                         Cut = false
                     };
+                    hasline = true;
                     cur++;
                     size++;
                     continue;
@@ -341,6 +353,7 @@ namespace DUIP.UI
                             Size = size,
                             Cut = false
                         };
+                        hasline = true;
                     }
                     len += sfi.Length;
                     cur++;
@@ -362,8 +375,9 @@ namespace DUIP.UI
         /// <summary>
         /// Greedily creates a list of lines for a sequence of items, or returns null if not possible.
         /// </summary>
+        /// <param name="Prefered">The prefered size of a line.</param>
         /// <param name="Max">The maximum size of a line.</param>
-        private static List<_PlannedLine> _GetLinesGreedy(List<FlowItem> Items, double Max, FlowStyle Style)
+        private static List<_PlannedLine> _GetLinesGreedy(List<FlowItem> Items, double Prefered, double Max, FlowStyle Style)
         {
             int cur = 0;
             List<_PlannedLine> lines = new List<_PlannedLine>();
@@ -371,7 +385,7 @@ namespace DUIP.UI
             {
                 bool hasline = false;
                 _PlannedLine last = new _PlannedLine();
-                foreach(_PlannedLine line in _GetPossibleLines(Items, cur, Max, Style))
+                foreach(_PlannedLine line in _GetPossibleLines(Items, cur, Prefered, Max, Style))
                 {
                     hasline = true;
                     last = line;
