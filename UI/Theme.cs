@@ -36,32 +36,23 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets the default flow style to use for text.
+        /// Creates a block for general-purpose text.
         /// </summary>
-        public FlowStyle FlowStyle
+        public virtual Block CreateText(string Text)
         {
-            get
+            return new FlowBlock
             {
-                return new FlowStyle
+                Fit = FlowFit.AspectRatio(2.0),
+                Style = new FlowStyle
                 {
                     Direction = FlowDirection.RightDown,
-                    Justification = FlowJustification.Ragged,
+                    Justification = FlowJustification.Justify,
                     LineAlignment = Alignment.Center,
                     LineSpacing = 0.00,
                     LineSize = 0.01
-                };
-            }
-        }
-
-        /// <summary>
-        /// Gets the default amount of padding to apply to a section of text or content.
-        /// </summary>
-        public double TextPadding
-        {
-            get
-            {
-                return 0.05;
-            }
+                },
+                Items = FlowItem.CreateText(Text, this.GetFont(FontPurpose.General), 0.01, true)
+            }.WithPad(0.05);
         }
 
         private BitmapTypeface _DefaultTypeface;

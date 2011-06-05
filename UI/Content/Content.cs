@@ -10,7 +10,7 @@ namespace DUIP.UI
     public abstract class Content
     {
         /// <summary>
-        /// Creates a visual representation of this content to be used within a node.
+        /// Creates a block representation of this content to be used within a node.
         /// </summary>
         public abstract Disposable<Block> CreateBlock(Theme Theme);
 

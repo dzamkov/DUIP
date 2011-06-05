@@ -17,39 +17,9 @@ namespace DUIP.UI
 
         public override Disposable<Block> CreateBlock(Theme Theme)
         {
-            FlowStyle style = new FlowStyle
-            {
-                Direction = FlowDirection.RightDown,
-                Justification = FlowJustification.Ragged,
-                WrapMode = FlowWrap.Greedy,
-                LineAlignment = Alignment.Up,
-                LineSize = 0.0,
-                LineSpacing = 0.0
-            };
-
-            Func<string, Block> text = delegate(string Text)
-            {
-                return new FlowBlock
-                {
-                    AspectRatio = double.PositiveInfinity,
-                    Style = style,
-                    Items = FlowItem.CreateText(Text, Theme.GetFont(FontPurpose.General), 0.01)
-                }.WithPad(Theme.TextPadding);
-            };
-
-            GridBlock grid = new GridBlock(8, 16);
-            grid.Seperator = new Border(0.02, Color.RGB(0.2, 0.2, 0.2));
-            for (int r = 0; r < grid.Rows; r++)
-            {
-                for (int c = 0; c < grid.Columns; c++)
-                {
-                    grid[r, c] = text(r.ToString() + " * " + c.ToString() + " = " + (r * c).ToString());
-                }
-            }
-
             Border border; Color background;
             Theme.GetNodeStyle(out border, out background);
-            return grid.WithBorder(border).WithBackground(background);
+            return this._Type.CreateBlock(this._Value, Theme).WithBorder(border).WithBackground(background);
         }
 
         /// <summary>

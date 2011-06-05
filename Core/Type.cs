@@ -14,6 +14,14 @@ namespace DUIP
         /// Gets if the two representations of values in the type represent the same value.
         /// </summary>
         public abstract bool Equal(T A, T B);
+
+        /// <summary>
+        /// Creates a block to display an instance of this type.
+        /// </summary>
+        public virtual UI.Block CreateBlock(T Instance, UI.Theme Theme)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     /// <summary>

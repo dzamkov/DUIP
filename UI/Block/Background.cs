@@ -21,7 +21,7 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets or sets the color of the background applied by this control.
+        /// Gets or sets the color of the background applied by this block.
         /// </summary>
         public Color Color
         {

@@ -23,5 +23,10 @@ namespace DUIP
         {
             return A == B;
         }
+
+        public override UI.Block CreateBlock(string Instance, UI.Theme Theme)
+        {
+            return Theme.CreateText(Instance);
+        }
     }
 }

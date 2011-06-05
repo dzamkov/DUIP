@@ -14,6 +14,13 @@ namespace DUIP.UI
 
         }
 
+        public FlowBlock(FlowStyle Style, FlowFit Fit, List<FlowItem> Items)
+        {
+            this._Style = Style;
+            this._Fit = Fit;
+            this._Items = Items;
+        }
+
         /// <summary>
         /// Gets or sets the style of the flow for the block.
         /// </summary>
@@ -30,18 +37,17 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets or sets the target aspect ratio (minor size / major size) for the flow. If set to infinity, the flow block will try
-        /// to use the smallest amount of lines possible.
+        /// Gets or sets the method used to determine the size of the block.
         /// </summary>
-        public double AspectRatio
+        public FlowFit Fit
         {
             get
             {
-                return this._AspectRatio;
+                return this._Fit;
             }
             set
             {
-                this._AspectRatio = value;
+                this._Fit = value;
             }
         }
 
@@ -69,8 +75,7 @@ namespace DUIP.UI
 
             // Determine minor size
             double minor = 0.0;
-            double aspectratio = this._AspectRatio;
-            if (aspectratio == double.PositiveInfinity)
+            if (this._Fit == CompactFlowFit.Singleton)
             {
                 minor = SizeRange.Right;
             }
@@ -599,15 +604,15 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Picks a minor size in order to make the resulting layout as close to the given aspect ratio as possible.
+        /// Picks a minor size in order to satisfy the fit method used.
         /// </summary>
         /// <param name="Major">The predicted major size of the layout.</param>
         private double _PickMinor(double Min, double Max, out double Major)
         {
             FlowStyle style = this._Style;
+            FlowFit fit = this._Fit;
             _Metrics metrics = this._GetMetrics();
             int itemcount = this._Items.Count;
-            double aspectratio = this.AspectRatio;
 
             Point avg = metrics.AverageSize;
             Point max = metrics.MaximumSize;
@@ -623,6 +628,7 @@ namespace DUIP.UI
             double deltaminor = (maxminor - minminor) / 100.0;
             double minor = minminor;
             Major = 0.0;
+            double score = double.PositiveInfinity;
             for(int t = 0; t < 100; t++)
             {
                 double tminor = minminor + t * deltaminor;
@@ -631,22 +637,21 @@ namespace DUIP.UI
                 double twaste = breakspacing;
                 double tlines = totalminor / (tminor - twaste);
                 double tmajor = tlines * (tlinesize + linespacing) - linespacing;
-                double taspectratio = tminor / tmajor;
+                double tscore = fit.GetScore(tminor, tmajor, totalminor, tlines);
 
-                // If the minor value we choose is too high, stop
-                if (taspectratio > aspectratio)
+                if (tscore < score)
                 {
-                    break;
+                    score = tscore;
+                    minor = tminor;
+                    Major = tmajor;
                 }
-                minor = tminor;
-                Major = tmajor;
             }
             return minor;
         }
 
         private _Metrics _MetricsCache;
+        private FlowFit _Fit;
         private FlowStyle _Style;
-        private double _AspectRatio;
         private List<FlowItem> _Items;
     }
 
@@ -705,7 +710,7 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a sequence of flow items to display the given text.
         /// </summary>
-        public static List<FlowItem> CreateText(string Text, Font Font, double SpaceLength)
+        public static List<FlowItem> CreateText(string Text, Font Font, double SpaceLength, bool CutEnd)
         {
             List<FlowItem> items = new List<FlowItem>();
             SpaceFlowItem space = Space(SpaceLength, true);
@@ -724,6 +729,10 @@ namespace DUIP.UI
                         items.Add(Character(c, Font));
                         break;
                 }
+            }
+            if (CutEnd)
+            {
+                items.Add(FlowItem.Cut);
             }
             return items;
         }
@@ -793,6 +802,92 @@ namespace DUIP.UI
         /// The font to use to display the glyph.
         /// </summary>
         public Font Font;
+    }
+
+    /// <summary>
+    /// A method of determining the prefered size of a flow block.
+    /// </summary>
+    public abstract class FlowFit
+    {
+        /// <summary>
+        /// Gets a score of the layout of the given parameters. A flow block will try to minimize this value.
+        /// </summary>
+        /// <param name="Minor">The size of the layout in the minor direction.</param>
+        /// <param name="Major">The size of the layout in the major direction.</param>
+        /// <param name="TotalMinor">The total size of all items in the flow, in the minor direction.</param>
+        /// <param name="Lines">The amount of lines in the layout.</param>
+        public abstract double GetScore(double Minor, double Major, double TotalMinor, double Lines);
+
+        /// <summary>
+        /// Gets the compact fit method.
+        /// </summary>
+        public static CompactFlowFit Compact
+        {
+            get
+            {
+                return CompactFlowFit.Singleton;
+            }
+        }
+
+        /// <summary>
+        /// Gets an aspect ratio fit method.
+        /// </summary>
+        public static AspectRatioFlowFit AspectRatio(double Target)
+        {
+            return new AspectRatioFlowFit(Target);
+        }
+    }
+
+    /// <summary>
+    /// A flow fit method that uses the smallest major size possible.
+    /// </summary>
+    public sealed class CompactFlowFit : FlowFit
+    {
+        private CompactFlowFit()
+        {
+
+        }
+
+        /// <summary>
+        /// The only instance of the class.
+        /// </summary>
+        public static readonly CompactFlowFit Singleton = new CompactFlowFit();
+
+        public override double GetScore(double Minor, double Major, double TotalMinor, double Lines)
+        {
+            return Major;
+        }
+    }
+
+    /// <summary>
+    /// A flow fit method that finds a size as close to a certain aspect ratio (minor / major size) as possible.
+    /// </summary>
+    public class AspectRatioFlowFit : FlowFit
+    {
+        public AspectRatioFlowFit(double AspectRatio)
+        {
+            this._AspectRatio = AspectRatio;
+        }
+
+        /// <summary>
+        /// Gets the target aspect ratio for this fit method.
+        /// </summary>
+        public new double AspectRatio
+        {
+            get
+            {
+                return this._AspectRatio;
+            }
+        }
+
+        public override double GetScore(double Minor, double Major, double TotalMinor, double Lines)
+        {
+            double c = Minor / Major;
+            double t = this._AspectRatio;
+            return (c - t) * (1.0 / t - 1.0 / c);
+        }
+
+        private double _AspectRatio;
     }
 
     /// <summary>
