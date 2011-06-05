@@ -19,10 +19,10 @@ namespace DUIP.UI
         /// </summary>
         public static Transfer.Item Export(Content Content)
         {
-            StaticContent<string> sc = Content as StaticContent<string>;
-            if (sc != null)
+            StaticContent sc = Content as StaticContent;
+            if (sc.Type == Type.String)
             {
-                return new Transfer.StringItem(sc.Value);
+                return new Transfer.StringItem(sc.Value as string);
             }
 
             return null;
@@ -36,13 +36,13 @@ namespace DUIP.UI
             Transfer.StringItem si = Item as Transfer.StringItem;
             if (si != null)
             {
-                return new StaticContent<string>(si.String, Type.String);
+                return new StaticContent(Type.String, si.String);
             }
 
             Transfer.FileItem fi = Item as Transfer.FileItem;
             if (fi != null)
             {
-                return new StaticContent<File>(fi.GetFile(), Type.File);
+                return new StaticContent(Type.File, fi.GetFile());
             }
 
             return null;

@@ -15,7 +15,7 @@ namespace DUIP
     /// <summary>
     /// A type for a relation (or rather, a specific definition of a relation) between an argument and a result of certain types.
     /// </summary>
-    public class FunctionType : Type<Function>
+    public class FunctionType : Type
     {
         private FunctionType()
         {
@@ -48,7 +48,7 @@ namespace DUIP
         /// </summary>
         private static Registry<FunctionType> _Types = new Registry<FunctionType>();
 
-        public override bool Equal(Function A, Function B)
+        public override bool Equal(object A, object B)
         {
             return A == B;
         }
@@ -78,7 +78,7 @@ namespace DUIP
         /// <summary>
         /// Evaluates a given function (of this type) for a given argument.
         /// </summary>
-        public TRes Evaluate<TArg, TRes>(Function Function, TArg Argument)
+        public object Evaluate(Function Function, object Argument)
         {
             throw new NotImplementedException();
         }

@@ -168,7 +168,7 @@ namespace DUIP
     /// <summary>
     /// A type for data.
     /// </summary>
-    public class DataType : Type<Data>
+    public class DataType : Type
     {
         private DataType()
         {
@@ -180,9 +180,9 @@ namespace DUIP
         /// </summary>
         public static readonly DataType Singleton = new DataType();
 
-        public override bool Equal(Data A, Data B)
+        public override bool Equal(object A, object B)
         {
-            return DUIP.Data.Equal(A, B);
+            return DUIP.Data.Equal(A as Data, B as Data);
         }
     }
 }

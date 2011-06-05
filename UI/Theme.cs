@@ -59,7 +59,7 @@ namespace DUIP.UI
                 Fit = FlowFit.AspectRatio(2.0),
                 Style = this.FlowStyle,
                 Items = FlowItem.CreateText(Text, this.GetFont(FontPurpose.General), 0.01, true)
-            }.WithPad(0.05);
+            }.WithPad(0.04);
         }
 
         /// <summary>

@@ -7,9 +7,9 @@ namespace DUIP.UI
     /// <summary>
     /// A content representation of a static instance of a certain type.
     /// </summary>
-    public class StaticContent<T> : Content
+    public class StaticContent : Content
     {
-        public StaticContent(T Value, Type<T> Type)
+        public StaticContent(Type Type, object Value)
         {
             this._Value = Value;
             this._Type = Type;
@@ -25,7 +25,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets the value for this content.
         /// </summary>
-        public T Value
+        public object Value
         {
             get
             {
@@ -36,7 +36,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets the type for this content.
         /// </summary>
-        public Type<T> Type
+        public Type Type
         {
             get
             {
@@ -44,7 +44,7 @@ namespace DUIP.UI
             }
         }
 
-        private T _Value;
-        private Type<T> _Type;
+        private object _Value;
+        private Type _Type;
     }
 }

@@ -159,7 +159,7 @@ namespace DUIP
     /// <summary>
     /// A type for a file.
     /// </summary>
-    public class FileType : Type<File>
+    public class FileType : Type
     {
         private FileType()
         {
@@ -171,21 +171,22 @@ namespace DUIP
         /// </summary>
         public static readonly FileType Singleton = new FileType();
 
-        public sealed override bool Equal(File A, File B)
+        public sealed override bool Equal(object A, object B)
         {
-            return DUIP.File.Equal(A, B);
+            return DUIP.File.Equal(A as File, B as File);
         }
 
-        public override UI.Block CreateBlock(File Instance, UI.Theme Theme)
+        public override UI.Block CreateBlock(object Instance, UI.Theme Theme)
         {
+            File file = Instance as File;
             List<KeyValuePair<string, UI.Block>> props = new List<KeyValuePair<string, UI.Block>>();
 
-            props.Add(new KeyValuePair<string, UI.Block>("Name", Theme.TextBlock(Instance.Name)));
-            props.Add(new KeyValuePair<string, UI.Block>("Size", Theme.DataSizeBlock(Instance.Size)));
+            props.Add(new KeyValuePair<string, UI.Block>("Name", Theme.TextBlock(file.Name)));
+            props.Add(new KeyValuePair<string, UI.Block>("Size", Theme.DataSizeBlock(file.Size)));
 
-            if (Instance.IsFolder)
+            if (file.IsFolder)
             {
-                File[] subfiles = Instance.Subfiles;
+                File[] subfiles = file.Subfiles;
                 props.Add(new KeyValuePair<string, UI.Block>("Subfiles", Theme.NumberBlock(subfiles.Length)));
             }
 

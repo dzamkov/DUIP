@@ -7,7 +7,7 @@ namespace DUIP
     /// <summary>
     /// A type for unicode strings.
     /// </summary>
-    public class StringType : Type<string>
+    public class StringType : Type
     {
         private StringType()
         {
@@ -19,14 +19,14 @@ namespace DUIP
         /// </summary>
         public static readonly StringType Singleton = new StringType();
 
-        public override bool Equal(string A, string B)
+        public override bool Equal(object A, object B)
         {
-            return A == B;
+            return A as string == B as string;
         }
 
-        public override UI.Block CreateBlock(string Instance, UI.Theme Theme)
+        public override UI.Block CreateBlock(object Instance, UI.Theme Theme)
         {
-            return Theme.TextBlock(Instance);
+            return Theme.TextBlock(Instance as string);
         }
     }
 }

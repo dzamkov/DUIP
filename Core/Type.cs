@@ -7,36 +7,21 @@ namespace DUIP
     /// <summary>
     /// An interpretation of values (called instances) within a certain set.
     /// </summary>
-    /// <typeparam name="T">A representation of an instance of the type.</typeparam>
-    public abstract class Type<T> : Type
+    public abstract class Type
     {
         /// <summary>
-        /// Gets if the two representations of values in the type represent the same value.
+        /// Gets if the two given instances of this type are equivalent.
         /// </summary>
-        public abstract bool Equal(T A, T B);
+        public abstract bool Equal(object A, object B);
 
         /// <summary>
         /// Creates a block to display an instance of this type.
         /// </summary>
-        public virtual UI.Block CreateBlock(T Instance, UI.Theme Theme)
+        public virtual UI.Block CreateBlock(object Instance, UI.Theme Theme)
         {
             throw new NotImplementedException();
         }
-    }
 
-    /// <summary>
-    /// A kind of composition type that is entirely defined by named properties (possibly interrelated).
-    /// </summary>
-    public abstract class Struct<T> : Type<T>
-    {
-
-    }
-
-    /// <summary>
-    /// The generalized form of a type with no specific instance type. Contains function for creating types.
-    /// </summary>
-    public abstract class Type
-    {
         /// <summary>
         /// Gets if the two given types are equivalent.
         /// </summary>
