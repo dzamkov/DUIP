@@ -5,24 +5,24 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A control that limits the range of prefered sizes an inner control may take.
+    /// A block that limits the range of prefered sizes an inner block may take.
     /// </summary>
-    public class SizeControl : Control, IDisposable
+    public class SizeBlock : Block, IDisposable
     {
-        public SizeControl()
+        public SizeBlock()
         {
 
         }
 
-        public SizeControl(Rectangle LimitSizeRange, Disposable<Control> Inner)
+        public SizeBlock(Rectangle LimitSizeRange, Disposable<Block> Inner)
         {
             this._LimitSizeRange = LimitSizeRange;
             this._Inner = Inner;
         }
 
         /// <summary>
-        /// Gets or sets the size range that the inner control is limited to. The size range for the inner
-        /// control will be the intersection of this and the size range given to the size control (with some
+        /// Gets or sets the size range that the inner block is limited to. The size range for the inner
+        /// block will be the intersection of this and the size range given to the size block (with some
         /// clamping to ensure that the resulting size range has a positive area).
         /// </summary>
         public Rectangle LimitSizeRange
@@ -38,9 +38,9 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets or sets the inner control for this size control.
+        /// Gets or sets the inner block for this size block.
         /// </summary>
-        public Control Inner
+        public Block Inner
         {
             get
             {
@@ -69,7 +69,7 @@ namespace DUIP.UI
             this._Inner.Dispose();
         }
 
-        private Disposable<Control> _Inner;
+        private Disposable<Block> _Inner;
         private Rectangle _LimitSizeRange;
     }
 }

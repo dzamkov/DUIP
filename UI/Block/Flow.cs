@@ -5,17 +5,17 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A control that displays inner controls and items arranged in lines.
+    /// A block that displays inner blocks and items arranged in lines.
     /// </summary>
-    public class FlowControl : Control
+    public class FlowBlock : Block
     {
-        public FlowControl()
+        public FlowBlock()
         {
 
         }
 
         /// <summary>
-        /// Gets or sets the style of the flow for the control.
+        /// Gets or sets the style of the flow for the block.
         /// </summary>
         public FlowStyle Style
         {
@@ -30,7 +30,7 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets or sets the target aspect ratio (minor size / major size) for the flow. If set to infinity, the flow control will try
+        /// Gets or sets the target aspect ratio (minor size / major size) for the flow. If set to infinity, the flow block will try
         /// to use the smallest amount of lines possible.
         /// </summary>
         public double AspectRatio
@@ -117,15 +117,15 @@ namespace DUIP.UI
                 Size = new Point(minor, major).Shift(style.MinorAxis);
                 return new _Layout
                 {
-                    Control = this,
+                    Block = this,
                     Lines = layoutlines
                 };
             }
             else
             {
-                // If a layout can not be created within the given size range, this control acts like a space control
+                // If a layout can not be created within the given size range, this block acts like a space block
                 Size = SizeRange.TopLeft;
-                return SpaceControl.Layout;
+                return SpaceBlock.Layout;
             }
         }
 
@@ -138,7 +138,7 @@ namespace DUIP.UI
 
             public override void Render(RenderContext Context)
             {
-                FlowStyle style = this.Control.Style;
+                FlowStyle style = this.Block.Style;
                 Axis minoraxis = style.MinorAxis;
                 Alignment linealign = style.LineAlignment;
 
@@ -234,7 +234,7 @@ namespace DUIP.UI
                 public FlowItem Source;
             }
 
-            public FlowControl Control;
+            public FlowBlock Block;
             public List<Line> Lines;
         }
 
@@ -796,7 +796,7 @@ namespace DUIP.UI
     }
 
     /// <summary>
-    /// Gives information about the arrangement of items within a flow control.
+    /// Gives information about the arrangement of items within a flow block.
     /// </summary>
     /// <remarks>The minor direction is the direction items within a line follow. The major direction
     /// is the direction lines follow.</remarks>

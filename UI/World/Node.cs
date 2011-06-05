@@ -13,19 +13,19 @@ namespace DUIP.UI
     /// </summary>
     public class Node : IDisposable
     {
-        public Node(Disposable<Content> Content, Disposable<Control> Control, Point Position, Point Velocity)
+        public Node(Disposable<Content> Content, Disposable<Block> Block, Point Position, Point Velocity)
         {
             this._Content = Content;
-            this._Control = Control;
+            this._Block = Block;
             this._Position = Position;
             this._Velocity = Velocity;
-            this._Layout = this._Control.Object.CreateLayout(SizeRange, out this._Size);
+            this._Layout = this._Block.Object.CreateLayout(SizeRange, out this._Size);
         }
 
-        public Node(Disposable<Content> Content, Disposable<Control> Control, Control.Layout Layout, Point Size, Point Position, Point Velocity)
+        public Node(Disposable<Content> Content, Disposable<Block> Block, Block.Layout Layout, Point Size, Point Position, Point Velocity)
         {
             this._Content = Content;
-            this._Control = Control;
+            this._Block = Block;
             this._Position = Position;
             this._Velocity = Velocity;
             this._Layout = Layout;
@@ -71,13 +71,13 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets the control displayed by the node.
+        /// Gets the block displayed by the node.
         /// </summary>
-        public Control Control
+        public Block Block
         {
             get
             {
-                return this._Control;
+                return this._Block;
             }
         }
 
@@ -301,15 +301,15 @@ namespace DUIP.UI
         public void Dispose()
         {
             this._Content.Dispose();
-            this._Control.Dispose();
+            this._Block.Dispose();
         }
 
         private Point _Position;
         private Point _Velocity;
         private DragState _DragState;
         private Disposable<Content> _Content;
-        private Disposable<Control> _Control;
-        private Control.Layout _Layout;
+        private Disposable<Block> _Block;
+        private Block.Layout _Layout;
         private Point _Size;
     }
 }

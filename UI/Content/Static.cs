@@ -15,7 +15,7 @@ namespace DUIP.UI
             this._Type = Type;
         }
 
-        public override Disposable<Control> CreateControl(Theme Theme)
+        public override Disposable<Block> CreateBlock(Theme Theme)
         {
             FlowStyle style = new FlowStyle
             {
@@ -27,9 +27,9 @@ namespace DUIP.UI
                 LineSpacing = 0.0
             };
 
-            Func<string, Control> text = delegate(string Text)
+            Func<string, Block> text = delegate(string Text)
             {
-                return new FlowControl
+                return new FlowBlock
                 {
                     AspectRatio = double.PositiveInfinity,
                     Style = style,
@@ -37,7 +37,7 @@ namespace DUIP.UI
                 }.WithPad(Theme.TextPadding);
             };
 
-            GridControl grid = new GridControl(8, 16);
+            GridBlock grid = new GridBlock(8, 16);
             grid.Seperator = new Border(0.02, Color.RGB(0.2, 0.2, 0.2));
             for (int r = 0; r < grid.Rows; r++)
             {

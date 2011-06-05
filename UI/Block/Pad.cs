@@ -5,23 +5,23 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A control that applies padding to an inner control.
+    /// A block that applies padding to an inner block.
     /// </summary>
-    public class PadControl : Control, IDisposable
+    public class PadBlock : Block, IDisposable
     {
-        public PadControl()
+        public PadBlock()
         {
 
         }
 
-        public PadControl(Compass<double> Padding, Disposable<Control> Inner)
+        public PadBlock(Compass<double> Padding, Disposable<Block> Inner)
         {
             this._Padding = Padding;
             this._Inner = Inner;
         }
 
         /// <summary>
-        /// Gets or sets the amount of padding applied by this control.
+        /// Gets or sets the amount of padding applied by this block.
         /// </summary>
         public Compass<double> Padding
         {
@@ -36,9 +36,9 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets or sets the inner control for this pad control.
+        /// Gets or sets the inner block for this pad block.
         /// </summary>
-        public Control Inner
+        public Block Inner
         {
             get
             {
@@ -88,6 +88,6 @@ namespace DUIP.UI
         }
 
         private Compass<double> _Padding;
-        private Disposable<Control> _Inner;
+        private Disposable<Block> _Inner;
     }
 }

@@ -5,13 +5,13 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A control that displays a matrix of inner controls aligned in rows and columns.
+    /// A block that displays a matrix of inner blocks aligned in rows and columns.
     /// </summary>
-    public class GridControl : Control
+    public class GridBlock : Block
     {
-        public GridControl(int Rows, int Columns)
+        public GridBlock(int Rows, int Columns)
         {
-            this._Cells = new Control[Rows, Columns];
+            this._Cells = new Block[Rows, Columns];
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets a cell in this grid.
         /// </summary>
-        public Control this[int Row, int Column]
+        public Block this[int Row, int Column]
         {
             get
             {
@@ -113,7 +113,7 @@ namespace DUIP.UI
             Size = new Point(totalwidth, totalheight);
             return new _Layout
             {
-                Control = this,
+                Block = this,
                 Cells = cells,
                 RowOffsets = rowoffsets,
                 ColumnOffsets = coloffsets,
@@ -201,7 +201,7 @@ namespace DUIP.UI
                 }
 
                 // Render seperators
-                Border seperator = this.Control.Seperator;
+                Border seperator = this.Block.Seperator;
                 if (seperator.Color.A > 0.0 && seperator.Weight > 0.0)
                 {
                     double hw = seperator.Weight * 0.5;
@@ -223,14 +223,14 @@ namespace DUIP.UI
                 }
             }
 
-            public GridControl Control;
+            public GridBlock Block;
             public double[] RowOffsets;
             public double[] ColumnOffsets;
             public Layout[,] Cells;
             public Point Size;
         }
 
-        private Control[,] _Cells;
+        private Block[,] _Cells;
         private Border _Seperator;
     }
 }

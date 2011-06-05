@@ -5,23 +5,23 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A control that applies a border to an inner control.
+    /// A block that applies a border to an inner block.
     /// </summary>
-    public class BorderControl : Control, IDisposable
+    public class BorderBlock : Block, IDisposable
     {
-        public BorderControl()
+        public BorderBlock()
         {
 
         }
 
-        public BorderControl(Border Border, Disposable<Control> Inner)
+        public BorderBlock(Border Border, Disposable<Block> Inner)
         {
             this._Border = Border;
             this._Inner = Inner;
         }
 
         /// <summary>
-        /// Gets or sets the border this control applies.
+        /// Gets or sets the border this block applies.
         /// </summary>
         public Border Border
         {
@@ -36,9 +36,9 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets or sets the inner control for this border control.
+        /// Gets or sets the inner block for this border block.
         /// </summary>
-        public Control Inner
+        public Block Inner
         {
             get
             {
@@ -51,7 +51,7 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets the size that is added to the inner control when the border is applied.
+        /// Gets the size that is added to the inner block when the border is applied.
         /// </summary>
         public Point SizePadding
         {
@@ -64,7 +64,7 @@ namespace DUIP.UI
 
         public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
         {
-            BackgroundControl bc = this.Inner as BackgroundControl;
+            BackgroundBlock bc = this.Inner as BackgroundBlock;
             if (bc != null)
             {
                 return CreateBorderBackgroundLayout(SizeRange, this, bc, bc.Inner, out Size);
@@ -76,7 +76,7 @@ namespace DUIP.UI
                 Size += sizepadding;
                 return new _Layout
                 {
-                    Control = this,
+                    Block = this,
                     Inner = inner,
                     Size = Size
                 };
@@ -87,13 +87,13 @@ namespace DUIP.UI
         {
             public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
             {
-                double w = this.Control.Border.Weight;
+                double w = this.Block.Border.Weight;
                 this.Inner.Update(Offset + new Point(w, w), Probes, Time);
             }
 
             public override void Render(RenderContext Context)
             {
-                Border bord = this.Control.Border;
+                Border bord = this.Block.Border;
                 using (Context.Translate(new Point(bord.Weight, bord.Weight)))
                 {
                     this.Inner.Render(Context);
@@ -101,7 +101,7 @@ namespace DUIP.UI
                 bord.Render(Context, this.Size);
             }
 
-            public BorderControl Control;
+            public BorderBlock Block;
             public Layout Inner;
             public Point Size;
         }
@@ -109,15 +109,15 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a layout that combines a border with a background for increased performance and less visual artifacts.
         /// </summary>
-        public static Layout CreateBorderBackgroundLayout(Rectangle SizeRange, BorderControl Border, BackgroundControl Background, Control Inner, out Point Size)
+        public static Layout CreateBorderBackgroundLayout(Rectangle SizeRange, BorderBlock Border, BackgroundBlock Background, Block Inner, out Point Size)
         {
             Point sizepadding = Border.SizePadding;
             Layout inner = Inner.CreateLayout(SizeRange.Translate(-sizepadding), out Size);
             Size += sizepadding;
             return new _BorderBackgroundLayout
             {
-                BorderControl = Border,
-                BackgroundControl = Background,
+                BorderBlock = Border,
+                BackgroundBlock = Background,
                 Inner = inner,
                 Size = Size
             };
@@ -127,18 +127,18 @@ namespace DUIP.UI
         {
             public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
             {
-                double w = this.BorderControl.Border.Weight;
+                double w = this.BorderBlock.Border.Weight;
                 this.Inner.Update(Offset + new Point(w, w), Probes, Time);
             }
 
             public override void Render(RenderContext Context)
             {
-                Border bord = this.BorderControl.Border;
+                Border bord = this.BorderBlock.Border;
                 Point size = this.Size;
                 double w = bord.Weight;
                 double hw = w * 0.5;
                 Context.ClearTexture();
-                Context.SetColor(this.BackgroundControl.Color);
+                Context.SetColor(this.BackgroundBlock.Color);
                 Context.DrawQuad(new Rectangle(hw, hw, size.X - hw, size.Y - hw));
                 using (Context.Translate(new Point(bord.Weight, bord.Weight)))
                 {
@@ -147,8 +147,8 @@ namespace DUIP.UI
                 bord.Render(Context, size);
             }
 
-            public BorderControl BorderControl;
-            public BackgroundControl BackgroundControl;
+            public BorderBlock BorderBlock;
+            public BackgroundBlock BackgroundBlock;
             public Layout Inner;
             public Point Size;
         }
@@ -158,7 +158,7 @@ namespace DUIP.UI
             this._Inner.Dispose();
         }
 
-        private Disposable<Control> _Inner;
+        private Disposable<Block> _Inner;
         private Border _Border;
     }
 

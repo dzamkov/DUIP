@@ -5,19 +5,19 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A control that takes space with displaying any content.
+    /// A b;pcl that takes space without displaying any content.
     /// </summary>
-    public class SpaceControl : Control
+    public class SpaceBlock : Block
     {
-        private SpaceControl()
+        private SpaceBlock()
         {
 
         }
 
         /// <summary>
-        /// The only instance of this control.
+        /// The only instance of this block.
         /// </summary>
-        public static SpaceControl Singleton = new SpaceControl();
+        public static SpaceBlock Singleton = new SpaceBlock();
 
         /// <summary>
         /// Gets a layout that displays no content.

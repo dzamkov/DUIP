@@ -12,7 +12,7 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a visual representation of this content to be used within a node.
         /// </summary>
-        public abstract Disposable<Control> CreateControl(Theme Theme);
+        public abstract Disposable<Block> CreateBlock(Theme Theme);
 
         /// <summary>
         /// Creates an item through which the given content can be transfered, or returns null if not possible.

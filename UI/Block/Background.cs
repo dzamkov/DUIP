@@ -5,16 +5,16 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A control that displays a background below an inner control.
+    /// A block that displays a background below an inner block.
     /// </summary>
-    public class BackgroundControl : Control, IDisposable
+    public class BackgroundBlock : Block, IDisposable
     {
-        public BackgroundControl()
+        public BackgroundBlock()
         {
 
         }
 
-        public BackgroundControl(Color Color, Disposable<Control> Inner)
+        public BackgroundBlock(Color Color, Disposable<Block> Inner)
         {
             this._Color = Color;
             this._Inner = Inner;
@@ -36,9 +36,9 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets or sets the inner control for this background control. This control is displayed above the background.
+        /// Gets or sets the inner block for this background block. This block is displayed above the background.
         /// </summary>
-        public Control Inner
+        public Block Inner
         {
             get
             {
@@ -52,16 +52,16 @@ namespace DUIP.UI
 
         public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
         {
-            BorderControl bc = this.Inner as BorderControl;
+            BorderBlock bc = this.Inner as BorderBlock;
             if (bc != null)
             {
-                return BorderControl.CreateBorderBackgroundLayout(SizeRange, bc, this, bc.Inner, out Size);
+                return BorderBlock.CreateBorderBackgroundLayout(SizeRange, bc, this, bc.Inner, out Size);
             }
             else
             {
                 return new _Layout
                 {
-                    Control = this,
+                    Block = this,
                     Inner = this.Inner.CreateLayout(SizeRange, out Size),
                     Size = Size
                 };
@@ -78,12 +78,12 @@ namespace DUIP.UI
             public override void Render(RenderContext Context)
             {
                 Context.ClearTexture();
-                Context.SetColor(this.Control.Color);
+                Context.SetColor(this.Block.Color);
                 Context.DrawQuad(new Rectangle(Point.Origin, this.Size));
                 this.Inner.Render(Context);
             }
 
-            public BackgroundControl Control;
+            public BackgroundBlock Block;
             public Layout Inner;
             public Point Size;
         }
@@ -94,6 +94,6 @@ namespace DUIP.UI
         }
 
         private Color _Color;
-        private Disposable<Control> _Inner;
+        private Disposable<Block> _Inner;
     }
 }
