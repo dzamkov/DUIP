@@ -7,9 +7,18 @@ namespace DUIP
     /// <summary>
     /// Defines a relation between an argument and a result.
     /// </summary>
-    public class Function
+    public abstract class Function
     {
+        /// <summary>
+        /// Gets an expression form of this function with variable 0 as the argument.
+        /// </summary>
+        public abstract Expression GetExpression(FunctionType Type);
 
+        /// <summary>
+        /// Tries evaluating this function with the given argument. Returns nothing if there was a computional
+        /// error (infinite loop, excessive memory usage, took too long, etc).
+        /// </summary>
+        public abstract Maybe<object> Evaluate(object Argument, FunctionType Type);
     }
 
     /// <summary>
@@ -73,14 +82,6 @@ namespace DUIP
             {
                 return this._Result;
             }
-        }
-
-        /// <summary>
-        /// Evaluates a given function (of this type) for a given argument.
-        /// </summary>
-        public object Evaluate(Function Function, object Argument)
-        {
-            throw new NotImplementedException();
         }
 
         private Type _Argument;

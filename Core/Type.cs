@@ -64,11 +64,43 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Gets the type for types (the reflexive type).
+        /// </summary>
+        public static ReflexiveType Reflexive
+        {
+            get
+            {
+                return ReflexiveType.Singleton;
+            }
+        }
+
+        /// <summary>
         /// Creates a function type for the given argument and result types.
         /// </summary>
-        public static Type Function(Type Argument, Type Result)
+        public static FunctionType Function(Type Argument, Type Result)
         {
             return FunctionType.Get(Argument, Result);
+        }
+    }
+
+    /// <summary>
+    /// A type whose instances are all types (a type of types).
+    /// </summary>
+    public class ReflexiveType : Type
+    {
+        private ReflexiveType()
+        {
+
+        }
+
+        /// <summary>
+        /// The only instance of this class.
+        /// </summary>
+        public static readonly ReflexiveType Singleton = new ReflexiveType();
+
+        public override bool Equal(object A, object B)
+        {
+            return DUIP.Type.Equal(A as Type, B as Type);
         }
     }
 }

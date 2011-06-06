@@ -42,6 +42,7 @@
   -->
   <ItemGroup>
     <Compile Include="Core\Data.cs" />
+    <Compile Include="Core\Expression.cs" />
     <Compile Include="Core\File.cs" />
     <Compile Include="Core\Function.cs" />
     <Compile Include="Core\String.cs" />
