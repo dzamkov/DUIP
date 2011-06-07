@@ -10,15 +10,145 @@ namespace DUIP
     public abstract class Function
     {
         /// <summary>
-        /// Gets an expression form of this function with variable 0 as the argument.
-        /// </summary>
-        public abstract Expression GetExpression(FunctionType Type);
-
-        /// <summary>
-        /// Tries evaluating this function with the given argument. Returns nothing if there was a computional
+        /// Tries evaluating this function with the given argument. Returns false if there was a computional
         /// error (infinite loop, excessive memory usage, took too long, etc).
         /// </summary>
-        public abstract Maybe<object> Evaluate(object Argument, FunctionType Type);
+        public abstract bool Evaluate(object Argument, out object Result);
+
+        /// <summary>
+        /// Gets the identity function.
+        /// </summary>
+        public static IdentityFunction Identity
+        {
+            get
+            {
+                return IdentityFunction.Singleton;
+            }
+        }
+
+        /// <summary>
+        /// Gets a function that always returns the given constant value.
+        /// </summary>
+        public static ConstantFunction Constant(object Value)
+        {
+            return new ConstantFunction(Value);
+        }
+
+        /// <summary>
+        /// Gets a call function.
+        /// </summary>
+        public static CallFunction Call(Function Function, Function Argument)
+        {
+            return new CallFunction(Function, Argument);
+        }
+    }
+
+    /// <summary>
+    /// A function which returns its argument.
+    /// </summary>
+    public sealed class IdentityFunction : Function
+    {
+        private IdentityFunction()
+        {
+
+        }
+
+        /// <summary>
+        /// The only instance of this class.
+        /// </summary>
+        public static readonly IdentityFunction Singleton = new IdentityFunction();
+
+        public override bool Evaluate(object Argument, out object Result)
+        {
+            Result = Argument;
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// A function whose result is always a certain value.
+    /// </summary>
+    public sealed class ConstantFunction : Function
+    {
+        public ConstantFunction(object Value)
+        {
+            this._Value = Value;
+        }
+
+        /// <summary>
+        /// Gets the constant value of this function.
+        /// </summary>
+        public object Value
+        {
+            get
+            {
+                return this._Value;
+            }
+        }
+
+        public override bool Evaluate(object Argument, out object Result)
+        {
+            Result = this._Value;
+            return true;
+        }
+
+        private object _Value;
+    }
+
+    /// <summary>
+    /// A function that derives its result by calling a function with an argument, with both parts
+    /// being defined by functions.
+    /// </summary>
+    public sealed class CallFunction : Function
+    {
+        public CallFunction(Function Function, Function Argument)
+        {
+            this._Function = Function;
+            this._Argument = Argument;
+        }
+
+        /// <summary>
+        /// Get a function that, when evaluated with the argument of this function, will return the function
+        /// component of this call.
+        /// </summary>
+        public Function Function
+        {
+            get
+            {
+                return this._Function;
+            }
+        }
+
+        /// <summary>
+        /// Get a function that, when evaluated with the argument of this function, will return the argument
+        /// component of this call.
+        /// </summary>
+        public Function Argument
+        {
+            get
+            {
+                return this._Argument;
+            }
+        }
+
+        public override bool Evaluate(object Argument, out object Result)
+        {
+            object func;
+            object arg;
+            if (this._Function.Evaluate(Argument, out func))
+            {
+                if (this._Argument.Evaluate(Argument, out arg))
+                {
+                    (func as Function).Evaluate(arg, out Result);
+                    return true;
+                }
+            }
+            Result = null;
+            return false;
+        }
+
+        private Function _Function;
+        private Function _Argument;
     }
 
     /// <summary>
