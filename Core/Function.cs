@@ -16,6 +16,11 @@ namespace DUIP
         public abstract bool Evaluate(object Argument, out object Result);
 
         /// <summary>
+        /// Gets the result type of the function given the argument type.
+        /// </summary>
+        public abstract Type GetResultType(Type ArgumentType);
+
+        /// <summary>
         /// Gets the identity function.
         /// </summary>
         public static IdentityFunction Identity
@@ -29,9 +34,9 @@ namespace DUIP
         /// <summary>
         /// Gets a function that always returns the given constant value.
         /// </summary>
-        public static ConstantFunction Constant(object Value)
+        public static ConstantFunction Constant(Type Type, object Value)
         {
-            return new ConstantFunction(Value);
+            return new ConstantFunction(Type, Value);
         }
 
         /// <summary>
@@ -63,6 +68,11 @@ namespace DUIP
             Result = Argument;
             return true;
         }
+
+        public override Type GetResultType(Type ArgumentType)
+        {
+            return ArgumentType;
+        }
     }
 
     /// <summary>
@@ -70,9 +80,21 @@ namespace DUIP
     /// </summary>
     public sealed class ConstantFunction : Function
     {
-        public ConstantFunction(object Value)
+        public ConstantFunction(Type Type, object Value)
         {
+            this._Type = Type;
             this._Value = Value;
+        }
+
+        /// <summary>
+        /// Gets the type of this constant.
+        /// </summary>
+        public Type Type
+        {
+            get
+            {
+                return this._Type;
+            }
         }
 
         /// <summary>
@@ -92,6 +114,12 @@ namespace DUIP
             return true;
         }
 
+        public override Type GetResultType(Type ArgumentType)
+        {
+            return this._Type;    
+        }
+
+        private Type _Type;
         private object _Value;
     }
 
@@ -145,6 +173,11 @@ namespace DUIP
             }
             Result = null;
             return false;
+        }
+
+        public override Type GetResultType(Type ArgumentType)
+        {
+            return (this._Function.GetResultType(ArgumentType) as FunctionType).Result;
         }
 
         private Function _Function;
