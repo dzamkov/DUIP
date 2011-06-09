@@ -15,6 +15,14 @@ namespace DUIP
         public abstract bool Equal(object A, object B);
 
         /// <summary>
+        /// Gets the serialization method (with the given serialization context) to use for an object of this type.
+        /// </summary>
+        public virtual ISerialization<object> GetSerialization(Context Context)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Creates a block to display an instance of this type.
         /// </summary>
         public virtual UI.Block CreateBlock(object Instance, UI.Theme Theme)
@@ -83,6 +91,8 @@ namespace DUIP
         }
     }
 
+    
+
     /// <summary>
     /// A type whose instances are all types (a type of types).
     /// </summary>
@@ -101,6 +111,104 @@ namespace DUIP
         public override bool Equal(object A, object B)
         {
             return DUIP.Type.Equal(A as Type, B as Type);
+        }
+
+        public override ISerialization<object> GetSerialization(Context Context)
+        {
+            return new TypeSerialization();    
+        }
+    }
+
+    /// <summary>
+    /// A serialization method for types.
+    /// </summary>
+    public class TypeSerialization : ISerialization<Type>, ISerialization<object>
+    {
+        /// <summary>
+        /// Specifies a possible method to use for serialization.
+        /// </summary>
+        public enum Method : byte
+        {
+            Reflexive,
+            Function,
+            String,
+            Data,
+            File,
+        }
+
+        public void Serialize(Type Object, OutStream Stream)
+        {
+            if (Object is ReflexiveType)
+            {
+                Stream.WriteByte((byte)Method.Reflexive);
+                return;
+            }
+
+            FunctionType ft = Object as FunctionType;
+            if (ft != null)
+            {
+                Stream.WriteByte((byte)Method.Function);
+                this.Serialize(ft.Argument, Stream);
+                this.Serialize(ft.Result, Stream);
+                return;
+            }
+
+            if (Object is StringType)
+            {
+                Stream.WriteByte((byte)Method.String);
+                return;
+            }
+
+            if (Object is DataType)
+            {
+                Stream.WriteByte((byte)Method.Data);
+                return;
+            }
+
+            if (Object is FileType)
+            {
+                Stream.WriteByte((byte)Method.File);
+                return;
+            }
+        }
+
+        public Type Deserialize(InStream Stream)
+        {
+            switch ((Method)Stream.ReadByte())
+            {
+                case Method.Reflexive:
+                    return Type.Reflexive;
+                case Method.Function:
+                    Type arg = this.Deserialize(Stream);
+                    Type res = this.Deserialize(Stream);
+                    return Type.Function(arg, res);
+                case Method.String:
+                    return Type.String;
+                case Method.Data:
+                    return Type.Data;
+                case Method.File:
+                    return Type.File;
+                default:
+                    throw new DeserializationException();
+            }
+        }
+
+        void ISerialization<object>.Serialize(object Object, OutStream Stream)
+        {
+            this.Serialize(Object as Type, Stream);
+        }
+
+        object ISerialization<object>.Deserialize(InStream Stream)
+        {
+            return this.Deserialize(Stream) as Type;
+        }
+
+        public Maybe<long> Size
+        {
+            get
+            {
+                return Maybe<long>.Nothing;
+            }
         }
     }
 }

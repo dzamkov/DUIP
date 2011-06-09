@@ -57,6 +57,18 @@ namespace DUIP
         [STAThread]
         public static void Main(string[] Args)
         {
+            Function func = Function.Identity;
+            FunctionType functype = Type.Function(Type.String, Type.String);
+            ISerialization<object> funcser = functype.GetSerialization(null);
+
+            byte[] buffer = new byte[1024];
+            funcser.Serialize(func, new BufferOutStream(buffer, 0));
+            func = funcser.Deserialize(new BufferInStream(buffer, 0)) as Function;
+
+            object test;
+            func.Evaluate("hello world", out test);
+
+
             Path work = Path.WorkingDirectory;
             _Cache = work["Cache"];
             Path data = work["Data"];

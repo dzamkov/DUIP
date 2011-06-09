@@ -16,11 +16,6 @@ namespace DUIP
         public abstract bool Evaluate(object Argument, out object Result);
 
         /// <summary>
-        /// Gets the result type of the function given the argument type.
-        /// </summary>
-        public abstract Type GetResultType(Type ArgumentType);
-
-        /// <summary>
         /// Gets the identity function.
         /// </summary>
         public static IdentityFunction Identity
@@ -34,17 +29,17 @@ namespace DUIP
         /// <summary>
         /// Gets a function that always returns the given constant value.
         /// </summary>
-        public static ConstantFunction Constant(Type Type, object Value)
+        public static ConstantFunction Constant(object Value)
         {
-            return new ConstantFunction(Type, Value);
+            return new ConstantFunction(Value);
         }
 
         /// <summary>
         /// Gets a call function.
         /// </summary>
-        public static CallFunction Call(Function Function, Function Argument)
+        public static CallFunction Call(Type Inner, Function Function, Function Argument)
         {
-            return new CallFunction(Function, Argument);
+            return new CallFunction(Inner, Function, Argument);
         }
     }
 
@@ -68,11 +63,6 @@ namespace DUIP
             Result = Argument;
             return true;
         }
-
-        public override Type GetResultType(Type ArgumentType)
-        {
-            return ArgumentType;
-        }
     }
 
     /// <summary>
@@ -80,21 +70,9 @@ namespace DUIP
     /// </summary>
     public sealed class ConstantFunction : Function
     {
-        public ConstantFunction(Type Type, object Value)
+        public ConstantFunction(object Value)
         {
-            this._Type = Type;
             this._Value = Value;
-        }
-
-        /// <summary>
-        /// Gets the type of this constant.
-        /// </summary>
-        public Type Type
-        {
-            get
-            {
-                return this._Type;
-            }
         }
 
         /// <summary>
@@ -114,12 +92,6 @@ namespace DUIP
             return true;
         }
 
-        public override Type GetResultType(Type ArgumentType)
-        {
-            return this._Type;    
-        }
-
-        private Type _Type;
         private object _Value;
     }
 
@@ -127,17 +99,31 @@ namespace DUIP
     /// A function that derives its result by calling a function with an argument, with both parts
     /// being defined by functions.
     /// </summary>
+    /// <remarks>This type of function can be thought of as the composition of two constant functions of types
+    /// (A -> B -> C) and (A -> B) to form a function of type (A -> C) with B being the inner type.</remarks>
     public sealed class CallFunction : Function
     {
-        public CallFunction(Function Function, Function Argument)
+        public CallFunction(Type InnerType, Function Function, Function Argument)
         {
+            this._InnerType = InnerType;
             this._Function = Function;
             this._Argument = Argument;
         }
 
         /// <summary>
+        /// Gets the inner type (the type of the argument) for this function call.
+        /// </summary>
+        public Type InnerType
+        {
+            get
+            {
+                return this._InnerType;
+            }
+        }
+
+        /// <summary>
         /// Get a function that, when evaluated with the argument of this function, will return the function
-        /// component of this call.
+        /// component of the call.
         /// </summary>
         public Function Function
         {
@@ -149,7 +135,7 @@ namespace DUIP
 
         /// <summary>
         /// Get a function that, when evaluated with the argument of this function, will return the argument
-        /// component of this call.
+        /// component of the call.
         /// </summary>
         public Function Argument
         {
@@ -175,14 +161,12 @@ namespace DUIP
             return false;
         }
 
-        public override Type GetResultType(Type ArgumentType)
-        {
-            return (this._Function.GetResultType(ArgumentType) as FunctionType).Result;
-        }
-
+        private Type _InnerType;
         private Function _Function;
         private Function _Argument;
     }
+
+    
 
     /// <summary>
     /// A type for a relation (or rather, a specific definition of a relation) between an argument and a result of certain types.
@@ -225,6 +209,17 @@ namespace DUIP
             return A == B;
         }
 
+        public override ISerialization<object> GetSerialization(Context Context)
+        {
+            return new FunctionSerialization
+            {
+                Context = Context,
+                Type = this,
+                TypeSerialization = Reflexive.GetSerialization(Context),
+                ResultSerialization = this._Result.GetSerialization(Context)
+            };
+        }
+
         /// <summary>
         /// Gets the type required for an argument to a function of this type.
         /// </summary>
@@ -249,5 +244,102 @@ namespace DUIP
 
         private Type _Argument;
         private Type _Result;
-    }   
+    }
+
+    /// <summary>
+    /// A serialization method for functions.
+    /// </summary>
+    public class FunctionSerialization : ISerialization<Function>, ISerialization<object>
+    {
+        /// <summary>
+        /// Specifies a possible method to use for serialization.
+        /// </summary>
+        public enum Method
+        {
+            Identity,
+            Constant,
+            Call
+        }
+
+        public void Serialize(Function Object, OutStream Stream)
+        {
+            if (Object == IdentityFunction.Singleton)
+            {
+                Stream.WriteByte((byte)Method.Identity);
+                return;
+            }
+
+            ConstantFunction cf = Object as ConstantFunction;
+            if (cf != null)
+            {
+                Stream.WriteByte((byte)Method.Constant);
+                this.ResultSerialization.Serialize(cf.Value, Stream);
+                return;
+            }
+
+            CallFunction ccf = Object as CallFunction;
+            if (ccf != null)
+            {
+                Stream.WriteByte((byte)Method.Call);
+                this.TypeSerialization.Serialize(ccf.InnerType, Stream);
+
+                FunctionType functiontype = FunctionType.Get(this.Type.Argument, FunctionType.Get(ccf.InnerType, this.Type.Result));
+                FunctionType argumenttype = FunctionType.Get(this.Type.Argument, ccf.InnerType);
+
+                functiontype.GetSerialization(this.Context).Serialize(ccf.Function, Stream);
+                argumenttype.GetSerialization(this.Context).Serialize(ccf.Argument, Stream);
+                return;
+            }
+        }
+
+        public Function Deserialize(InStream Stream)
+        {
+            switch ((Method)Stream.ReadByte())
+            {
+                case Method.Identity:
+                    if (!DUIP.Type.Equal(this.Type.Argument, this.Type.Result))
+                    {
+                        throw new DeserializationException();
+                    }
+                    return IdentityFunction.Singleton;
+                case Method.Constant:
+                    object value = this.ResultSerialization.Deserialize(Stream);
+                    return new ConstantFunction(value);
+                case Method.Call:
+                    Type inner = this.TypeSerialization.Deserialize(Stream) as Type;
+
+                    FunctionType functiontype = FunctionType.Get(this.Type.Argument, FunctionType.Get(inner, this.Type.Result));
+                    FunctionType argumenttype = FunctionType.Get(this.Type.Argument, inner);
+
+                    object function = functiontype.GetSerialization(this.Context).Deserialize(Stream);
+                    object argument = argumenttype.GetSerialization(this.Context).Deserialize(Stream);
+                    return new CallFunction(inner, function as Function, argument as Function);
+                default:
+                    throw new DeserializationException();
+            }
+        }
+
+        void ISerialization<object>.Serialize(object Object, OutStream Stream)
+        {
+            this.Serialize(Object as Function, Stream);
+        }
+
+        object ISerialization<object>.Deserialize(InStream Stream)
+        {
+            return this.Deserialize(Stream);
+        }
+
+        public Maybe<long> Size
+        {
+            get
+            {
+                return Maybe<long>.Nothing;
+            }
+        }
+
+        public Context Context;
+        public FunctionType Type;
+        public ISerialization<object> ResultSerialization;
+        public ISerialization<object> TypeSerialization;
+    }
 }

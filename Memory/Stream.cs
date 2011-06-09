@@ -7,10 +7,7 @@ namespace DUIP
     /// <summary>
     /// A byte stream that can be read from.
     /// </summary>
-    /// <remarks>Usually, an InStream has a limited size, but due to performance considerations,
-    /// requesting data an InStream doesn't have leads to undefined results. At low levels, it can
-    /// be assumed that an InStream has an infinite size and all data it returns is valid. The Data class is
-    /// more robust and can be used to check the size and validity of data.</remarks>
+    /// <remarks>Stream functions may throw an exception to indicate stream errors (such as out of memory, or end of stream).</remarks>
     public abstract class InStream
     {
         /// <summary>
@@ -169,6 +166,7 @@ namespace DUIP
     /// <summary>
     /// A byte stream that can be written to.
     /// </summary>
+    /// <remarks>Stream functions may throw an exception to indicate stream errors (such as out of memory, or end of stream).</remarks>
     public abstract class OutStream
     {
         /// <summary>

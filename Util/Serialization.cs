@@ -12,12 +12,13 @@ namespace DUIP
     public interface ISerialization<T>
     {
         /// <summary>
-        /// Serializes an object to a stream.
+        /// Serializes an object to a stream. An exception may be thrown if there is a stream error.
         /// </summary>
         void Serialize(T Object, OutStream Stream);
 
         /// <summary>
-        /// Deserializes an object from the stream.
+        /// Deserializes an object from the stream. An exception may be thrown if there is a stream error, or no object could
+        /// be derived from the stream.
         /// </summary>
         T Deserialize(InStream Stream);
 
@@ -25,6 +26,15 @@ namespace DUIP
         /// Gets the length in bytes of this serializable object for all values, or nothing if the size is variable or unbounded.
         /// </summary>
         Maybe<long> Size { get; }
+    }
+
+    /// <summary>
+    /// An exception that is thrown when there is an attempt to deserialize an object from a stream that does not contain a
+    /// valid object for the serialization method.
+    /// </summary>
+    public class DeserializationException : Exception
+    {
+
     }
 
     /// <summary>
