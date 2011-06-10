@@ -234,9 +234,9 @@ namespace DUIP
         /// </summary>
         public long GetBucketIndex(BigInt Hash)
         {
-            Header h = this._Header;
-            long hashbuckets = h.Buckets - h.CellarBuckets;
-            return (long)((Hash % (ulong)hashbuckets).ToULong() + (ulong)h.CellarBuckets);
+            Scheme scheme = this._Scheme;
+            long hashbuckets = scheme.Buckets - scheme.CellarBuckets;
+            return (long)((Hash % (ulong)hashbuckets).ToULong() + (ulong)scheme.CellarBuckets);
         }
 
         /// <summary>
@@ -274,9 +274,10 @@ namespace DUIP
         /// </summary>
         public long SearchBucketIndex(long Start, bool Free)
         {
+            Scheme scheme = this._Scheme;
             Start++;
-            long tb = this._Header.Buckets;
-            long bs = this._Scheme.BucketSerialization.Size.OrExcept;
+            long tb = scheme.Buckets;
+            long bs = scheme.BucketSerialization.Size.OrExcept;
             while (true)
             {
                 if (Start == tb)
@@ -286,7 +287,7 @@ namespace DUIP
                 InStream str = this._Source.Read(this.GetBucketOffset(Start));
                 while (Start < tb)
                 {
-                    Bucket b = this._Scheme.BucketSerialization.Deserialize(str);
+                    Bucket b = scheme.BucketSerialization.Deserialize(str);
                     if (b.Free == Free)
                     {
                         str.Finish();
@@ -314,7 +315,7 @@ namespace DUIP
         {
             get
             {
-                return this._Header.Items < this._Header.Buckets;
+                return this._Header.Items < this._Scheme.Buckets;
             }
         }
 
@@ -326,7 +327,7 @@ namespace DUIP
         {
             this._Header.Items++;
             long ind = this._Header.FirstFreeBucket;
-            if (this._Header.Items < this._Header.Buckets)
+            if (this._Header.Items < this._Scheme.Buckets)
             {
                 this._Header.FirstFreeBucket = this.SearchBucketIndex(ind, true);
             }
@@ -343,7 +344,7 @@ namespace DUIP
         private void _Add(long BucketIndex)
         {
             this._Header.Items++;
-            if (BucketIndex == this._Header.FirstFreeBucket && this._Header.Items < this._Header.Buckets)
+            if (BucketIndex == this._Header.FirstFreeBucket && this._Header.Items < this._Scheme.Buckets)
             {
                 this._Header.FirstFreeBucket = this.SearchBucketIndex(BucketIndex, true);
             }
@@ -401,29 +402,28 @@ namespace DUIP
         {
             get
             {
-                return this._Header.Buckets;
+                return this._Scheme.Buckets;
             }
         }
 
         /// <summary>
         /// Initializes an empty hashmap in the given memory. The size of the data should be at or greater than the required
-        /// size for the hashmap as computed by the plan.
+        /// size for the hashmap as computed by the scheme.
         /// </summary>
-        public static HashMap<TKey, T> Create(Memory Source, Plan Plan)
+        public static HashMap<TKey, T> Create(Memory Source, Scheme Scheme)
         {
             // Fill data with an empty map
             Header h = new Header()
             {
-                Buckets = Plan.Buckets,
-                CellarBuckets = Plan.CellarBuckets,
                 Items = 0,
-                FirstFreeBucket = 0
+                FirstFreeBucket = 0,
+                FirstFilledBucket = 0,
             };
             OutStream os = Source.Modify();
             h.Write(os);
-            for (long t = 0; t < Plan.Buckets; t++)
+            for (long t = 0; t < Scheme.Buckets; t++)
             {
-                Plan.Scheme.BucketSerialization.Serialize(new Bucket()
+                Scheme.BucketSerialization.Serialize(new Bucket()
                     {
                         Free = true,
                         Reference = t
@@ -434,7 +434,7 @@ namespace DUIP
             // Create an interface to the map
             return new HashMap<TKey, T>()
             {
-                _Scheme = Plan.Scheme,
+                _Scheme = Scheme,
                 _Source = Source,
                 _Header = h,
             };
@@ -460,45 +460,20 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Details needed for the creation of a hashmap in data.
+        /// Scheme information for a hashmap.
         /// </summary>
-        public struct Plan
+        public class Scheme
         {
             /// <summary>
-            /// The amount of buckets to be used for the hashmap. This is the maximum amount of items
-            /// the hashmap can contain.
+            /// The amount of buckets in the hashmap.
             /// </summary>
             public long Buckets;
 
             /// <summary>
-            /// The amount of buckets to be used exclusively for collision resolution. With the coalesced hashing
-            /// scheme, it is useful to reserve some buckets in the cellar if there is expected to be a high load factor
-            /// to reduce the chances of chains coalescing.
+            /// The amount of cellar buckets in the initial buckets of the hashmap.
             /// </summary>
             public long CellarBuckets;
 
-            /// <summary>
-            /// The scheme information needed by the hashmap.
-            /// </summary>
-            public Scheme Scheme;
-
-            /// <summary>
-            /// Gets the total size of memory needed by the hashmap described with this plan.
-            /// </summary>
-            public long TotalSize
-            {
-                get
-                {
-                    return Header.Size + this.Scheme.BucketSerialization.Size.OrExcept * this.Buckets;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Scheme information for a hashmap.
-        /// </summary>
-        public struct Scheme
-        {
             /// <summary>
             /// Method used to serialize a bucket in the hashmap. This must have a fixed size.
             /// </summary>
@@ -508,6 +483,17 @@ namespace DUIP
             /// Method used to hash and equate keys.
             /// </summary>
             public IHashing<TKey> KeyHashing;
+
+            /// <summary>
+            /// Gets the total size of memory needed by the hashmap described with this scheme.
+            /// </summary>
+            public long RequiredSize
+            {
+                get
+                {
+                    return Header.Size + this.BucketSerialization.Size.OrExcept * this.Buckets;
+                }
+            }
         }
 
         /// <summary>
@@ -515,16 +501,6 @@ namespace DUIP
         /// </summary>
         public struct Header
         {
-            /// <summary>
-            /// The amount of buckets in the hashmap.
-            /// </summary>
-            public long Buckets;
-
-            /// <summary>
-            /// The amount of cellar buckets preceding the hashmap.
-            /// </summary>
-            public long CellarBuckets;
-
             /// <summary>
             /// If the hashmap is not entirely full, this is an index to a free bucket which is likely the start of a cluster of
             /// free buckets. 
@@ -547,8 +523,6 @@ namespace DUIP
             /// </summary>
             public void Write(OutStream Stream)
             {
-                Stream.WriteLong(this.Buckets);
-                Stream.WriteLong(this.CellarBuckets);
                 Stream.WriteLong(this.FirstFreeBucket);
                 Stream.WriteLong(this.FirstFilledBucket);
                 Stream.WriteLong(this.Items);
@@ -561,8 +535,6 @@ namespace DUIP
             {
                 return new Header()
                 {
-                    Buckets = Stream.ReadLong(),
-                    CellarBuckets = Stream.ReadLong(),
                     FirstFreeBucket = Stream.ReadLong(),
                     FirstFilledBucket = Stream.ReadLong(),
                     Items = Stream.ReadLong()
@@ -570,13 +542,13 @@ namespace DUIP
             }
 
             /// <summary>
-            /// The size in bytes of the header.
+            /// The size of the header in bytes.
             /// </summary>
-            public const long Size = 8 * 5;
+            public const long Size = 8 * 3;
         }
 
         /// <summary>
-        /// A representation of a mutable area in the hash map that can store an item.
+        /// A representation of the contents of a slot in the hash map that can store an item.
         /// </summary>
         public struct Bucket
         {

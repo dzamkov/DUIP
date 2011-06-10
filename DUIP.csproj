@@ -47,6 +47,8 @@
     <Compile Include="Core\Function.cs" />
     <Compile Include="Core\String.cs" />
     <Compile Include="Core\Type.cs" />
+    <Compile Include="Memory\Allocator\Buddy.cs" />
+    <Compile Include="Memory\Allocator\Directory.cs" />
     <Compile Include="Memory\Path.cs" />
     <Compile Include="Memory\Handle.cs" />
     <Compile Include="Memory\Map.cs" />
@@ -99,7 +101,7 @@
     <Compile Include="Util\Relation.cs" />
     <Compile Include="Util\Void.cs" />
     <Compile Include="Util\ID.cs" />
-    <Compile Include="Memory\Allocator.cs" />
+    <Compile Include="Memory\Allocator\Allocator.cs" />
     <Compile Include="Memory\HashMap.cs" />
     <Compile Include="Util\Equality.cs" />
     <Compile Include="Memory\File.cs" />

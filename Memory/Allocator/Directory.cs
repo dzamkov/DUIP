@@ -5,42 +5,6 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// A representation of storage space that allows the allocation and deallocation of fixed-size mutable memory.
-    /// </summary>
-    /// <typeparam name="T">A pointer to allocated memory in the allocator.</typeparam>
-    public abstract class Allocator<T>
-    {
-        /// <summary>
-        /// Allocates memory with the given size. The resulting memory will be null if there is no
-        /// space for allocation available.
-        /// </summary>
-        public abstract Memory Allocate(long Size, out T Pointer);
-
-        /// <summary>
-        /// Gets the maximum size for which an allocation can succeed.
-        /// </summary>
-        public virtual long MaxSize
-        {
-            get
-            {
-                return long.MaxValue;
-            }
-        }
-
-        /// <summary>
-        /// Gets the memory at the given pointer. The size of the returned data may be larger than the size of the allocated
-        /// data, in which case, the extra bytes are safe to use.
-        /// </summary>
-        public abstract Memory Lookup(T Pointer);
-
-        /// <summary>
-        /// Deallocates the memory with the given pointer. After this is called, the corresponding memory
-        /// may no longer be used.
-        /// </summary>
-        public abstract void Deallocate(T Pointer);
-    }
-
-    /// <summary>
     /// An allocator that stores memory as files in a directory. Memory in this kind of allocator will persist between
     /// instances and processes.
     /// </summary>
@@ -81,6 +45,22 @@ namespace DUIP
             }
         }
 
+        /// <summary>
+        /// Tries allocating memory at the given pointer. Returns null if not possible.
+        /// </summary>
+        public Memory Allocate(long Size, int Pointer)
+        {
+            Path fpath = this._GetFile(Pointer);
+            if (fpath.Exists)
+            {
+                return null;
+            }
+            else
+            {
+                return fpath.Create(Size);
+            }
+        }
+
         public override Memory Allocate(long Size, out int Pointer)
         {
             Path fpath;
@@ -93,14 +73,14 @@ namespace DUIP
             return fpath.Create(Size);
         }
 
+        public override void Deallocate(long Size, int Pointer)
+        {
+            this._GetFile(Pointer).Delete();
+        }
+
         public override Memory Lookup(int Pointer)
         {
             return this._GetFile(Pointer).Open();
-        }
-
-        public override void Deallocate(int Pointer)
-        {
-            this._GetFile(Pointer).Delete();
         }
 
         /// <summary>
@@ -108,7 +88,7 @@ namespace DUIP
         /// </summary>
         private string _GetName(int Index)
         {
-            return Index.ToString("X");
+            return Index.ToString("X8");
         }
 
         /// <summary>

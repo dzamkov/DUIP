@@ -48,10 +48,11 @@ namespace DUIP
                     fm._FileStream = fs;
                     return _Files[Path] = fm;
                 }
-                finally
+                catch
                 {
                     fs.Close();
                     fs.Dispose();
+                    return null;
                 }
             }
             catch
