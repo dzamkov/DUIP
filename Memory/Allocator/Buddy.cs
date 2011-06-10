@@ -7,6 +7,8 @@ namespace DUIP
     /// <summary>
     /// An implementation of a buddy allocator that fully contains its state, and allocated memory(s), in a single memory object.
     /// </summary>
+    /// <remarks>This is not an ideal implementation. It is possible for fragmentation to occur that results in blocks of larger sizes
+    /// to not be able to be allocated. This implementation works best when allocations are given in descending order of size.</remarks>
     public class BuddyAllocator : Allocator<long>, IHandle
     {
         private BuddyAllocator()
@@ -51,15 +53,15 @@ namespace DUIP
         {
             Pointer = 0;
             Scheme scheme = this._Scheme;
-            long csize = GetContentSize(scheme.BaseContentSize, scheme.Depth);
-            if(Size > csize)
+            long csize = this._ContentSize;
+            if (Size > csize)
             {
                 return null;
             }
 
 
             BlockState state;
-            if (_Allocate(this._Source, Size, 0, csize, scheme.Depth, ref Pointer, out state))
+            if (_Allocate(this._Source, 0, csize, scheme.Depth, Size, ref Pointer, out state))
             {
                 return this.Lookup(Pointer);
             }
@@ -73,12 +75,12 @@ namespace DUIP
         /// Tries allocating memory in the block with the given parameters.
         /// </summary>
         /// <param name="Source">The memory that contains the block to be used for allocation.</param>
-        /// <param name="Size">The size of the memory to allocate. This should be at, or smaller than the content size of the block.</param>
         /// <param name="Start">A pointer to the beginning of the block (including header).</param>
         /// <param name="ContentSize">The size of the content of the block.</param>
         /// <param name="Depth">The depth of the block.</param>
         /// <param name="State">The state of the block after the function exits.</param>
-        private static bool _Allocate(Memory Source, long Size, long Start, long ContentSize, int Depth, ref long Pointer, out BlockState State)
+        /// <param name="Size">The size of the memory to allocate.</param>
+        private static bool _Allocate(Memory Source, long Start, long ContentSize, int Depth, long Size, ref long Pointer, out BlockState State)
         {
             State = _GetBlockState(Source, Start);
             long ibcs; // Content size for inner blocks.
@@ -118,7 +120,7 @@ namespace DUIP
                         long fstart = Start + BlockHeaderSize;
                         long sstart = fstart + BlockHeaderSize + ibcs;
                         BlockState fstate, sstate;
-                        if (_Allocate(Source, Size, fstart, ibcs, ndepth, ref Pointer, out fstate))
+                        if (_Allocate(Source, fstart, ibcs, ndepth, Size, ref Pointer, out fstate))
                         {
                             sstate = _GetBlockState(Source, sstart);
                             if (_Filled(fstate) && _Filled(sstate))
@@ -129,7 +131,7 @@ namespace DUIP
                         }
                         else
                         {
-                            if (_Allocate(Source, Size, sstart, ibcs, ndepth, ref Pointer, out sstate))
+                            if (_Allocate(Source, sstart, ibcs, ndepth, Size, ref Pointer, out sstate))
                             {
                                 if (_Filled(fstate) && _Filled(sstate))
                                 {
@@ -145,11 +147,56 @@ namespace DUIP
             }
         }
 
-
-
         public override void Deallocate(long Size, long Pointer)
         {
-            throw new NotImplementedException();
+            this.Deallocate(Pointer);
+        }
+
+        /// <summary>
+        /// Deallocates the memory beginning at the given pointer.
+        /// </summary>
+        public void Deallocate(long Pointer)
+        {
+            BlockState state;
+            _Deallocate(this._Source, 0, this._ContentSize, Pointer, out state);
+        }
+
+        /// <summary>
+        /// Deallocates a pointer in the given block.
+        /// </summary>
+        /// <param name="State">The state of the block after the function exits.</param>
+        private static void _Deallocate(Memory Source, long Start, long ContentSize, long Pointer, out BlockState State)
+        {
+            if (Pointer == Start + BlockHeaderSize)
+            {
+                _SetBlockState(Source, Start, State = BlockState.Empty);
+                return;
+            }
+
+            long ibbs = ContentSize / 2;
+            long ibcs = ibbs - BlockHeaderSize;
+            long fstart = Start + BlockHeaderSize;
+            long sstart = fstart + BlockHeaderSize + ibcs;
+            BlockState fstate, sstate;
+            if (Pointer - fstart < ibbs)
+            {
+                _Deallocate(Source, fstart, ibcs, Pointer, out fstate);
+                sstate = _GetBlockState(Source, sstart);
+                
+            }
+            else
+            {
+                fstate = _GetBlockState(Source, fstart);
+                _Deallocate(Source, sstart, ibcs, Pointer, out sstate);
+            }
+            if (fstate == BlockState.Empty && sstate == BlockState.Empty)
+            {
+                _SetBlockState(Source, Start, State = BlockState.Empty);
+            }
+            else
+            {
+                _SetBlockState(Source, Start, State = BlockState.Split);
+            }
         }
 
         public override Memory Lookup(long Pointer)
@@ -211,7 +258,8 @@ namespace DUIP
             return new BuddyAllocator
             {
                 _Source = Source,
-                _Scheme = Scheme
+                _Scheme = Scheme,
+                _ContentSize = GetContentSize(Scheme.BaseContentSize, Scheme.Depth)
             };
         }
 
@@ -223,7 +271,8 @@ namespace DUIP
             return new BuddyAllocator
             {
                 _Source = Source,
-                _Scheme = Scheme
+                _Scheme = Scheme,
+                _ContentSize = GetContentSize(Scheme.BaseContentSize, Scheme.Depth)
             };
         }
 
@@ -267,6 +316,7 @@ namespace DUIP
             }
         }
 
+        private long _ContentSize;
         private Memory _Source;
         private Scheme _Scheme;
     }

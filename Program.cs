@@ -71,11 +71,12 @@ namespace DUIP
             Memory mem = alloc.Allocate((long)scheme.RequiredSize, 0) ?? alloc.Lookup(0);
             BuddyAllocator balloc = BuddyAllocator.Create(mem, scheme);
             long ptr;
+            long nptr;
             balloc.Allocate(100, out ptr);
-            balloc.Allocate(1, out ptr);
-            balloc.Allocate(1, out ptr);
-            balloc.Allocate(1, out ptr);
-            balloc.Allocate(1, out ptr);
+            balloc.Allocate(1, out nptr);
+            balloc.Deallocate(nptr);
+            balloc.Allocate(100, out nptr);
+            balloc.Deallocate(ptr);
 
             Application.EnableVisualStyles();
             MainForm mf = new MainForm();
