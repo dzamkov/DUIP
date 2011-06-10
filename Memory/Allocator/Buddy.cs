@@ -22,7 +22,7 @@ namespace DUIP
         /// <summary>
         /// Gives a possible state for a block in the allocator.
         /// </summary>
-        public enum BlockState
+        public enum BlockState : byte
         {
             /// <summary>
             /// The block is completely empty
@@ -49,7 +49,62 @@ namespace DUIP
 
         public override Memory Allocate(long Size, out int Pointer)
         {
-            throw new NotImplementedException();
+            Pointer = 0;
+            int isize;
+            try
+            {
+                isize = checked((int)Size);
+            }
+            catch (ArithmeticException)
+            {
+                return null;
+            }
+
+            Scheme scheme = this._Scheme;
+            int csize = GetContentSize(scheme.BaseContentSize, scheme.Depth);
+            if(isize > csize)
+            {
+                return null;
+            }
+
+            
+            Memory mem = null;
+            InStream str = this._Source.Read();
+            if (!_Allocate(isize, str, csize, scheme.Depth, 0, ref Pointer, ref mem))
+            {
+                str.Finish();
+            }
+            return mem;
+        }
+
+        /// <summary>
+        /// Tries allocating memory in the block with the given parameters.
+        /// </summary>
+        /// <param name="Size">The size of the memory to allocate. This should be at, or smaller than the content size of the block.</param>
+        /// <param name="Stream">A stream containing the block. The stream is closed if memory is allocated.</param>
+        /// <param name="ContentSize">The size of the content of the block in the stream.</param>
+        /// <param name="Depth">The depth of the block.</param>
+        /// <param name="Start">The pointer to the current position of the stream</param>
+        private static bool _Allocate(int Size, InStream Stream, int ContentSize, int Depth, int Start, ref int Pointer, ref Memory Memory)
+        {
+            switch ((BlockState)Stream.ReadByte())
+            {
+                case BlockState.Empty:
+                    throw new NotImplementedException();
+                case BlockState.Split:
+                    int ibcs = ContentSize / 2 - BlockHeaderSize;
+                    if (Size > ibcs)
+                    {
+                        Stream.Advance(ContentSize);
+                        return false;
+                    }
+                    return
+                        _Allocate(Size, Stream, ibcs, Depth - 1, Start + BlockHeaderSize, ref Pointer, ref Memory) ||
+                        _Allocate(Size, Stream, ibcs, Depth - 1, Start + BlockHeaderSize + ibcs, ref Pointer, ref Memory);
+                default:
+                    Stream.Advance(ContentSize);
+                    return false;
+            }
         }
 
         public override void Deallocate(long Size, int Pointer)
@@ -102,14 +157,27 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Gets the content size of a block given the base content size and the recursive depth of the block.
+        /// </summary>
+        public static int GetContentSize(int BaseContentSize, int Depth)
+        {
+            while (Depth-- > 0)
+            {
+                int blocksize =  BlockHeaderSize + BaseContentSize;
+                BaseContentSize = blocksize + blocksize;
+            }
+            return BaseContentSize;
+        }
+
+        /// <summary>
         /// Scheme information for a buddy allocator.
         /// </summary>
         public class Scheme
         {
             /// <summary>
-            /// The size of the smallest possible block that can be allocated.
+            /// The size of the smallest possible allocatable partion.
             /// </summary>
-            public int BaseBlockSize;
+            public int BaseContentSize;
 
             /// <summary>
             /// The maximum possible recusive depth for blocks.
@@ -123,13 +191,7 @@ namespace DUIP
             {
                 get
                 {
-                    int d = this.Depth;
-                    int s = BlockHeaderSize + this.BaseBlockSize;
-                    while (d-- > 0)
-                    {
-                        s = BlockHeaderSize + s + s;
-                    }
-                    return s;
+                    return BlockHeaderSize + GetContentSize(this.BaseContentSize, this.Depth);
                 }
             }
         }

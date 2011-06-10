@@ -65,7 +65,7 @@ namespace DUIP
             // Test buddy allocator
             BuddyAllocator.Scheme scheme = new BuddyAllocator.Scheme
             {
-                BaseBlockSize = 16,
+                BaseContentSize = 16,
                 Depth = 4
             };
             Memory mem = alloc.Allocate((long)scheme.RequiredSize, 0) ?? alloc.Lookup(0);
