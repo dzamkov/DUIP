@@ -263,7 +263,7 @@ namespace DUIP
         /// </summary>
         public void SetBucket(long BucketIndex, Bucket Value)
         {
-            OutStream str = this._Source.Modify(this.GetBucketOffset(BucketIndex));
+            OutStream str = this._Source.Write(this.GetBucketOffset(BucketIndex));
             this._Scheme.BucketSerialization.Serialize(Value, str);
             str.Finish();
         }
@@ -371,7 +371,7 @@ namespace DUIP
         /// </summary>
         private void _UpdateHeader()
         {
-            OutStream str = this._Source.Modify();
+            OutStream str = this._Source.Write();
             this._Header.Write(str);
             str.Finish();
         }
@@ -419,7 +419,7 @@ namespace DUIP
                 FirstFreeBucket = 0,
                 FirstFilledBucket = 0,
             };
-            OutStream os = Source.Modify();
+            OutStream os = Source.Write();
             h.Write(os);
             for (long t = 0; t < Scheme.Buckets; t++)
             {

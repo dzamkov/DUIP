@@ -10,21 +10,18 @@ namespace DUIP
     public abstract class Memory
     {
         /// <summary>
-        /// Creates a stream to read the memory or returns null if not possible.
+        /// Creates a stream to read the memory from the beginning or returns null if not possible.
         /// </summary>
-        public abstract InStream Read();
+        public InStream Read()
+        {
+            return Read(0);
+        }
 
         /// <summary>
-        /// Creates a stream to read this memory, starting at the given position.
+        /// Creates a stream to read this memory, starting at the given position or returns null if not possible.
         /// </summary>
         public virtual InStream Read(long Start)
         {
-            InStream r = this.Read();
-            if (r != null)
-            {
-                r.Advance(Start);
-                return r;
-            }
             return null;
         }
 
@@ -34,20 +31,20 @@ namespace DUIP
         public abstract long Size { get; }
 
         /// <summary>
-        /// Creates a stream to modify the memory beginning at the given position. The modifing stream may not go over the
-        /// bounds of the memory. Null is returned if the data can not be modified.
+        /// Creates a stream to modify the memory starting at the given position or returns null if not possible. The modifing stream 
+        /// may not go over the bounds of the memory.
         /// </summary>
-        public virtual OutStream Modify(long Start)
+        public virtual OutStream Write(long Start)
         {
             return null;
         }
 
         /// <summary>
-        /// Creates a stream to modify the memory from the beginning.
+        /// Creates a stream to modify the memory from the beginning or returns null if not possible.
         /// </summary>
-        public OutStream Modify()
+        public OutStream Write()
         {
-            return Modify(0);
+            return Write(0);
         }
 
         /// <summary>
@@ -111,11 +108,6 @@ namespace DUIP
             }
         }
 
-        public override InStream Read()
-        {
-            return this._Source.Read(this._Start);
-        }
-
         public override InStream Read(long Start)
         {
             return this._Source.Read(this._Start + Start);
@@ -129,9 +121,9 @@ namespace DUIP
             }
         }
 
-        public override OutStream Modify(long Start)
+        public override OutStream Write(long Start)
         {
-            return this._Source.Modify(this._Start + Start);
+            return this._Source.Write(this._Start + Start);
         }
 
         public override Data GetData(long Start, long Size)

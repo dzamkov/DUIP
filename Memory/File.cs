@@ -103,12 +103,12 @@ namespace DUIP
             }
         }
 
-        public override InStream Read()
+        public override InStream Read(long Start)
         {
-            return this.Open() ? new _InStream(0, this) : null;
+            return this.Open() ? new _InStream(Start, this) : null;
         }
 
-        public override OutStream Modify(long Start)
+        public override OutStream Write(long Start)
         {
             return this.Open() ? new _OutStream(Start, this) : null;
         }

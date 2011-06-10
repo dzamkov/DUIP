@@ -7,7 +7,7 @@ namespace DUIP
     /// <summary>
     /// An implementation of a buddy allocator that fully contains its state, and allocated memory(s), in a single memory object.
     /// </summary>
-    public class BuddyAllocator : Allocator<int>, IHandle
+    public class BuddyAllocator : Allocator<long>, IHandle
     {
         private BuddyAllocator()
         {
@@ -17,7 +17,7 @@ namespace DUIP
         /// <summary>
         /// The size of a block header in bytes.
         /// </summary>
-        public const int BlockHeaderSize = 1;
+        public const long BlockHeaderSize = 1;
 
         /// <summary>
         /// Gives a possible state for a block in the allocator.
@@ -47,74 +47,145 @@ namespace DUIP
             FilledSplit,
         }
 
-        public override Memory Allocate(long Size, out int Pointer)
+        public override Memory Allocate(long Size, out long Pointer)
         {
             Pointer = 0;
-            int isize;
-            try
-            {
-                isize = checked((int)Size);
-            }
-            catch (ArithmeticException)
-            {
-                return null;
-            }
-
             Scheme scheme = this._Scheme;
-            int csize = GetContentSize(scheme.BaseContentSize, scheme.Depth);
-            if(isize > csize)
+            long csize = GetContentSize(scheme.BaseContentSize, scheme.Depth);
+            if(Size > csize)
             {
                 return null;
             }
 
-            
-            Memory mem = null;
-            InStream str = this._Source.Read();
-            if (!_Allocate(isize, str, csize, scheme.Depth, 0, ref Pointer, ref mem))
+
+            BlockState state;
+            if (_Allocate(this._Source, Size, 0, csize, scheme.Depth, ref Pointer, out state))
             {
-                str.Finish();
+                return this.Lookup(Pointer);
             }
-            return mem;
+            else
+            {
+                return null;
+            }
         }
 
         /// <summary>
         /// Tries allocating memory in the block with the given parameters.
         /// </summary>
+        /// <param name="Source">The memory that contains the block to be used for allocation.</param>
         /// <param name="Size">The size of the memory to allocate. This should be at, or smaller than the content size of the block.</param>
-        /// <param name="Stream">A stream containing the block. The stream is closed if memory is allocated.</param>
-        /// <param name="ContentSize">The size of the content of the block in the stream.</param>
+        /// <param name="Start">A pointer to the beginning of the block (including header).</param>
+        /// <param name="ContentSize">The size of the content of the block.</param>
         /// <param name="Depth">The depth of the block.</param>
-        /// <param name="Start">The pointer to the current position of the stream</param>
-        private static bool _Allocate(int Size, InStream Stream, int ContentSize, int Depth, int Start, ref int Pointer, ref Memory Memory)
+        /// <param name="State">The state of the block after the function exits.</param>
+        private static bool _Allocate(Memory Source, long Size, long Start, long ContentSize, int Depth, ref long Pointer, out BlockState State)
         {
-            switch ((BlockState)Stream.ReadByte())
+            State = _GetBlockState(Source, Start);
+            long ibcs; // Content size for inner blocks.
+            switch (State)
             {
                 case BlockState.Empty:
-                    throw new NotImplementedException();
-                case BlockState.Split:
-                    int ibcs = ContentSize / 2 - BlockHeaderSize;
-                    if (Size > ibcs)
+                    ibcs = ContentSize / 2 - BlockHeaderSize;
+                    if (Size > ibcs || Depth == 0)
                     {
-                        Stream.Advance(ContentSize);
-                        return false;
+                        Pointer = Start + BlockHeaderSize;
+                        _SetBlockState(Source, Start, State = BlockState.Filled);
+                        return true;
                     }
-                    return
-                        _Allocate(Size, Stream, ibcs, Depth - 1, Start + BlockHeaderSize, ref Pointer, ref Memory) ||
-                        _Allocate(Size, Stream, ibcs, Depth - 1, Start + BlockHeaderSize + ibcs, ref Pointer, ref Memory);
+
+                    State = BlockState.Split;
+                    long cur = Start;
+                    while (true)
+                    {
+                        _SetBlockState(Source, cur, BlockState.Split);
+                        cur += BlockHeaderSize;
+
+                        _SetBlockState(Source, cur + BlockHeaderSize + ibcs, BlockState.Empty);
+
+                        ibcs = ibcs / 2 - BlockHeaderSize;
+                        if (Size > ibcs || --Depth == 0)
+                        {
+                            Pointer = cur + BlockHeaderSize;
+                            _SetBlockState(Source, cur, BlockState.Filled);
+                            return true;
+                        }
+                    }
+                case BlockState.Split:
+                    ibcs = ContentSize / 2 - BlockHeaderSize;
+                    if (Size <= ibcs)
+                    {
+                        int ndepth = Depth - 1;
+                        long fstart = Start + BlockHeaderSize;
+                        long sstart = fstart + BlockHeaderSize + ibcs;
+                        BlockState fstate, sstate;
+                        if (_Allocate(Source, Size, fstart, ibcs, ndepth, ref Pointer, out fstate))
+                        {
+                            sstate = _GetBlockState(Source, sstart);
+                            if (_Filled(fstate) && _Filled(sstate))
+                            {
+                                _SetBlockState(Source, Start, State = BlockState.FilledSplit);
+                            }
+                            return true;
+                        }
+                        else
+                        {
+                            if (_Allocate(Source, Size, sstart, ibcs, ndepth, ref Pointer, out sstate))
+                            {
+                                if (_Filled(fstate) && _Filled(sstate))
+                                {
+                                    _SetBlockState(Source, Start, State = BlockState.FilledSplit);
+                                }
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
                 default:
-                    Stream.Advance(ContentSize);
                     return false;
             }
         }
 
-        public override void Deallocate(long Size, int Pointer)
+
+
+        public override void Deallocate(long Size, long Pointer)
         {
             throw new NotImplementedException();
         }
 
-        public override Memory Lookup(int Pointer)
+        public override Memory Lookup(long Pointer)
         {
-            throw new NotImplementedException();
+            return this._Source.GetPartion(Pointer, this._Source.Size - Pointer);
+        }
+
+        /// <summary>
+        /// Gets the state of a block in memory.
+        /// </summary>
+        /// <param name="Start">A pointer to the beginning of the block (including header).</param>
+        private static BlockState _GetBlockState(Memory Source, long Start)
+        {
+            InStream str = Source.Read(Start);
+            BlockState state = (BlockState)str.ReadByte();
+            str.Finish();
+            return state;
+        }
+
+        /// <summary>
+        /// Sets the state of a block in memory.
+        /// </summary>
+        /// <param name="Start">A pointer to the beginning of the block (including header).</param>
+        private static void _SetBlockState(Memory Source, long Start, BlockState State)
+        {
+            OutStream str = Source.Write(Start);
+            str.WriteByte((byte)State);
+            str.Finish();
+        }
+
+        /// <summary>
+        /// Gets if the given state is either Filled, or FilledSplit.
+        /// </summary>
+        private static bool _Filled(BlockState State)
+        {
+            return State == BlockState.Filled || State == BlockState.FilledSplit;
         }
 
         public Memory Source
@@ -132,7 +203,7 @@ namespace DUIP
         public static BuddyAllocator Create(Memory Source, Scheme Scheme)
         {
             // Initialize the first block in the allocator to empty
-            OutStream os = Source.Modify();
+            OutStream os = Source.Write();
             os.WriteByte((byte)BlockState.Empty);
             os.Finish();
 
@@ -159,11 +230,11 @@ namespace DUIP
         /// <summary>
         /// Gets the content size of a block given the base content size and the recursive depth of the block.
         /// </summary>
-        public static int GetContentSize(int BaseContentSize, int Depth)
+        public static long GetContentSize(long BaseContentSize, int Depth)
         {
             while (Depth-- > 0)
             {
-                int blocksize =  BlockHeaderSize + BaseContentSize;
+                long blocksize =  BlockHeaderSize + BaseContentSize;
                 BaseContentSize = blocksize + blocksize;
             }
             return BaseContentSize;
@@ -177,7 +248,7 @@ namespace DUIP
             /// <summary>
             /// The size of the smallest possible allocatable partion.
             /// </summary>
-            public int BaseContentSize;
+            public long BaseContentSize;
 
             /// <summary>
             /// The maximum possible recusive depth for blocks.
@@ -187,7 +258,7 @@ namespace DUIP
             /// <summary>
             /// Gets the total size needed for a buddy allocator using this scheme.
             /// </summary>
-            public int RequiredSize
+            public long RequiredSize
             {
                 get
                 {
