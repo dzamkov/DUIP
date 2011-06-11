@@ -8,20 +8,32 @@ using System.Net.Sockets;
 namespace DUIP.Net
 {
     /// <summary>
-    /// UDP helper class.
+    /// An interface to a UDP client that can send and receive data.
     /// </summary>
-    public static class UDP
+    public class UDP
     {
+        public UDP()
+        {
+            this._Client = new UdpClient();
+        }
+
+        public UDP(int Port)
+        {
+            this._Client = new UdpClient(Port);
+            this._Receive();
+        }
+
         /// <summary>
-        /// Sends a packet with the given end point.
+        /// Sends data using this UDP interface.
         /// </summary>
-        public static void Send(UdpClient Client, IPEndPoint To, byte[] Data)
+        public void Send(IPEndPoint To, byte[] Data)
         {
             while (true)
             {
                 try
                 {
-                    Client.Send(Data, Data.Length, To);
+                    this._Client.Send(Data, Data.Length, To);
+                    this._Receive();
                     return;
                 }
                 catch (SocketException se)
@@ -39,36 +51,34 @@ namespace DUIP.Net
         }
 
         /// <summary>
-        /// Sends a single packet to the specified end point.
+        /// Event fired whenever this UDP interface receives a packet.
         /// </summary>
-        public static void Send(IPEndPoint To, byte[] Data)
-        {
-            using (UdpClient cli = new UdpClient())
-            {
-                Send(cli, To, Data);
-            }
-        }
+        public event ReceiveRawPacketHandler Receive;
 
         /// <summary>
-        /// Asynchronously listens on the given client for a single packet.
+        /// Begins receiving for the UDP interface.
         /// </summary>
-        public static void Receive(UdpClient Client, ReceiveRawPacketHandler OnReceive)
+        private void _Receive()
         {
             // This really shouldn't be hard
-            while (true)
+            while (!this._Receiving)
             {
                 try
                 {
-                    Client.BeginReceive(delegate(IAsyncResult ar)
+                    this._Client.BeginReceive(delegate(IAsyncResult ar)
                     {
-                        lock (Client)
+                        lock (this)
                         {
+                            this._Receiving = false;
                             IPEndPoint end = new IPEndPoint(IPAddress.Any, 0);
                             byte[] data;
                             try
                             {
-                                data = Client.EndReceive(ar, ref end);
-                                OnReceive(end, data);
+                                data = this._Client.EndReceive(ar, ref end);
+                                if (this.Receive != null)
+                                {
+                                    this.Receive(end, data);
+                                }
                             }
                             catch (SocketException se)
                             {
@@ -78,7 +88,7 @@ namespace DUIP.Net
                                 }
                                 if (_CanIgnore(se))
                                 {
-                                    Receive(Client, OnReceive);
+                                    this._Receive();
                                 }
                                 else
                                 {
@@ -89,8 +99,10 @@ namespace DUIP.Net
                             {
                                 return;
                             }
+                            this._Receive();
                         }
                     }, null);
+                    this._Receiving = true;
                     return;
                 }
                 catch (SocketException se)
@@ -119,5 +131,8 @@ namespace DUIP.Net
         /// Called when a raw (unprocessed) packet is received.
         /// </summary>
         public delegate void ReceiveRawPacketHandler(IPEndPoint From, byte[] Data);
+
+        private UdpClient _Client;
+        private bool _Receiving;
     }
 }

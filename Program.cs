@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Reflection;
 using System.Windows.Forms;
 
+using DUIP.Net;
 using DUIP.UI;
 
 namespace DUIP
@@ -62,21 +63,13 @@ namespace DUIP
             Path data = work["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
 
-            // Test buddy allocator
-            BuddyAllocator.Scheme scheme = new BuddyAllocator.Scheme
+            UDP a = new UDP(101);
+            UDP b = new UDP();
+            a.Receive += delegate(System.Net.IPEndPoint From, byte[] Data)
             {
-                BaseContentSize = 16,
-                Depth = 4
+
             };
-            Memory mem = alloc.Allocate((long)scheme.RequiredSize, 0) ?? alloc.Lookup(0);
-            BuddyAllocator balloc = BuddyAllocator.Create(mem, scheme);
-            long ptr;
-            long nptr;
-            balloc.Allocate(100, out ptr);
-            balloc.Allocate(1, out nptr);
-            balloc.Deallocate(nptr);
-            balloc.Allocate(100, out nptr);
-            balloc.Deallocate(ptr);
+            b.Send(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 101), new byte[] { 5, 6, 7 });
 
             Application.EnableVisualStyles();
             MainForm mf = new MainForm();
