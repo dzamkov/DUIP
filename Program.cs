@@ -63,14 +63,6 @@ namespace DUIP
             Path data = work["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
 
-            UDP a = new UDP(101);
-            UDP b = new UDP();
-            a.Receive += delegate(System.Net.IPEndPoint From, byte[] Data)
-            {
-
-            };
-            b.Send(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 101), new byte[] { 5, 6, 7 });
-
             Application.EnableVisualStyles();
             MainForm mf = new MainForm();
             mf.Icon = Icon;

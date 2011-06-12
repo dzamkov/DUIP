@@ -5,7 +5,7 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// Wraps an object of a certain type with a reference.
+    /// A mutable reference to an object of a certain type.
     /// </summary>
     public class Ref<T>
     {
