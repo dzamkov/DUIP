@@ -50,5 +50,42 @@ namespace DUIP.Net
         Interpret,
     }
 
+    /// <summary>
+    /// An interface to a virtual connection to a peer that allows the transmitting and receiving of arbitrary data.
+    /// </summary>
+    public class Terminal
+    {
+        public Terminal(ITerminalInterface Interface)
+        {
+            this._Interface = Interface;
+        }
 
+        private ITerminalInterface _Interface;
+    }
+
+    /// <summary>
+    /// A network interface used by a terminal.
+    /// </summary>
+    public interface ITerminalInterface
+    {
+        /// <summary>
+        /// Sends a packet from the terminal.
+        /// </summary>
+        void Send(byte[] Data);
+
+        /// <summary>
+        /// Causes the given network data to be processed.
+        /// </summary>
+        void Interpret(Data Data);
+
+        /// <summary>
+        /// Closes the terminal.
+        /// </summary>
+        void Close();
+
+        /// <summary>
+        /// Event fired whenever a packet is received for the terminal.
+        /// </summary>
+        event Action<byte[]> Receive;
+    }
 }

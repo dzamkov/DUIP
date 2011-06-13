@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace DUIP
 {
@@ -20,6 +21,11 @@ namespace DUIP
         public static implicit operator Query<T>(T Value)
         {
             return new StaticQuery<T>(Value);
+        }
+
+        public static implicit operator Query<T>(Func<T> Function)
+        {
+            return new ComputationQuery<T>(Function);
         }
     }
 
@@ -83,7 +89,7 @@ namespace DUIP
         {
             if (this._Listeners == null)
             {
-                Listener(this._Result);
+                this._Result.Register(Listener);
             }
             else
             {
@@ -92,10 +98,9 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Gets or sets the function used to compute the result of the compound query after all its required queries are complete. This should
-        /// be set only once, after all required queries are specified.
+        /// Gets or sets the function used to determine what to do after after all required queries are completed.
         /// </summary>
-        public Func<T> Function
+        public Func<Query<T>> Function
         {
             get
             {
@@ -112,7 +117,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Evaluates the function for the result of the query and informs all the listeners of the result.
+        /// Evaluates the function for the compound query.
         /// </summary>
         private void _Evaluate()
         {
@@ -120,14 +125,71 @@ namespace DUIP
             this._Function = null;
             foreach (Action<T> listener in this._Listeners)
             {
-                listener(this._Result);
+                this._Result.Register(listener);
             }
             this._Listeners = null;
         }
 
         private int _Required;
+        private Query<T> _Result;
+        private Func<Query<T>> _Function;
+        private List<Action<T>> _Listeners;
+    }
+
+    /// <summary>
+    /// A query that asynchronously evaluates a function.
+    /// </summary>
+    public sealed class ComputationQuery<T> : Query<T>
+    {
+        public ComputationQuery(Func<T> Function)
+        {
+            this._Listeners = new List<Action<T>>();
+            this._Thread = new Thread(delegate()
+            { 
+                T result = this._Result = Function();
+                lock (this)
+                {
+                    foreach (Action<T> listener in this._Listeners)
+                    {
+                        listener(result);
+                    }
+                    this._Listeners = null;
+                    this._Thread = null;
+                }
+            });
+            this._Thread.IsBackground = true;
+            this._Thread.Start();
+        }
+
+        public override void Register(Action<T> Listener)
+        {
+            lock (this)
+            {
+                if (this._Listeners == null)
+                {
+                    Listener(this._Result);
+                }
+                else
+                {
+                    this._Listeners.Add(Listener);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Blocks the current thread until the result for this query is known.
+        /// </summary>
+        public T Wait()
+        {
+            if (this._Thread != null)
+            {
+                this._Thread.Join();
+            }
+            return this._Result;
+        }
+
         private T _Result;
-        private Func<T> _Function;
+        private Thread _Thread;
         private List<Action<T>> _Listeners;
     }
 }
