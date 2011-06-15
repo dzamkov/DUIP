@@ -155,6 +155,7 @@ namespace DUIP
                     }
                     this._Listeners = null;
                     this._Thread = null;
+                    this._HasResult = true;
                 }
             });
             this._Thread.IsBackground = true;
@@ -167,7 +168,10 @@ namespace DUIP
             {
                 if (this._Listeners == null)
                 {
-                    Listener(this._Result);
+                    if (this._HasResult)
+                    {
+                        Listener(this._Result);
+                    }
                 }
                 else
                 {
@@ -181,13 +185,34 @@ namespace DUIP
         /// </summary>
         public T Wait()
         {
-            if (this._Thread != null)
+            lock (this)
             {
-                this._Thread.Join();
+                if (this._Thread != null)
+                {
+                    this._Thread.Join();
+                }
             }
             return this._Result;
         }
 
+        /// <summary>
+        /// Aborts the computation, preventing it from ever being completed.
+        /// </summary>
+        public void Abort()
+        {
+            lock (this)
+            {
+                if (this._Thread != null)
+                {
+
+                    this._Thread.Abort();
+                    this._Thread = null;
+                    this._Listeners = null;
+                }
+            }
+        }
+
+        private bool _HasResult;
         private T _Result;
         private Thread _Thread;
         private List<Action<T>> _Listeners;

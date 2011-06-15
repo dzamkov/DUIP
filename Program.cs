@@ -63,6 +63,10 @@ namespace DUIP
             Path data = work["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
 
+            Network mainnet = new Network(new UDP(101));
+            Network testnet = new Network(new UDP());
+            Peer peer = testnet.Connect(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 101));
+
             Application.EnableVisualStyles();
             MainForm mf = new MainForm();
             mf.Icon = Icon;
@@ -79,6 +83,8 @@ namespace DUIP
                 double updatetime = (now - lastupdate).TotalSeconds;
                 lastupdate = now;
                 view.Update(updatetime);
+                mainnet.Update(updatetime);
+                testnet.Update(updatetime);
 
                 Application.DoEvents();
             }
