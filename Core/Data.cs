@@ -17,17 +17,15 @@ namespace DUIP
         /// <summary>
         /// Gets a stream to read this data. There may be any number of open streams for a single data object at one time.
         /// </summary>
-        public abstract InStream Read();
+        public InStream Read()
+        {
+            return this.Read(0);
+        }
 
         /// <summary>
         /// Gets a stream to read this data beginning at the given position.
         /// </summary>
-        public virtual InStream Read(long Start)
-        {
-            InStream stream = this.Read();
-            stream.Advance(Start);
-            return stream;
-        }
+        public abstract InStream Read(long Start);
 
         /// <summary>
         /// Gets a partion of this data.
@@ -59,6 +57,28 @@ namespace DUIP
             }
             return true;
         }
+
+        public static implicit operator Data(byte[] Buffer)
+        {
+            return new BufferData(Buffer);
+        }
+
+        /// <summary>
+        /// Creates data from the concatenation of parts.
+        /// </summary>
+        public static ConcatData Concat(List<Data> Parts)
+        {
+            Data[] parts = new Data[Parts.Count];
+            long[] offsets = new long[parts.Length];
+            long size = 0;
+            for (int t = 0; t < parts.Length; t++)
+            {
+                offsets[t] = size;
+                parts[t] = Parts[t];
+                size += parts[t].Size;
+            }
+            return new ConcatData(parts, offsets, size);
+        }
     }
 
     /// <summary>
@@ -80,11 +100,6 @@ namespace DUIP
             {
                 return this._Buffer;
             }
-        }
-
-        public override InStream Read()
-        {
-            return new BufferInStream(this._Buffer, 0);
         }
 
         public override InStream Read(long Start)
@@ -145,11 +160,6 @@ namespace DUIP
             }
         }
 
-        public override InStream Read()
-        {
-            return this._Source.Read(this._Start);
-        }
-
         public override InStream Read(long Start)
         {
             return this._Source.Read(this._Start + Start);
@@ -162,6 +172,127 @@ namespace DUIP
 
         private Data _Source;
         private long _Start;
+        private long _Size;
+    }
+
+    /// <summary>
+    /// Data created from the concatenation of parts.
+    /// </summary>
+    public sealed class ConcatData : Data
+    {
+        public ConcatData(Data[] Parts, long[] Offsets, long Size)
+        {
+            this._Parts = Parts;
+            this._Offsets = Offsets;
+            this._Size = Size;
+        }
+
+        public override long Size
+        {
+            get
+            {
+                return this._Size;
+            }
+        }
+
+        public override InStream Read(long Start)
+        {
+            int part;
+            long offset = Start;
+            if (Start == 0)
+            {
+                part = 0;
+            }
+            else
+            {
+                // Use a binary search to find the part to start on
+                int l = 0;
+                int h = this._Parts.Length;
+                while (h > l + 1)
+                {
+                    int s = (l + h) / 2;
+                    long off = this._Offsets[s];
+                    if (Start < off)
+                    {
+                        h = s;
+                    }
+                    else
+                    {
+                        l = s;
+                        offset = Start - off;
+                    }
+                }
+                part = l;
+            }
+
+            Data data = this._Parts[part];
+            long size = data.Size;
+            return new Stream(this._Parts, part, size - offset, data.Read(offset));
+        }
+
+        /// <summary>
+        /// A stream for concatenated data.
+        /// </summary>
+        public class Stream : InStream
+        {
+            public Stream(Data[] Parts, int LocalPart, long LocalStreamSize, InStream LocalStream)
+            {
+                this._Parts = Parts;
+                this._LocalPart = LocalPart;
+                this._LocalStreamSize = LocalStreamSize;
+                this._LocalStream = LocalStream;
+            }
+
+            public override byte Read()
+            {
+                this._Feed();
+                this._LocalStreamSize--;
+                return this._LocalStream.Read();
+            }
+
+            public override void Advance(long Amount)
+            {
+                if (Amount <= this._LocalStreamSize)
+                {
+                    this._LocalStream.Advance(Amount);
+                    this._LocalStreamSize -= Amount;
+                }
+                else
+                {
+                    this._LocalStream.Finish();
+                    Data next;
+                    long size;
+                    while ((size = (next = this._Parts[++this._LocalPart]).Size) < Amount)
+                    {
+                        Amount -= size;
+                    }
+                    this._LocalStream = next.Read(Amount);
+                    this._LocalStreamSize = size - Amount;
+                }
+            }
+
+            /// <summary>
+            /// Insures that the local stream has a size of at least 1.
+            /// </summary>
+            private void _Feed()
+            {
+                while (this._LocalStreamSize == 0)
+                {
+                    this._LocalStream.Finish();
+                    Data next = this._Parts[++this._LocalPart];
+                    this._LocalStream = next.Read();
+                    this._LocalStreamSize = next.Size;
+                }
+            }
+
+            private Data[] _Parts;
+            private int _LocalPart;
+            private long _LocalStreamSize;
+            private InStream _LocalStream;
+        }
+
+        private Data[] _Parts;
+        private long[] _Offsets;
         private long _Size;
     }
 
