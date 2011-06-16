@@ -5,38 +5,38 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// A block that applies padding to an inner block.
+    /// A block that applies a margin to an inner block.
     /// </summary>
-    public class PadBlock : Block, IDisposable
+    public class MarginBlock : Block, IDisposable
     {
-        public PadBlock()
+        public MarginBlock()
         {
 
         }
 
-        public PadBlock(Compass<double> Padding, Disposable<Block> Inner)
+        public MarginBlock(Compass<double> Margin, Disposable<Block> Inner)
         {
-            this._Padding = Padding;
+            this._Margin = Margin;
             this._Inner = Inner;
         }
 
         /// <summary>
-        /// Gets or sets the amount of padding applied by this block.
+        /// Gets or sets the size of the margin applied by this block.
         /// </summary>
-        public Compass<double> Padding
+        public Compass<double> Margin
         {
             get
             {
-                return this._Padding;
+                return this._Margin;
             }
             set
             {
-                this._Padding = value;
+                this._Margin = value;
             }
         }
 
         /// <summary>
-        /// Gets or sets the inner block for this pad block.
+        /// Gets or sets the inner block for this margin block.
         /// </summary>
         public Block Inner
         {
@@ -52,13 +52,13 @@ namespace DUIP.UI
 
         public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
         {
-            Compass<double> padding = this._Padding;
-            Point sizepadding = new Point(padding.Left + padding.Right, padding.Up + padding.Down);
+            Compass<double> margin = this._Margin;
+            Point sizepadding = new Point(margin.Left + margin.Right, margin.Up + margin.Down);
             Layout inner = this.Inner.CreateLayout(SizeRange.Translate(-sizepadding), out Size);
             Size += sizepadding;
             return new _Layout
             {
-                Offset = new Point(padding.Left, padding.Up),
+                Offset = new Point(margin.Left, margin.Up),
                 Inner = inner
             };
         }
@@ -87,7 +87,7 @@ namespace DUIP.UI
             this._Inner.Dispose();
         }
 
-        private Compass<double> _Padding;
+        private Compass<double> _Margin;
         private Disposable<Block> _Inner;
     }
 }

@@ -140,11 +140,11 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Creates a block that applies padding to this block.
+        /// Creates a block that applies a margin to this block.
         /// </summary>
-        public PadBlock WithPad(Compass<double> Padding)
+        public MarginBlock WithMargin(Compass<double> Padding)
         {
-            return new PadBlock(Padding, this);
+            return new MarginBlock(Padding, this);
         }
 
         /// <summary>

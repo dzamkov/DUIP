@@ -74,7 +74,7 @@
     <Compile Include="UI\Block\Border.cs" />
     <Compile Include="UI\Block\Block.cs" />
     <Compile Include="UI\Block\Flow.cs" />
-    <Compile Include="UI\Block\Pad.cs" />
+    <Compile Include="UI\Block\Margin.cs" />
     <Compile Include="UI\Block\Size.cs" />
     <Compile Include="UI\Block\Space.cs" />
     <Compile Include="UI\Text\BitmapFont.cs" />
