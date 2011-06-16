@@ -63,6 +63,24 @@ namespace DUIP
             return new BufferData(Buffer);
         }
 
+        public static implicit operator byte[](Data Data)
+        {
+            long size = Data.Size;
+            int isize = (int)size;
+            if ((long)isize >= size)
+            {
+                byte[] buffer = new byte[isize];
+                InStream str = Data.Read();
+                str.Read(buffer, 0, isize);
+                str.Finish();
+                return buffer;
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         /// <summary>
         /// Creates data from the concatenation of parts.
         /// </summary>
@@ -78,6 +96,21 @@ namespace DUIP
                 size += parts[t].Size;
             }
             return new ConcatData(parts, offsets, size);
+        }
+
+        /// <summary>
+        /// Creates data from the concatenation of parts.
+        /// </summary>
+        public static ConcatData Concat(Data[] Parts)
+        {
+            long[] offsets = new long[Parts.Length];
+            long size = 0;
+            for (int t = 0; t < Parts.Length; t++)
+            {
+                offsets[t] = size;
+                size += Parts[t].Size;
+            }
+            return new ConcatData(Parts, offsets, size);
         }
     }
 
