@@ -112,6 +112,21 @@ namespace DUIP
             }
             return new ConcatData(Parts, offsets, size);
         }
+
+        /// <summary>
+        /// Breaks this data into chunks (given as partion data) with the given maximum size.
+        /// </summary>
+        public IEnumerable<Data> Break(long ChunkSize)
+        {
+            long size = this.Size;
+            long i = 0;
+            while (size > 0)
+            {
+                yield return this.GetPartion(i, Math.Min(ChunkSize, size));
+                size -= ChunkSize;
+                i += ChunkSize;
+            }
+        }
     }
 
     /// <summary>

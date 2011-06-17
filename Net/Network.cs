@@ -81,7 +81,7 @@ namespace DUIP.Net
     /// </summary>
     public class Peer
     {
-        public Peer(IPEndPoint EndPoint)
+        public Peer(IPEndPoint EndPoint, InTerminal InTerminal, OutTerminal OutTerminal)
         {
             this._EndPoint = EndPoint;
         }
@@ -119,8 +119,32 @@ namespace DUIP.Net
                 return this._Favor;
             }
         }
+        
+        /// <summary>
+        /// Gets the terminal that handles incoming communications with the peer.
+        /// </summary>
+        public InTerminal InTerminal
+        {
+            get
+            {
+                return this._InTerminal;
+            }
+        }
+
+        /// <summary>
+        /// Gets the terminal that handles outgoing communications with the peer.
+        /// </summary>
+        public OutTerminal OutTerminal
+        {
+            get
+            {
+                return this._OutTerminal;
+            }
+        }
 
         private IPEndPoint _EndPoint;
+        private InTerminal _InTerminal;
+        private OutTerminal _OutTerminal;
         private double _Favor;
     }
 
