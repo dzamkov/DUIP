@@ -30,19 +30,19 @@ namespace DUIP.Net
         }
 
         /// <summary>
-        /// Opens a connection to a peer given by an end point. Only one peer per IP address may be connected. If the peer is unresponsive,
-        /// the connection may be closed. If a connection can not be started, this method will return null.
+        /// Opens a connection to a peer given by an end point. If the peer is unresponsive,
+        /// the connection may be closed. If a connection can not be started, this method will return null. If the connection already exists,
+        /// that will be returned.
         /// </summary>
         public Peer Connect(IPEndPoint EndPoint)
         {
+            Peer peer;
             IPAddress addr = EndPoint.Address;
-            if (!this._Peers.ContainsKey(addr))
+            if (!this._Peers.TryGetValue(addr, out peer))
             {
-                Peer peer = new Peer(EndPoint);
-                this._Peers[EndPoint.Address] = peer;
-                return peer;
+                throw new NotImplementedException();
             }
-            return null;
+            return peer;
         }
 
         /// <summary>
