@@ -52,7 +52,9 @@
     <Compile Include="Memory\Path.cs" />
     <Compile Include="Memory\Handle.cs" />
     <Compile Include="Memory\Map.cs" />
-    <Compile Include="Net\Transfer.cs" />
+    <Compile Include="Net\Message.cs" />
+    <Compile Include="Net\Packet.cs" />
+    <Compile Include="Net\UDPNetwork.cs" />
     <Compile Include="UI\Ambience\Ambience.cs" />
     <Compile Include="UI\Block\Grid.cs" />
     <Compile Include="UI\Theme.cs" />

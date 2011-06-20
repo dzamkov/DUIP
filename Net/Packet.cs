@@ -16,14 +16,24 @@ namespace DUIP.Net
         Chunk = 0x01,
 
         /// <summary>
-        /// The packet tests if the connection is valid, and gives the initial sequence number used by the receiving terminal.
+        /// The packet requests a connection with another peer.
         /// </summary>
-        Handshake = 0x02,
+        ConnectionRequest = 0x02,
+
+        /// <summary>
+        /// The packet is a response to a connection request that causes a connection to be opened.
+        /// </summary>
+        ConnectionAccept = 0x03,
+
+        /// <summary>
+        /// The packet is a negative response to a connection request that indicates that a connection may not be opened.
+        /// </summary>
+        ConnectionRefuse = 0x04,
 
         /// <summary>
         /// The packet informs the receiver that the connection has been closed and no more message may be sent or received.
         /// </summary>
-        Disconnect = 0x03,
+        Disconnect = 0x02,
 
         /// <summary>
         /// The chunk contained within the packet is the first one in a message.

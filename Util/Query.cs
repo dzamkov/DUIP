@@ -6,8 +6,8 @@ using System.Threading;
 namespace DUIP
 {
     /// <summary>
-    /// Represents a process that will output a result upon completion. Once the query is complete,
-    /// it will retain its result.
+    /// Represents a process that will given a result upon completion. Once the query is complete,
+    /// it will retain the result.
     /// </summary>
     public abstract class Query<T>
     {
@@ -59,7 +59,7 @@ namespace DUIP
     }
 
     /// <summary>
-    /// A query that combines the results of several other queries.
+    /// A query that depends on the results of several other queries.
     /// </summary>
     public sealed class CompoundQuery<T> : Query<T>
     {
@@ -137,7 +137,7 @@ namespace DUIP
     }
 
     /// <summary>
-    /// A query that asynchronously evaluates a function.
+    /// A query that is depends on the result of a (computationally intensive) function.
     /// </summary>
     public sealed class ComputationQuery<T> : Query<T>
     {
@@ -215,6 +215,62 @@ namespace DUIP
         private bool _HasResult;
         private T _Result;
         private Thread _Thread;
+        private List<Action<T>> _Listeners;
+    }
+
+    /// <summary>
+    /// A query that is depends on the result of an independant process.
+    /// </summary>
+    public class DelayedQuery<T> : Query<T>
+    {
+        public DelayedQuery()
+        {
+            this._Listeners = new List<Action<T>>();
+        }
+
+        public override void Register(Action<T> Listener)
+        {
+            if (this._HasResult)
+            {
+                Listener(this._Result);
+            }
+            else
+            {
+                if (this._Listeners != null)
+                {
+                    this._Listeners.Add(Listener);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Indicates that the process associated with the query is complete and gives the query its result. If the query has already been completed,
+        /// this will have no affect.
+        /// </summary>
+        public void Complete(T Result)
+        {
+            if (!this._HasResult)
+            {
+                this._Result = Result;
+                foreach (Action<T> listener in this._Listeners)
+                {
+                    listener(Result);
+                }
+                this._Listeners = null;
+                this._HasResult = true;
+            }
+        }
+
+        /// <summary>
+        /// Indicates that there will never be a result for this query.
+        /// </summary>
+        public void Cancel()
+        {
+            this._Listeners = null;
+        }
+
+        private bool _HasResult;
+        private T _Result;
         private List<Action<T>> _Listeners;
     }
 }
