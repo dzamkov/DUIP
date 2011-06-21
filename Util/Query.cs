@@ -12,11 +12,22 @@ namespace DUIP
     public abstract class Query<T>
     {
         /// <summary>
-        /// Registers a listener for the query. When the query is complete, the listener will
-        /// be called with the result of the query. If the query is already complete, the listener
-        /// is called immediately.
+        /// Registers a listener for the query.
         /// </summary>
-        public abstract void Register(Action<T> Listener);
+        public abstract void Register(IQueryListener<T> Listener);
+
+        /// <summary>
+        /// Registers a listener (given by a delegate to be invoked upon completion) for the query.
+        /// </summary>
+        public void Register(Action<T> Listener)
+        {
+            this.Register(new DelegateQueryListener<T>(Listener));
+        }
+
+        /// <summary>
+        /// Gets the result of the query, if available.
+        /// </summary>
+        public abstract Maybe<T> Result { get; }
 
         public static implicit operator Query<T>(T Value)
         {
@@ -27,6 +38,56 @@ namespace DUIP
         {
             return new ComputationQuery<T>(Function);
         }
+    }
+
+    /// <summary>
+    /// An interface that responds to the completion (or cancellation) of a query.
+    /// </summary>
+    public interface IQueryListener<T>
+    {
+        /// <summary>
+        /// Called when the query is complete with the result of the query.
+        /// </summary>
+        void Complete(T Result);
+
+        /// <summary>
+        /// Called when the query is cancelled, indicating that the query will never be complete.
+        /// </summary>
+        void Cancel();
+    }
+
+    /// <summary>
+    /// A query listener that invokes a delegate upon completion.
+    /// </summary>
+    public class DelegateQueryListener<T> : IQueryListener<T>
+    {
+        public DelegateQueryListener(Action<T> Action)
+        {
+            this._Action = Action;
+        }
+
+        /// <summary>
+        /// Gets the action this listener invokes when the query is complete.
+        /// </summary>
+        public Action<T> Action
+        {
+            get
+            {
+                return this._Action;
+            }
+        }
+
+        public void Complete(T Result)
+        {
+            this._Action(Result);
+        }
+
+        public void Cancel()
+        {
+
+        }
+
+        private Action<T> _Action;
     }
 
     /// <summary>
@@ -50,12 +111,49 @@ namespace DUIP
             }
         }
 
-        public override void Register(Action<T> Listener)
+        public override void Register(IQueryListener<T> Listener)
         {
-            Listener(this._Value);
+            Listener.Complete(this._Value);
+        }
+
+        public override Maybe<T> Result
+        {
+            get
+            {
+                return this._Value;
+            }
         }
 
         private T _Value;
+    }
+
+    /// <summary>
+    /// A query that will never be complete in any case (immediately calls cancel on all registered listeners).
+    /// </summary>
+    public class NeverQuery<T> : Query<T>
+    {
+        private NeverQuery()
+        {
+
+        }
+
+        /// <summary>
+        /// The only instance of this class.
+        /// </summary>
+        public static NeverQuery<T> Singleton = new NeverQuery<T>();
+
+        public override void Register(IQueryListener<T> Listener)
+        {
+            Listener.Cancel();
+        }
+
+        public override Maybe<T> Result
+        {
+            get
+            {
+                return Maybe<T>.Nothing;
+            }
+        }
     }
 
     /// <summary>
@@ -65,7 +163,7 @@ namespace DUIP
     {
         public CompoundQuery()
         {
-            this._Listeners = new List<Action<T>>();
+            this._Listeners = new List<IQueryListener<T>>();
         }
 
         /// <summary>
@@ -75,30 +173,62 @@ namespace DUIP
         public void Require<F>(Query<F> Query, Ref<F> Result)
         {
             this._Required++;
-            Query.Register(delegate(F Value)
+            Query.Register(new _Listener<F>
             {
-                Result.Value = Value;
-                if (--this._Required == 0 && this._Function != null)
-                {
-                    this._Evaluate();
-                }
+                Main = this,
+                Result = Result
             });
         }
 
-        public override void Register(Action<T> Listener)
+        /// <summary>
+        /// A listener for a required query.
+        /// </summary>
+        private class _Listener<F> : IQueryListener<F>
         {
-            if (this._Listeners == null)
+            public void Complete(F Result)
             {
-                this._Result.Register(Listener);
+                this.Result.Value = Result;
+                if (--this.Main._Required == 0 && this.Main.Function != null)
+                {
+                    this.Main._Evaluate();
+                }
+            }
+
+            public void Cancel()
+            {
+                this.Main._Cancel();
+            }
+
+            public CompoundQuery<T> Main;
+            public Ref<F> Result;
+        }
+
+        public override void Register(IQueryListener<T> Listener)
+        {
+            if (this._Listeners != null)
+            {
+                this._Listeners.Add(Listener);
             }
             else
             {
-                this._Listeners.Add(Listener);
+                this._Intermediate.Register(Listener);
+            }
+        }
+
+        public override Maybe<T> Result
+        {
+            get
+            {
+                if (this._Intermediate == null)
+                {
+                    return this._Intermediate.Result;
+                }
+                return Maybe<T>.Nothing;
             }
         }
 
         /// <summary>
-        /// Gets or sets the function used to determine what to do after after all required queries are completed.
+        /// Gets or sets the function used to determine the intermediate query after after all required queries are completed.
         /// </summary>
         public Func<Query<T>> Function
         {
@@ -117,23 +247,37 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Evaluates the function for the compound query.
+        /// Evaluates the function for the compound query to find the intermediate query.
         /// </summary>
         private void _Evaluate()
         {
-            this._Result = this._Function();
+            this._Intermediate = this._Function();
             this._Function = null;
-            foreach (Action<T> listener in this._Listeners)
+            foreach (IQueryListener<T> listener in this._Listeners)
             {
-                this._Result.Register(listener);
+                this._Intermediate.Register(listener);
+            }
+            this._Listeners = null;
+        }
+
+        /// <summary>
+        /// Cancels the compound query (as a result of one of the required queries being cancelled).
+        /// </summary>
+        private void _Cancel()
+        {
+            this._Intermediate = NeverQuery<T>.Singleton;
+            this._Function = null;
+            foreach (IQueryListener<T> listener in this._Listeners)
+            {
+                listener.Cancel();
             }
             this._Listeners = null;
         }
 
         private int _Required;
-        private Query<T> _Result;
+        private Query<T> _Intermediate;
         private Func<Query<T>> _Function;
-        private List<Action<T>> _Listeners;
+        private List<IQueryListener<T>> _Listeners;
     }
 
     /// <summary>
@@ -143,15 +287,15 @@ namespace DUIP
     {
         public ComputationQuery(Func<T> Function)
         {
-            this._Listeners = new List<Action<T>>();
+            this._Listeners = new List<IQueryListener<T>>();
             this._Thread = new Thread(delegate()
             { 
                 T result = this._Result = Function();
                 lock (this)
                 {
-                    foreach (Action<T> listener in this._Listeners)
+                    foreach (IQueryListener<T> listener in this._Listeners)
                     {
-                        listener(result);
+                        listener.Complete(result);
                     }
                     this._Listeners = null;
                     this._Thread = null;
@@ -162,21 +306,37 @@ namespace DUIP
             this._Thread.Start();
         }
 
-        public override void Register(Action<T> Listener)
+        public override void Register(IQueryListener<T> Listener)
         {
             lock (this)
             {
-                if (this._Listeners == null)
-                {
-                    if (this._HasResult)
-                    {
-                        Listener(this._Result);
-                    }
-                }
-                else
+                if (this._Listeners != null)
                 {
                     this._Listeners.Add(Listener);
                 }
+                else
+                {
+                    if (this._HasResult)
+                    {
+                        Listener.Complete(this._Result);
+                    }
+                    else
+                    {
+                        Listener.Cancel();
+                    }
+                }
+            }
+        }
+
+        public override Maybe<T> Result
+        {
+            get
+            {
+                return new Maybe<T>()
+                {
+                    HasValue = this._HasResult,
+                    Value = this._Result
+                };
             }
         }
 
@@ -207,6 +367,10 @@ namespace DUIP
 
                     this._Thread.Abort();
                     this._Thread = null;
+                    foreach (IQueryListener<T> listener in this._Listeners)
+                    {
+                        listener.Cancel();
+                    }
                     this._Listeners = null;
                 }
             }
@@ -215,7 +379,7 @@ namespace DUIP
         private bool _HasResult;
         private T _Result;
         private Thread _Thread;
-        private List<Action<T>> _Listeners;
+        private List<IQueryListener<T>> _Listeners;
     }
 
     /// <summary>
@@ -225,21 +389,37 @@ namespace DUIP
     {
         public DelayedQuery()
         {
-            this._Listeners = new List<Action<T>>();
+            this._Listeners = new List<IQueryListener<T>>();
         }
 
-        public override void Register(Action<T> Listener)
+        public override void Register(IQueryListener<T> Listener)
         {
-            if (this._HasResult)
+            if (this._Listeners != null)
             {
-                Listener(this._Result);
+                this._Listeners.Add(Listener);
             }
             else
             {
-                if (this._Listeners != null)
+                if (this._HasResult)
                 {
-                    this._Listeners.Add(Listener);
+                    Listener.Complete(this._Result);
                 }
+                else
+                {
+                    Listener.Cancel();
+                }
+            }
+        }
+
+        public override Maybe<T> Result
+        {
+            get
+            {
+                return new Maybe<T>()
+                {
+                    HasValue = this._HasResult,
+                    Value = this._Result
+                };
             }
         }
 
@@ -252,9 +432,9 @@ namespace DUIP
             if (!this._HasResult)
             {
                 this._Result = Result;
-                foreach (Action<T> listener in this._Listeners)
+                foreach (IQueryListener<T> listener in this._Listeners)
                 {
-                    listener(Result);
+                    listener.Complete(Result);
                 }
                 this._Listeners = null;
                 this._HasResult = true;
@@ -266,11 +446,15 @@ namespace DUIP
         /// </summary>
         public void Cancel()
         {
+            foreach (IQueryListener<T> listener in this._Listeners)
+            {
+                listener.Cancel();
+            }
             this._Listeners = null;
         }
 
         private bool _HasResult;
         private T _Result;
-        private List<Action<T>> _Listeners;
+        private List<IQueryListener<T>> _Listeners;
     }
 }

@@ -8,7 +8,7 @@ namespace DUIP.Net
     /// <summary>
     /// A network consisting of peers connected through a common UDP interface.
     /// </summary>
-    public class UDPNetwork
+    public class UDPNetwork : Network
     {
         public UDPNetwork(UDP UDP)
         {
@@ -16,6 +16,14 @@ namespace DUIP.Net
             UDP.Receive += new UDP.ReceiveRawPacketHandler(this._Receive);
             this._Peers = new Dictionary<IPEndPoint, UDPPeer>();
         }
+
+        public override IEnumerable<Peer> Peers
+        {
+            get
+            {
+                return this._Peers.Values.Cast<Peer>();
+            }
+        } 
 
         private void _Receive(IPEndPoint From, byte[] Packet)
         {
@@ -31,6 +39,11 @@ namespace DUIP.Net
     /// </summary>
     public class UDPPeer : Peer
     {
+        /// <summary>
+        /// Gets the size of the chunks to break messages into for sending.
+        /// </summary>
+        public const int ChunkSize = 1024;
+
         /// <summary>
         /// Gets the endpoint for this peer.
         /// </summary>
@@ -62,6 +75,11 @@ namespace DUIP.Net
             {
                 return this._OutTerminal;
             }
+        }
+
+        public override void Send(Message Message)
+        {
+            this._OutTerminal.Send(Message.Write(), ChunkSize);
         }
 
         private IPEndPoint _EndPoint;

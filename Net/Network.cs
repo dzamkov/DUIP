@@ -6,11 +6,14 @@ using System.Net;
 namespace DUIP.Net
 {
     /// <summary>
-    /// An interface to a collection of peers that can send and receive network messages.
+    /// An interface to a collection of peers that can send and respond to network queries.
     /// </summary>
     public abstract class Network
     {
-
+        /// <summary>
+        /// Gets the peers currently connected on this network.
+        /// </summary>
+        public abstract IEnumerable<Peer> Peers { get; }
     }
 
     /// <summary>
@@ -23,5 +26,10 @@ namespace DUIP.Net
         /// (and requesting) a low level of network traffic.
         /// </summary>
         public double Favor;
+
+        /// <summary>
+        /// Sends a network message to this peer.
+        /// </summary>
+        public abstract void Send(Message Message);
     }
 }
