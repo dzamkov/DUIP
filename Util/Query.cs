@@ -14,6 +14,8 @@ namespace DUIP
         /// <summary>
         /// Registers a listener for the query.
         /// </summary>
+        /// <remarks>At most one method will be called on the listener. After a method is called, the listener will no
+        /// longer be tracked by the query.</remarks>
         public abstract void Register(IQueryListener<T> Listener);
 
         /// <summary>
@@ -43,6 +45,7 @@ namespace DUIP
     /// <summary>
     /// An interface that responds to the completion (or cancellation) of a query.
     /// </summary>
+    /// <remarks>The methods in a listener may be called with any thread.</remarks>
     public interface IQueryListener<T>
     {
         /// <summary>

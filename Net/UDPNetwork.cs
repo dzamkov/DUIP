@@ -23,12 +23,42 @@ namespace DUIP.Net
             {
                 return this._Peers.Values.Cast<Peer>();
             }
-        } 
+        }
+
+        /// <summary>
+        /// Tries connecting to a peer specified by an IP end point. If the peer is already connected, it will be immediately returned. If
+        /// a connection can not be made, null will be returned (either immediately or after some period of time).
+        /// </summary>
+        public Query<UDPPeer> Connect(IPEndPoint EndPoint)
+        {
+            UDPPeer peer;
+            if (this._Peers.TryGetValue(EndPoint, out peer))
+            {
+                return peer;
+            }
+
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Updates the state of the network by the given amount of time in seconds, sending packets if needed.
+        /// </summary>
+        public void Update(double Time)
+        {
+            throw new NotImplementedException();
+        }
 
         private void _Receive(IPEndPoint From, byte[] Packet)
         {
-
+            // Find the peer that sent this message
+            UDPPeer peer;
+            if (this._Peers.TryGetValue(From, out peer))
+            {
+                throw new NotImplementedException();
+            }
         }
+
+        public override event Action<Peer, Message> Receive;
 
         private UDP _UDP;
         private Dictionary<IPEndPoint, UDPPeer> _Peers;

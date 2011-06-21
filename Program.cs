@@ -63,9 +63,9 @@ namespace DUIP
             Path data = work["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
 
-            Network mainnet = new UDPNetwork(new UDP(101));
-            Network testnet = new UDPNetwork(new UDP());
-            Peer peer = testnet.Connect(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 101));
+            UDPNetwork mainnet = new UDPNetwork(new UDP(101));
+            UDPNetwork testnet = new UDPNetwork(new UDP());
+            testnet.Connect(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 101));
 
             Application.EnableVisualStyles();
             MainForm mf = new MainForm();
