@@ -52,6 +52,14 @@ namespace DUIP.Net
     }
 
     /// <summary>
+    /// Contains functions that allow the processing and creation of packets.
+    /// </summary>
+    public static class Packet
+    {
+
+    }
+
+    /// <summary>
     /// A component of a virtual connection that handles the assembly of received chunks into messages.
     /// </summary>
     public class InTerminal

@@ -10,6 +10,14 @@ namespace DUIP.Net
     /// </summary>
     public class UDPPeer : Peer
     {
+        internal UDPPeer(IPEndPoint EndPoint, int SequenceNumber, int AcknowledgementNumber)
+        {
+            this._EndPoint = EndPoint;
+            this._LastSequenceNumber = AcknowledgementNumber;
+            this._InTerminal = new InTerminal(AcknowledgementNumber);
+            this._OutTerminal = new OutTerminal(SequenceNumber);
+        }
+
         /// <summary>
         /// Gets the size of the chunks to break messages into for sending.
         /// </summary>
@@ -53,11 +61,57 @@ namespace DUIP.Net
             this._OutTerminal.Send(Message.Write(), ChunkSize);
         }
 
+        /// <summary>
+        /// Processes a chunk of a message sent from this peer.
+        /// </summary>
+        public void Process(int SequenceNumber, Data Data, bool Initial, bool Final)
+        {
+            if (_After(SequenceNumber, this._LastSequenceNumber))
+            {
+                this._LastSequenceNumber = SequenceNumber;
+            }
+
+            Data d = null;
+            if (this._InTerminal.Receive(SequenceNumber, Data, Initial, Final, ref d))
+            {
+                Message m = Message.Read(d);
+                if (m != null && this.Receive != null)
+                {
+                    this.Receive(this, m);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Determines wether a packet with the given sequence number is likely to be valid (authentic).
+        /// </summary>
+        public bool Valid(int SequenceNumber)
+        {
+            return
+                _After(SequenceNumber, this._InTerminal.AcknowledgementNumber) &&
+                _After(this._LastSequenceNumber + _ValidThreshold, SequenceNumber);
+        }
+
+        /// <summary>
+        /// The allowable difference between the last sequence number and the sequence number of the next received
+        /// packet in order for the packet to be considered valid.
+        /// </summary>
+        private const int _ValidThreshold = 64;
+
+        /// <summary>
+        /// Determines wether the sequence number A is likely to occur after (or is) the sequence number B.
+        /// </summary>
+        private static bool _After(int A, int B)
+        {
+            return A >= B || A < (B ^ int.MinValue);
+        }
+
         public override event Action<Peer, Message> Receive;
 
         private IPEndPoint _EndPoint;
         private InTerminal _InTerminal;
         private OutTerminal _OutTerminal;
+        private int _LastSequenceNumber;
     }
 
     /// <summary>

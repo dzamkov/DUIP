@@ -24,7 +24,7 @@ namespace DUIP.Net
         public abstract Data Write();
 
         /// <summary>
-        /// Reads a message from data.
+        /// Reads a message from data or returns null if the data could not be interpreted as a message.
         /// </summary>
         public static Message Read(Data Data)
         {
