@@ -63,8 +63,8 @@ namespace DUIP
             Path data = work["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
 
-            UDPNetwork mainnet = new UDPNetwork(new UDP(101));
-            UDPNetwork testnet = new UDPNetwork(new UDP());
+            UDPHub mainnet = new UDPHub(new UDP(101));
+            UDPHub testnet = new UDPHub(new UDP());
             testnet.Connect(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 101));
 
             Application.EnableVisualStyles();
@@ -78,7 +78,6 @@ namespace DUIP
             {
                 WorldDisplay view = mf.WorldDisplay;
                 view.Render();
-
                 DateTime now = DateTime.Now;
                 double updatetime = (now - lastupdate).TotalSeconds;
                 lastupdate = now;

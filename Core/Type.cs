@@ -10,7 +10,8 @@ namespace DUIP
     public abstract class Type
     {
         /// <summary>
-        /// Gets if the two given instances of this type are equivalent.
+        /// Gets if the two given instances of this type are equivalent. A computational exception may be thrown
+        /// in the case of a computational error.
         /// </summary>
         public abstract bool Equal(object A, object B);
 
@@ -35,7 +36,30 @@ namespace DUIP
         /// </summary>
         public static bool Equal(Type A, Type B)
         {
-            return A == B;
+            // Reference comparison
+            if (A == B)
+            {
+                return true;
+            }
+
+            // Compare as functions
+            FunctionType aft = A as FunctionType;
+            if (aft != null)
+            {
+                FunctionType bft = B as FunctionType;
+                if (bft != null)
+                {
+                    return Equal(aft.Argument, bft.Argument) && Equal(aft.Result, bft.Result);
+                }
+                return false;
+            }
+            if (B is FunctionType)
+            {
+                return false;
+            }
+
+            
+            throw new ComputationalException();
         }
 
         /// <summary>
@@ -87,11 +111,9 @@ namespace DUIP
         /// </summary>
         public static FunctionType Function(Type Argument, Type Result)
         {
-            return FunctionType.Get(Argument, Result);
+            return new FunctionType(Argument, Result);
         }
     }
-
-    
 
     /// <summary>
     /// A type whose instances are all types (a type of types).

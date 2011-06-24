@@ -5,7 +5,7 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// Represents a static, named container of information that can be imported from or exported to a filesystem.
+    /// A static, named container of information that can be imported from or exported to a filesystem.
     /// </summary>
     public sealed class File
     {

@@ -6,23 +6,15 @@ using System.Net;
 namespace DUIP.Net
 {
     /// <summary>
-    /// An interface to a collection of peers that can send and receive network messages.
+    /// An interface to a collection of peers that can respond to and request queries.
     /// </summary>
-    public abstract class Network
+    public class Network
     {
-        /// <summary>
-        /// Gets the peers currently connected on this network.
-        /// </summary>
-        public abstract IEnumerable<Peer> Peers { get; }
 
-        /// <summary>
-        /// Event fired when a message is received from a peer on this network.
-        /// </summary>
-        public abstract event Action<Peer, Message> Receive;
     }
 
     /// <summary>
-    /// Represents a connected peer on a network.
+    /// Represents a connected peer that can send and receive network messages.
     /// </summary>
     public abstract class Peer
     {
@@ -36,5 +28,10 @@ namespace DUIP.Net
         /// Sends a network message to this peer.
         /// </summary>
         public abstract void Send(Message Message);
+
+        /// <summary>
+        /// Event fired when a message is received from this peer.
+        /// </summary>
+        public abstract event Action<Peer, Message> Receive;
     }
 }

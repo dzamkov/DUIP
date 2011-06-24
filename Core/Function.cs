@@ -5,15 +5,15 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// Defines a relation between an argument and a result.
+    /// A relation between an argument and a result.
     /// </summary>
     public abstract class Function
     {
         /// <summary>
-        /// Tries evaluating this function with the given argument. Returns false if there was a computional
-        /// error (infinite loop, excessive memory usage, took too long, etc).
+        /// Tries evaluating this function with the given argument. A computational exception may be thrown
+        /// in the case of a computational error.
         /// </summary>
-        public abstract bool Evaluate(object Argument, out object Result);
+        public abstract object Evaluate(object Argument);
 
         /// <summary>
         /// Gets the identity function.
@@ -44,6 +44,15 @@ namespace DUIP
     }
 
     /// <summary>
+    /// An exception thrown when a computational error (infinite loop, excessive memory usage, took too long, 
+    /// undecidable problem, etc) occurs while evaluating a function.
+    /// </summary>
+    public class ComputationalException : Exception
+    {
+
+    }
+
+    /// <summary>
     /// A function which returns its argument.
     /// </summary>
     public sealed class IdentityFunction : Function
@@ -58,10 +67,9 @@ namespace DUIP
         /// </summary>
         public static readonly IdentityFunction Singleton = new IdentityFunction();
 
-        public override bool Evaluate(object Argument, out object Result)
+        public override object Evaluate(object Argument)
         {
-            Result = Argument;
-            return true;
+            return Argument;
         }
     }
 
@@ -86,10 +94,9 @@ namespace DUIP
             }
         }
 
-        public override bool Evaluate(object Argument, out object Result)
+        public override object Evaluate(object Argument)
         {
-            Result = this._Value;
-            return true;
+            return this._Value;
         }
 
         private object _Value;
@@ -145,20 +152,11 @@ namespace DUIP
             }
         }
 
-        public override bool Evaluate(object Argument, out object Result)
+        public override object Evaluate(object Argument)
         {
-            object func;
-            object arg;
-            if (this._Function.Evaluate(Argument, out func))
-            {
-                if (this._Argument.Evaluate(Argument, out arg))
-                {
-                    (func as Function).Evaluate(arg, out Result);
-                    return true;
-                }
-            }
-            Result = null;
-            return false;
+            object func = this._Function.Evaluate(Argument);
+            object arg = this._Argument.Evaluate(Argument);
+            return ((Function)func).Evaluate(arg);
         }
 
         private Type _InnerType;
@@ -166,47 +164,28 @@ namespace DUIP
         private Function _Argument;
     }
 
-    
-
     /// <summary>
-    /// A type for a relation (or rather, a specific definition of a relation) between an argument and a result of certain types.
+    /// A type for functions of a certain argument and return type (a relation between types).
     /// </summary>
+    /// <remarks>Two functions are considered equivalent if and only if their results are equivalent when evaluated
+    /// with all instances of the argument type.</remarks>
     public class FunctionType : Type
     {
-        private FunctionType()
+        public FunctionType(Type Argument, Type Result)
         {
-
+            this._Argument = Argument;
+            this._Result = Result;
         }
-
-        /// <summary>
-        /// Gets a function type for the given argument and result types.
-        /// </summary>
-        public static FunctionType Get(Type Argument, Type Result)
-        {
-            foreach (FunctionType type in _Types)
-            {
-                if (Type.Equal(type._Argument, Argument) && Type.Equal(type._Result, Result))
-                {
-                    return type;
-                }
-            }
-            FunctionType ntype = new FunctionType
-            {
-                _Argument = Argument,
-                _Result = Result
-            };
-            _Types.Register(ntype);
-            return ntype;
-        }
-
-        /// <summary>
-        /// A registry of available function types.
-        /// </summary>
-        private static Registry<FunctionType> _Types = new Registry<FunctionType>();
 
         public override bool Equal(object A, object B)
         {
-            return A == B;
+            if (A == B)
+            {
+                return true;
+            }
+
+            // This is an undecidable problem anyway
+            throw new ComputationalException();
         }
 
         public override ISerialization<object> GetSerialization(Context Context)
@@ -283,8 +262,8 @@ namespace DUIP
                 Stream.WriteByte((byte)Method.Call);
                 this.TypeSerialization.Serialize(ccf.InnerType, Stream);
 
-                FunctionType functiontype = FunctionType.Get(this.Type.Argument, FunctionType.Get(ccf.InnerType, this.Type.Result));
-                FunctionType argumenttype = FunctionType.Get(this.Type.Argument, ccf.InnerType);
+                FunctionType functiontype = new FunctionType(this.Type.Argument, new FunctionType(ccf.InnerType, this.Type.Result));
+                FunctionType argumenttype = new FunctionType(this.Type.Argument, ccf.InnerType);
 
                 functiontype.GetSerialization(this.Context).Serialize(ccf.Function, Stream);
                 argumenttype.GetSerialization(this.Context).Serialize(ccf.Argument, Stream);
@@ -308,8 +287,8 @@ namespace DUIP
                 case Method.Call:
                     Type inner = this.TypeSerialization.Deserialize(Stream) as Type;
 
-                    FunctionType functiontype = FunctionType.Get(this.Type.Argument, FunctionType.Get(inner, this.Type.Result));
-                    FunctionType argumenttype = FunctionType.Get(this.Type.Argument, inner);
+                    FunctionType functiontype = new FunctionType(this.Type.Argument, new FunctionType(inner, this.Type.Result));
+                    FunctionType argumenttype = new FunctionType(this.Type.Argument, inner);
 
                     object function = functiontype.GetSerialization(this.Context).Deserialize(Stream);
                     object argument = argumenttype.GetSerialization(this.Context).Deserialize(Stream);

@@ -5,7 +5,7 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// Represents a finite, uninterpreted sequence of bytes.
+    /// A finite, uninterpreted sequence of bytes.
     /// </summary>
     public abstract class Data
     {
