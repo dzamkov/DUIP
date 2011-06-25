@@ -19,7 +19,8 @@ namespace DUIP
         /// </summary>
         public static void Main(string[] Args)
         {
-
+            Console.Title = "DUIP";
+            Console.ReadKey();
         }
     }
 }
