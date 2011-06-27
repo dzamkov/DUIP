@@ -15,6 +15,20 @@ namespace DUIP
         public abstract long Size { get; }
 
         /// <summary>
+        /// Gets the value of a byte in this data.
+        /// </summary>
+        public byte this[long Position]
+        {
+            get
+            {
+                InStream str = this.Read(Position);
+                byte val = str.ReadByte();
+                str.Finish();
+                return val;
+            }
+        }
+
+        /// <summary>
         /// Gets a stream to read this data. There may be any number of open streams for a single data object at one time.
         /// </summary>
         public InStream Read()
@@ -357,7 +371,7 @@ namespace DUIP
         /// <summary>
         /// The only instance of this class.
         /// </summary>
-        public static readonly DataType Singleton = new DataType();
+        public static readonly DataType Instance = new DataType();
 
         public override bool Equal(object A, object B)
         {

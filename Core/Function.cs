@@ -22,7 +22,7 @@ namespace DUIP
         {
             get
             {
-                return IdentityFunction.Singleton;
+                return IdentityFunction.Instance;
             }
         }
 
@@ -65,7 +65,7 @@ namespace DUIP
         /// <summary>
         /// The only instance of this class.
         /// </summary>
-        public static readonly IdentityFunction Singleton = new IdentityFunction();
+        public static readonly IdentityFunction Instance = new IdentityFunction();
 
         public override object Evaluate(object Argument)
         {
@@ -242,7 +242,7 @@ namespace DUIP
 
         public void Serialize(Function Object, OutStream Stream)
         {
-            if (Object == IdentityFunction.Singleton)
+            if (Object == IdentityFunction.Instance)
             {
                 Stream.WriteByte((byte)Method.Identity);
                 return;
@@ -280,7 +280,7 @@ namespace DUIP
                     {
                         throw new DeserializationException();
                     }
-                    return IdentityFunction.Singleton;
+                    return IdentityFunction.Instance;
                 case Method.Constant:
                     object value = this.ResultSerialization.Deserialize(Stream);
                     return new ConstantFunction(value);

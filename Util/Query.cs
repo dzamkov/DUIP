@@ -143,7 +143,7 @@ namespace DUIP
         /// <summary>
         /// The only instance of this class.
         /// </summary>
-        public static NeverQuery<T> Singleton = new NeverQuery<T>();
+        public static NeverQuery<T> Instance = new NeverQuery<T>();
 
         public override void Register(IQueryListener<T> Listener)
         {
@@ -268,7 +268,7 @@ namespace DUIP
         /// </summary>
         private void _Cancel()
         {
-            this._Intermediate = NeverQuery<T>.Singleton;
+            this._Intermediate = NeverQuery<T>.Instance;
             this._Function = null;
             foreach (IQueryListener<T> listener in this._Listeners)
             {

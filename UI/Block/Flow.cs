@@ -75,7 +75,7 @@ namespace DUIP.UI
 
             // Determine minor size
             double minor = 0.0;
-            if (this._Fit == CompactFlowFit.Singleton)
+            if (this._Fit == CompactFlowFit.Instance)
             {
                 minor = SizeRange.Right;
             }
@@ -302,7 +302,7 @@ namespace DUIP.UI
                 FlowItem item = Items[cur];
 
                 // Break item
-                if (item == BreakFlowItem.Singleton)
+                if (item == BreakFlowItem.Instance)
                 {
                     yield return new _PlannedLine
                     {
@@ -318,7 +318,7 @@ namespace DUIP.UI
                 }
 
                 // Cut item
-                if (item == CutFlowItem.Singleton)
+                if (item == CutFlowItem.Instance)
                 {
                     yield return new _PlannedLine
                     {
@@ -585,12 +585,12 @@ namespace DUIP.UI
                     continue;
                 }
 
-                if (item == BreakFlowItem.Singleton)
+                if (item == BreakFlowItem.Instance)
                 {
                     breaks++;
                 }
 
-                if (item == CutFlowItem.Singleton)
+                if (item == CutFlowItem.Instance)
                 {
                     breaks++;
                 }
@@ -682,7 +682,7 @@ namespace DUIP.UI
         {
             get
             {
-                return BreakFlowItem.Singleton;
+                return BreakFlowItem.Instance;
             }
         }
 
@@ -693,7 +693,7 @@ namespace DUIP.UI
         {
             get
             {
-                return CutFlowItem.Singleton;
+                return CutFlowItem.Instance;
             }
         }
 
@@ -765,7 +765,7 @@ namespace DUIP.UI
         /// <summary>
         /// The only instance of this class.
         /// </summary>
-        public static readonly BreakFlowItem Singleton = new BreakFlowItem();
+        public static readonly BreakFlowItem Instance = new BreakFlowItem();
     }
 
     /// <summary>
@@ -782,7 +782,7 @@ namespace DUIP.UI
         /// <summary>
         /// The only instance of this class.
         /// </summary>
-        public static readonly CutFlowItem Singleton = new CutFlowItem();
+        public static readonly CutFlowItem Instance = new CutFlowItem();
     }
 
     /// <summary>
@@ -839,7 +839,7 @@ namespace DUIP.UI
         {
             get
             {
-                return CompactFlowFit.Singleton;
+                return CompactFlowFit.Instance;
             }
         }
 
@@ -865,7 +865,7 @@ namespace DUIP.UI
         /// <summary>
         /// The only instance of the class.
         /// </summary>
-        public static readonly CompactFlowFit Singleton = new CompactFlowFit();
+        public static readonly CompactFlowFit Instance = new CompactFlowFit();
 
         public override double GetScore(double Minor, double Major, double TotalMinor, double Lines)
         {

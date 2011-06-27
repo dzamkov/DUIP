@@ -17,7 +17,7 @@ namespace DUIP
         /// <summary>
         /// The only instance of this class.
         /// </summary>
-        public static readonly StringType Singleton = new StringType();
+        public static readonly StringType Instance = new StringType();
 
         public override bool Equal(object A, object B)
         {

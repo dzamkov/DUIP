@@ -69,7 +69,7 @@ namespace DUIP
         {
             get
             {
-                return DataType.Singleton;
+                return DataType.Instance;
             }
         }
 
@@ -80,7 +80,7 @@ namespace DUIP
         {
             get
             {
-                return StringType.Singleton;
+                return StringType.Instance;
             }
         }
 
@@ -91,7 +91,7 @@ namespace DUIP
         {
             get
             {
-                return FileType.Singleton;
+                return FileType.Instance;
             }
         }
 
@@ -102,7 +102,7 @@ namespace DUIP
         {
             get
             {
-                return ReflexiveType.Singleton;
+                return ReflexiveType.Instance;
             }
         }
 
@@ -128,7 +128,7 @@ namespace DUIP
         /// <summary>
         /// The only instance of this class.
         /// </summary>
-        public static readonly ReflexiveType Singleton = new ReflexiveType();
+        public static readonly ReflexiveType Instance = new ReflexiveType();
 
         public override bool Equal(object A, object B)
         {

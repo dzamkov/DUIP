@@ -67,7 +67,10 @@ namespace DUIP
             UDPHub testhub = new UDPHub(new UDP());
             testhub.Connect(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 101)).Register(delegate(UDPPeer peer)
             {
-
+                peer.Send(new DataRequestMessage
+                {
+                    
+                });
             });
 
             Application.EnableVisualStyles();

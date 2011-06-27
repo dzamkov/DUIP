@@ -169,7 +169,7 @@ namespace DUIP
         /// <summary>
         /// The only instance of this class.
         /// </summary>
-        public static readonly FileType Singleton = new FileType();
+        public static readonly FileType Instance = new FileType();
 
         public sealed override bool Equal(object A, object B)
         {

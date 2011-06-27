@@ -17,7 +17,7 @@ namespace DUIP.UI
         /// <summary>
         /// The only instance of this block.
         /// </summary>
-        public static SpaceBlock Singleton = new SpaceBlock();
+        public static readonly SpaceBlock Instance = new SpaceBlock();
 
         /// <summary>
         /// Gets a layout that displays no content.
@@ -26,14 +26,14 @@ namespace DUIP.UI
         {
             get
             {
-                return _Layout.Singleton;
+                return _Layout.Instance;
             }
         }
 
         public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
         {
             Size = SizeRange.TopLeft;
-            return _Layout.Singleton;
+            return _Layout.Instance;
         }
 
         private class _Layout : Layout
@@ -41,7 +41,7 @@ namespace DUIP.UI
             /// <summary>
             /// The only instance of the layout.
             /// </summary>
-            public static readonly _Layout Singleton = new _Layout();
+            public static readonly _Layout Instance = new _Layout();
 
             public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
             {

@@ -136,9 +136,9 @@ namespace DUIP
     }
 
     /// <summary>
-    /// Provides useful interfaces for an ID.
+    /// A type for an ID. Provides useful interfaces for ID's.
     /// </summary>
-    public class IDType : ISerialization<ID>, IOrdering<ID>, IHashing<ID>
+    public class IDType : Type, ISerialization<ID>, IOrdering<ID>, IHashing<ID>
     {
         /// <summary>
         /// The only instance of this class.
@@ -189,6 +189,11 @@ namespace DUIP
         public bool Equal(ID A, ID B)
         {
             return DUIP.ID.Equal(A, B);
+        }
+
+        public override bool Equal(object A, object B)
+        {
+            return ID.Equal((ID)A, (ID)B);
         }
     }
 }

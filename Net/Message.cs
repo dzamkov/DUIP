@@ -6,11 +6,59 @@ using System.Net;
 namespace DUIP.Net
 {
     /// <summary>
-    /// A possible type of a network message.
+    /// A type of message that can be sent.
     /// </summary>
-    public enum MessageType : byte
+    [AttributeUsage(AttributeTargets.Class)]
+    public class MessageType : Attribute
     {
+        public MessageType(byte ID)
+        {
+            this.ID = ID;
+        }
 
+        /// <summary>
+        /// The identifier for this message type.
+        /// </summary>
+        public byte ID;
+
+        static MessageType()
+        {
+            _ForID = new Dictionary<byte, MessageType>();
+            _ForType = new Dictionary<System.Type, MessageType>();
+            foreach (var kvp in Reflection.SearchAttributes<MessageType>())
+            {
+                MessageType mt = kvp.Value;
+                mt._Write = Reflection.Cast<Func<Message, Data>>(kvp.Key, "Write").Value;
+                mt._Read = Reflection.Cast<Func<Data, Message>>(kvp.Key, "Read").Value;
+                _ForID[kvp.Value.ID] = mt;
+                _ForType[kvp.Key] = mt;
+            }
+        }
+
+        public static MessageType ForID(byte ID)
+        {
+            return _ForID[ID];
+        }
+
+        public static MessageType ForType(System.Type Type)
+        {
+            return _ForType[Type];
+        }
+
+        public Data Write(Message Message)
+        {
+            return this._Write(Message);
+        }
+
+        public Message Read(Data Data)
+        {
+            return this._Read(Data);
+        }
+
+        private static Dictionary<byte, MessageType> _ForID;
+        private static Dictionary<System.Type, MessageType> _ForType;
+        private Func<Message, Data> _Write;
+        private Func<Data, Message> _Read;
     }
 
     /// <summary>
@@ -21,15 +69,45 @@ namespace DUIP.Net
         /// <summary>
         /// Creates a data representation of this message for transmission or storage.
         /// </summary>
-        public abstract Data Write();
+        public Data Write()
+        {
+            return MessageType.ForType(this.GetType()).Write(this);
+        }
 
         /// <summary>
         /// Reads a message from data or returns null if the data could not be interpreted as a message.
         /// </summary>
         public static Message Read(Data Data)
         {
+            return MessageType.ForID(Data[0]).Read(Data);
+        }
+    }
+
+    /// <summary>
+    /// A message that requests indexed data.
+    /// </summary>
+    [MessageType(0)]
+    public class DataRequestMessage : Message
+    {
+        public static Data Write(Message Message)
+        {
             throw new NotImplementedException();
         }
+
+        public static new Message Read(Data Data)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// The index for the requested data.
+        /// </summary>
+        public ID Index;
+
+        /// <summary>
+        /// The bounty for a successful response to the request.
+        /// </summary>
+        public Bounty Bounty;
     }
 
     /// <summary>
