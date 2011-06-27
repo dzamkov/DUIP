@@ -31,7 +31,7 @@ namespace DUIP.UI
 
             RenderContext.Initialize();
             this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
-            this._Background = new OceanAmbience(new Random());
+            this._Background = new OceanAmbience(Random.Default);
             this._World = new World(new Theme());
             this._Probe = new Probe();
             this._MakeView();

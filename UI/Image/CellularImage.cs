@@ -29,7 +29,7 @@ namespace DUIP.UI
         {
             while (Amount > 0)
             {
-                yield return new Point(Random.NextDouble(), Random.NextDouble());
+                yield return new Point(Random.Sample(), Random.Sample());
                 Amount--;
             }
         }
@@ -50,11 +50,11 @@ namespace DUIP.UI
             {
                 for (int y = 0; y < Size; y++)
                 {
-                    if (Random.NextDouble() < Probability)
+                    if (Random.Sample() < Probability)
                     {
                         Point p = new Point(x * delta, y * delta);
-                        p.X += off + Random.NextDouble() * Error;
-                        p.Y += off + Random.NextDouble() * Error;
+                        p.X += off + Random.Sample() * Error;
+                        p.Y += off + Random.Sample() * Error;
                         yield return p;
                     }
                 }

@@ -99,6 +99,7 @@
     </Compile>
     <Compile Include="Util\Disposable.cs" />
     <Compile Include="Util\Maybe.cs" />
+    <Compile Include="Util\Random.cs" />
     <Compile Include="Util\Ref.cs" />
     <Compile Include="Util\Registry.cs" />
     <Compile Include="Util\Relation.cs" />

@@ -18,7 +18,7 @@ namespace DUIP
         }
 
         public DirectoryAllocator(Path Directory)
-            : this(Directory, new Random())
+            : this(Directory, Random.Default)
         {
 
         }
@@ -66,7 +66,7 @@ namespace DUIP
             Path fpath;
             do
             {
-                Pointer = this._Random.Next(int.MinValue, int.MaxValue);
+                Pointer = this._Random.Integer();
                 fpath = this._GetFile(Pointer);
             }
             while (fpath.FileExists);

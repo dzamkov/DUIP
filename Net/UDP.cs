@@ -26,13 +26,13 @@ namespace DUIP.Net
         /// <summary>
         /// Sends data using this UDP interface.
         /// </summary>
-        public void Send(IPEndPoint To, byte[] Data)
+        public void Send(IPEndPoint To, byte[] Data, int Length)
         {
             while (true)
             {
                 try
                 {
-                    this._Client.Send(Data, Data.Length, To);
+                    this._Client.Send(Data, Length, To);
                     this._Receive();
                     return;
                 }
@@ -48,6 +48,14 @@ namespace DUIP.Net
                     return;
                 }
             }
+        }
+
+        /// <summary>
+        /// Sends data using this UDP interface.
+        /// </summary>
+        public void Send(IPEndPoint To, byte[] Data)
+        {
+            this.Send(To, Data, Data.Length);
         }
 
         /// <summary>
