@@ -160,7 +160,7 @@ namespace DUIP
     /// A type for a file.
     /// </summary>
     [Kind(3)]
-    public class FileType : Type
+    public sealed class FileType : Type
     {
         private FileType()
         {
@@ -175,6 +175,14 @@ namespace DUIP
         public sealed override bool Equal(object A, object B)
         {
             return DUIP.File.Equal(A as File, B as File);
+        }
+
+        public override ISerialization<object> Serialization
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public override UI.Block CreateBlock(object Instance, UI.Theme Theme)

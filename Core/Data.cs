@@ -362,7 +362,7 @@ namespace DUIP
     /// A type for data.
     /// </summary>
     [Kind(4)]
-    public class DataType : Type
+    public sealed class DataType : Type
     {
         private DataType()
         {
@@ -373,6 +373,14 @@ namespace DUIP
         /// The only instance of this class.
         /// </summary>
         public static readonly DataType Instance = new DataType();
+
+        public override ISerialization<object> Serialization
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
 
         public override bool Equal(object A, object B)
         {

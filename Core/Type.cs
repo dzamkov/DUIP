@@ -24,7 +24,7 @@ namespace DUIP
         {
             _ForID = new Dictionary<byte, Kind>();
             _ForType = new Dictionary<System.Type, Kind>();
-            Func<Type, Type, bool> idtypeequals = (x, y) => x == y;
+            Func<Type, Type, bool> idkindequals = (x, y) => x == y;
             foreach (var kvp in Reflection.SearchAttributes<Kind>())
             {
                 Kind kind = kvp.Value;
@@ -36,18 +36,18 @@ namespace DUIP
                 if (instance.HasValue)
                 {
                     ConstantSerialization<Type> serialization = new ConstantSerialization<Type>(instance.Value);
-                    kind._TypeEquals = idtypeequals;
-                    kind._GetTypeSerialization = (x) => serialization;
+                    kind._Equals = idkindequals;
+                    kind._Serialization = serialization;
                     continue;
                 }
 
-                Maybe<Func<Type, Type, bool>> typeequals = 
-                    Reflection.Cast<Func<Type, Type, bool>>(kvp.Key, "TypeEquals");
-                kind._TypeEquals = typeequals.HasValue ? typeequals.Value : idtypeequals;
+                Maybe<Func<Type, Type, bool>> kindequals = 
+                    Reflection.Cast<Func<Type, Type, bool>>(kvp.Key, "KindEquals");
+                kind._Equals = kindequals.HasValue ? kindequals.Value : idkindequals;
 
-                Maybe<Func<Context, ISerialization<Type>>> gettypeserialization =
-                    Reflection.Cast<Func<Context, ISerialization<Type>>>(kvp.Key, "GetTypeSerialization");
-                kind._GetTypeSerialization = gettypeserialization.Value;
+                Maybe<ISerialization<Type>> kindserialization =
+                    Reflection.Cast<ISerialization<Type>>(kvp.Key, "KindSerialization");
+                kind._Serialization = kindserialization.Value;
             }
         }
 
@@ -61,26 +61,29 @@ namespace DUIP
             return _ForType[Type];
         }
 
-        public bool TypeEquals(Type A, Type B)
+        public bool Equals(Type A, Type B)
         {
-            return this._TypeEquals(A, B);
+            return this._Equals(A, B);
         }
 
-        public ISerialization<Type> GetTypeSerialization(Context Context)
+        public ISerialization<Type> Serialization
         {
-            return this._GetTypeSerialization(Context);
+            get
+            {
+                return this._Serialization;
+            }
         }
 
         private static Dictionary<byte, Kind> _ForID;
         private static Dictionary<System.Type, Kind> _ForType;
-        private Func<Type, Type, bool> _TypeEquals;
-        private Func<Context, ISerialization<Type>> _GetTypeSerialization;
+        private Func<Type, Type, bool> _Equals;
+        private ISerialization<Type> _Serialization;
     }
 
     /// <summary>
     /// An interpretation of values (called instances) within a certain set.
     /// </summary>
-    public abstract class Type
+    public abstract class Type : IEquality<object>
     {
         /// <summary>
         /// Gets if the two given instances of this type are equivalent. A computational exception may be thrown
@@ -89,13 +92,10 @@ namespace DUIP
         public abstract bool Equal(object A, object B);
 
         /// <summary>
-        /// Gets the serialization method (with the given serialization context) to use for an object of this type.
+        /// Gets the serialization method used for an object of this type.
         /// </summary>
-        public virtual ISerialization<object> GetSerialization(Context Context)
-        {
-            throw new NotImplementedException();
-        }
-
+        public abstract ISerialization<object> Serialization { get; }
+       
         /// <summary>
         /// Creates a block to display an instance of this type.
         /// </summary>
@@ -118,7 +118,7 @@ namespace DUIP
             Kind bkind = Kind.ForType(B.GetType());
             if (akind == bkind)
             {
-                return akind.TypeEquals(A, B);
+                return akind.Equals(A, B);
             }
             else
             {
@@ -133,7 +133,7 @@ namespace DUIP
     /// A type whose instances are all types (a type of types).
     /// </summary>
     [Kind(0)]
-    public class ReflexiveType : Type
+    public sealed class ReflexiveType : Type, ISerialization<Type>, ISerialization<object>
     {
         private ReflexiveType()
         {
@@ -150,30 +150,11 @@ namespace DUIP
             return DUIP.Type.Equal(A as Type, B as Type);
         }
 
-        public override ISerialization<object> GetSerialization(Context Context)
-        {
-            return new TypeSerialization(Context);    
-        }
-    }
-
-    /// <summary>
-    /// A serialization method for types.
-    /// </summary>
-    public class TypeSerialization : ISerialization<Type>, ISerialization<object>
-    {
-        public TypeSerialization(Context Context)
-        {
-            this._Context = Context;
-        }
-
-        /// <summary>
-        /// Gets the context for this serialization method.
-        /// </summary>
-        public Context Context
+        public override ISerialization<object> Serialization
         {
             get
             {
-                return this._Context;
+                return this;
             }
         }
 
@@ -181,14 +162,14 @@ namespace DUIP
         {
             Kind kind = Kind.ForType(Object.GetType());
             Stream.WriteByte(kind.ID);
-            kind.GetTypeSerialization(this._Context).Serialize(Object, Stream);
+            kind.Serialization.Serialize(Object, Stream);
         }
 
         public Type Deserialize(InStream Stream)
         {
             byte kindid = Stream.ReadByte();
             Kind kind = Kind.ForID(kindid);
-            return kind.GetTypeSerialization(this._Context).Deserialize(Stream);
+            return kind.Serialization.Deserialize(Stream);
         }
 
         void ISerialization<object>.Serialize(object Object, OutStream Stream)
@@ -208,7 +189,5 @@ namespace DUIP
                 return Maybe<long>.Nothing;
             }
         }
-
-        private Context _Context;
     }
 }

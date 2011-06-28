@@ -170,7 +170,7 @@ namespace DUIP
     /// <remarks>Two functions are considered equivalent if and only if their results are equivalent when evaluated
     /// with all instances of the argument type.</remarks>
     [Kind(1)]
-    public class FunctionType : Type
+    public sealed class FunctionType : Type, ISerialization<Function>, ISerialization<object>
     {
         public FunctionType(Type Argument, Type Result)
         {
@@ -192,38 +192,40 @@ namespace DUIP
         /// <summary>
         /// Determines wether two function types are equal.
         /// </summary>
-        public static bool TypeEquals(FunctionType A, FunctionType B)
+        public static bool KindEquals(FunctionType A, FunctionType B)
         {
             return
                 Type.Equal(A._Argument, B._Argument) &&
                 Type.Equal(A._Result, B._Result);
         }
 
-        public static bool TypeEquals(Type A, Type B)
+        public static bool KindEquals(Type A, Type B)
         {
-            return TypeEquals((FunctionType)A, (FunctionType)B);
+            return KindEquals((FunctionType)A, (FunctionType)B);
         }
 
-        public static ISerialization<Type> GetTypeSerialization(Context Context)
+        public static ISerialization<Type> KindSerialization
         {
-            return new _FunctionTypeSerialization()
+            get
             {
-                TypeSerialization = new TypeSerialization(Context)
-            };
+                return _KindSerialization.Instance;
+            }
         }
 
-        private sealed class _FunctionTypeSerialization : ISerialization<FunctionType>, ISerialization<Type>
+        private sealed class _KindSerialization : ISerialization<FunctionType>, ISerialization<Type>
         {
+            public static _KindSerialization Instance = new _KindSerialization();
+
             public void Serialize(FunctionType Object, OutStream Stream)
             {
-                ISerialization<Type> typeserialization = this.TypeSerialization;
+                ISerialization<Type> typeserialization = ReflexiveType.Instance;
                 typeserialization.Serialize(Object._Argument, Stream);
                 typeserialization.Serialize(Object._Result, Stream);
             }
 
             public FunctionType Deserialize(InStream Stream)
             {
-                ISerialization<Type> typeserialization = this.TypeSerialization;
+                ISerialization<Type> typeserialization = ReflexiveType.Instance;
                 return new FunctionType(
                     typeserialization.Deserialize(Stream),
                     typeserialization.Deserialize(Stream));
@@ -246,19 +248,14 @@ namespace DUIP
                     return Maybe<long>.Nothing;
                 }
             }
-
-            public ISerialization<Type> TypeSerialization;
         }
 
-        public override ISerialization<object> GetSerialization(Context Context)
+        public override ISerialization<object> Serialization
         {
-            return new FunctionSerialization
+            get
             {
-                Context = Context,
-                Type = this,
-                TypeSerialization = ReflexiveType.Instance.GetSerialization(Context),
-                ResultSerialization = this._Result.GetSerialization(Context)
-            };
+                return this;
+            }
         }
 
         /// <summary>
@@ -283,15 +280,6 @@ namespace DUIP
             }
         }
 
-        private Type _Argument;
-        private Type _Result;
-    }
-
-    /// <summary>
-    /// A serialization method for functions.
-    /// </summary>
-    public class FunctionSerialization : ISerialization<Function>, ISerialization<object>
-    {
         /// <summary>
         /// Specifies a possible method to use for serialization.
         /// </summary>
@@ -314,7 +302,7 @@ namespace DUIP
             if (cf != null)
             {
                 Stream.WriteByte((byte)Method.Constant);
-                this.ResultSerialization.Serialize(cf.Value, Stream);
+                this.Result.Serialization.Serialize(cf.Value, Stream);
                 return;
             }
 
@@ -322,13 +310,13 @@ namespace DUIP
             if (ccf != null)
             {
                 Stream.WriteByte((byte)Method.Call);
-                this.TypeSerialization.Serialize(ccf.InnerType, Stream);
+                ReflexiveType.Instance.Serialize(ccf.InnerType, Stream);
 
-                FunctionType functiontype = new FunctionType(this.Type.Argument, new FunctionType(ccf.InnerType, this.Type.Result));
-                FunctionType argumenttype = new FunctionType(this.Type.Argument, ccf.InnerType);
+                FunctionType functiontype = new FunctionType(this.Argument, new FunctionType(ccf.InnerType, this.Result));
+                FunctionType argumenttype = new FunctionType(this.Argument, ccf.InnerType);
 
-                functiontype.GetSerialization(this.Context).Serialize(ccf.Function, Stream);
-                argumenttype.GetSerialization(this.Context).Serialize(ccf.Argument, Stream);
+                functiontype.Serialization.Serialize(ccf.Function, Stream);
+                argumenttype.Serialization.Serialize(ccf.Argument, Stream);
                 return;
             }
         }
@@ -338,22 +326,22 @@ namespace DUIP
             switch ((Method)Stream.ReadByte())
             {
                 case Method.Identity:
-                    if (!DUIP.Type.Equal(this.Type.Argument, this.Type.Result))
+                    if (!Type.Equal(this.Argument, this.Result))
                     {
                         throw new DeserializationException();
                     }
                     return IdentityFunction.Instance;
                 case Method.Constant:
-                    object value = this.ResultSerialization.Deserialize(Stream);
+                    object value = this.Result.Serialization.Deserialize(Stream);
                     return new ConstantFunction(value);
                 case Method.Call:
-                    Type inner = this.TypeSerialization.Deserialize(Stream) as Type;
+                    Type inner = ReflexiveType.Instance.Deserialize(Stream) as Type;
 
-                    FunctionType functiontype = new FunctionType(this.Type.Argument, new FunctionType(inner, this.Type.Result));
-                    FunctionType argumenttype = new FunctionType(this.Type.Argument, inner);
+                    FunctionType functiontype = new FunctionType(this.Argument, new FunctionType(inner, this.Result));
+                    FunctionType argumenttype = new FunctionType(this.Argument, inner);
 
-                    object function = functiontype.GetSerialization(this.Context).Deserialize(Stream);
-                    object argument = argumenttype.GetSerialization(this.Context).Deserialize(Stream);
+                    object function = functiontype.Serialization.Deserialize(Stream);
+                    object argument = argumenttype.Serialization.Deserialize(Stream);
                     return new CallFunction(inner, function as Function, argument as Function);
                 default:
                     throw new DeserializationException();
@@ -378,9 +366,7 @@ namespace DUIP
             }
         }
 
-        public Context Context;
-        public FunctionType Type;
-        public ISerialization<object> ResultSerialization;
-        public ISerialization<object> TypeSerialization;
+        private Type _Argument;
+        private Type _Result;
     }
 }

@@ -138,12 +138,20 @@ namespace DUIP
     /// <summary>
     /// A type for an ID. Provides useful interfaces for ID's.
     /// </summary>
-    public class IDType : Type, ISerialization<ID>, IOrdering<ID>, IHashing<ID>
+    public sealed class IDType : Type, ISerialization<ID>, IOrdering<ID>, IHashing<ID>, ISerialization<object>
     {
         /// <summary>
         /// The only instance of this class.
         /// </summary>
         public static readonly IDType Singleton = new IDType();
+
+        public override ISerialization<object> Serialization
+        {
+            get
+            {
+                return this;
+            }
+        }
 
         public void Serialize(ID Object, OutStream Stream)
         {
@@ -162,7 +170,17 @@ namespace DUIP
                 Stream.ReadInt());
         }
 
-        Maybe<long> ISerialization<ID>.Size
+        void ISerialization<object>.Serialize(object Object, OutStream Stream)
+        {
+            this.Serialize((ID)Object, Stream);
+        }
+
+        object ISerialization<object>.Deserialize(InStream Stream)
+        {
+            return this.Deserialize(Stream);
+        }
+
+        public Maybe<long> Size
         {
             get
             {

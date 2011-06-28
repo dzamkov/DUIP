@@ -8,7 +8,7 @@ namespace DUIP
     /// A type for unicode strings.
     /// </summary>
     [Kind(2)]
-    public class StringType : Type
+    public sealed class StringType : Type, ISerialization<string>, ISerialization<object>
     {
         private StringType()
         {
@@ -25,22 +25,14 @@ namespace DUIP
             return A as string == B as string;
         }
 
-        public override ISerialization<object> GetSerialization(Context Context)
+        public override ISerialization<object> Serialization
         {
-            return new StringSerialization();
+            get 
+            { 
+                return this; 
+            }
         }
 
-        public override UI.Block CreateBlock(object Instance, UI.Theme Theme)
-        {
-            return Theme.TextBlock(Instance as string);
-        }
-    }
-
-    /// <summary>
-    /// A serialization method for strings.
-    /// </summary>
-    public class StringSerialization : ISerialization<string>, ISerialization<object>
-    {
         public void Serialize(string Object, OutStream Stream)
         {
             throw new NotImplementedException();
@@ -67,6 +59,11 @@ namespace DUIP
             {
                 return Maybe<long>.Nothing;
             }
+        }
+
+        public override UI.Block CreateBlock(object Instance, UI.Theme Theme)
+        {
+            return Theme.TextBlock(Instance as string);
         }
     }
 }
