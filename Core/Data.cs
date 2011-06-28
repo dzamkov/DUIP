@@ -361,6 +361,7 @@ namespace DUIP
     /// <summary>
     /// A type for data.
     /// </summary>
+    [Kind(4)]
     public class DataType : Type
     {
         private DataType()

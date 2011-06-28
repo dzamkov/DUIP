@@ -169,6 +169,7 @@ namespace DUIP
     /// </summary>
     /// <remarks>Two functions are considered equivalent if and only if their results are equivalent when evaluated
     /// with all instances of the argument type.</remarks>
+    [Kind(1)]
     public class FunctionType : Type
     {
         public FunctionType(Type Argument, Type Result)
@@ -188,13 +189,74 @@ namespace DUIP
             throw new ComputationalException();
         }
 
+        /// <summary>
+        /// Determines wether two function types are equal.
+        /// </summary>
+        public static bool TypeEquals(FunctionType A, FunctionType B)
+        {
+            return
+                Type.Equal(A._Argument, B._Argument) &&
+                Type.Equal(A._Result, B._Result);
+        }
+
+        public static bool TypeEquals(Type A, Type B)
+        {
+            return TypeEquals((FunctionType)A, (FunctionType)B);
+        }
+
+        public static ISerialization<Type> GetTypeSerialization(Context Context)
+        {
+            return new _FunctionTypeSerialization()
+            {
+                TypeSerialization = new TypeSerialization(Context)
+            };
+        }
+
+        private sealed class _FunctionTypeSerialization : ISerialization<FunctionType>, ISerialization<Type>
+        {
+            public void Serialize(FunctionType Object, OutStream Stream)
+            {
+                ISerialization<Type> typeserialization = this.TypeSerialization;
+                typeserialization.Serialize(Object._Argument, Stream);
+                typeserialization.Serialize(Object._Result, Stream);
+            }
+
+            public FunctionType Deserialize(InStream Stream)
+            {
+                ISerialization<Type> typeserialization = this.TypeSerialization;
+                return new FunctionType(
+                    typeserialization.Deserialize(Stream),
+                    typeserialization.Deserialize(Stream));
+            }
+
+            void ISerialization<Type>.Serialize(Type Object, OutStream Stream)
+            {
+                this.Serialize((FunctionType)Object, Stream);
+            }
+
+            Type ISerialization<Type>.Deserialize(InStream Stream)
+            {
+                return this.Deserialize(Stream);
+            }
+
+            public Maybe<long> Size
+            {
+                get
+                {
+                    return Maybe<long>.Nothing;
+                }
+            }
+
+            public ISerialization<Type> TypeSerialization;
+        }
+
         public override ISerialization<object> GetSerialization(Context Context)
         {
             return new FunctionSerialization
             {
                 Context = Context,
                 Type = this,
-                TypeSerialization = Reflexive.GetSerialization(Context),
+                TypeSerialization = ReflexiveType.Instance.GetSerialization(Context),
                 ResultSerialization = this._Result.GetSerialization(Context)
             };
         }

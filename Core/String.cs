@@ -7,6 +7,7 @@ namespace DUIP
     /// <summary>
     /// A type for unicode strings.
     /// </summary>
+    [Kind(2)]
     public class StringType : Type
     {
         private StringType()

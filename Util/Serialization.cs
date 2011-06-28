@@ -38,6 +38,48 @@ namespace DUIP
     }
 
     /// <summary>
+    /// A serialization method for a constant value.
+    /// </summary>
+    public class ConstantSerialization<T> : ISerialization<T>
+    {
+        public ConstantSerialization(T Value)
+        {
+            this._Value = Value;
+        }
+
+        /// <summary>
+        /// Gets the constant value that may be serialized.
+        /// </summary>
+        public T Value
+        {
+            get
+            {
+                return this._Value;
+            }
+        }
+
+        public void Serialize(T Object, OutStream Stream)
+        {
+
+        }
+
+        public T Deserialize(InStream Stream)
+        {
+            return this._Value;
+        }
+
+        public Maybe<long> Size
+        {
+            get
+            {
+                return 0;
+            }
+        }
+
+        private T _Value;
+    }
+
+    /// <summary>
     /// Serialization method for primitive types.
     /// </summary>
     public class PrimitiveSerialization : 

@@ -5,6 +5,79 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
+    /// A "type of a type" that allows serialization and equality testing of instances of the kind.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class Kind : Attribute
+    {
+        public Kind(byte ID)
+        {
+            this.ID = ID;
+        }
+
+        /// <summary>
+        /// The identifier for this kind.
+        /// </summary>
+        public byte ID;
+
+        static Kind()
+        {
+            _ForID = new Dictionary<byte, Kind>();
+            _ForType = new Dictionary<System.Type, Kind>();
+            Func<Type, Type, bool> idtypeequals = (x, y) => x == y;
+            foreach (var kvp in Reflection.SearchAttributes<Kind>())
+            {
+                Kind kind = kvp.Value;
+                _ForID[kind.ID] = kind;
+                _ForType[kvp.Key] = kind;
+
+                
+                Maybe<Type> instance = Reflection.Cast<Type>(kvp.Key, "Instance");
+                if (instance.HasValue)
+                {
+                    ConstantSerialization<Type> serialization = new ConstantSerialization<Type>(instance.Value);
+                    kind._TypeEquals = idtypeequals;
+                    kind._GetTypeSerialization = (x) => serialization;
+                    continue;
+                }
+
+                Maybe<Func<Type, Type, bool>> typeequals = 
+                    Reflection.Cast<Func<Type, Type, bool>>(kvp.Key, "TypeEquals");
+                kind._TypeEquals = typeequals.HasValue ? typeequals.Value : idtypeequals;
+
+                Maybe<Func<Context, ISerialization<Type>>> gettypeserialization =
+                    Reflection.Cast<Func<Context, ISerialization<Type>>>(kvp.Key, "GetTypeSerialization");
+                kind._GetTypeSerialization = gettypeserialization.Value;
+            }
+        }
+
+        public static Kind ForID(byte ID)
+        {
+            return _ForID[ID];
+        }
+
+        public static Kind ForType(System.Type Type)
+        {
+            return _ForType[Type];
+        }
+
+        public bool TypeEquals(Type A, Type B)
+        {
+            return this._TypeEquals(A, B);
+        }
+
+        public ISerialization<Type> GetTypeSerialization(Context Context)
+        {
+            return this._GetTypeSerialization(Context);
+        }
+
+        private static Dictionary<byte, Kind> _ForID;
+        private static Dictionary<System.Type, Kind> _ForType;
+        private Func<Type, Type, bool> _TypeEquals;
+        private Func<Context, ISerialization<Type>> _GetTypeSerialization;
+    }
+
+    /// <summary>
     /// An interpretation of values (called instances) within a certain set.
     /// </summary>
     public abstract class Type
@@ -36,88 +109,30 @@ namespace DUIP
         /// </summary>
         public static bool Equal(Type A, Type B)
         {
-            // Reference comparison
             if (A == B)
             {
                 return true;
             }
 
-            // Compare as functions
-            FunctionType aft = A as FunctionType;
-            if (aft != null)
+            Kind akind = Kind.ForType(A.GetType());
+            Kind bkind = Kind.ForType(B.GetType());
+            if (akind == bkind)
             {
-                FunctionType bft = B as FunctionType;
-                if (bft != null)
-                {
-                    return Equal(aft.Argument, bft.Argument) && Equal(aft.Result, bft.Result);
-                }
-                return false;
+                return akind.TypeEquals(A, B);
             }
-            if (B is FunctionType)
+            else
             {
                 return false;
             }
 
-            
             throw new ComputationalException();
-        }
-
-        /// <summary>
-        /// Gets the type for data.
-        /// </summary>
-        public static DataType Data
-        {
-            get
-            {
-                return DataType.Instance;
-            }
-        }
-
-        /// <summary>
-        /// Gets the type for strings.
-        /// </summary>
-        public static StringType String
-        {
-            get
-            {
-                return StringType.Instance;
-            }
-        }
-
-        /// <summary>
-        /// Gets the type for files.
-        /// </summary>
-        public static FileType File
-        {
-            get
-            {
-                return FileType.Instance;
-            }
-        }
-
-        /// <summary>
-        /// Gets the type for types (the reflexive type).
-        /// </summary>
-        public static ReflexiveType Reflexive
-        {
-            get
-            {
-                return ReflexiveType.Instance;
-            }
-        }
-
-        /// <summary>
-        /// Creates a function type for the given argument and result types.
-        /// </summary>
-        public static FunctionType Function(Type Argument, Type Result)
-        {
-            return new FunctionType(Argument, Result);
         }
     }
 
     /// <summary>
     /// A type whose instances are all types (a type of types).
     /// </summary>
+    [Kind(0)]
     public class ReflexiveType : Type
     {
         private ReflexiveType()
@@ -137,7 +152,7 @@ namespace DUIP
 
         public override ISerialization<object> GetSerialization(Context Context)
         {
-            return new TypeSerialization();    
+            return new TypeSerialization(Context);    
         }
     }
 
@@ -146,73 +161,34 @@ namespace DUIP
     /// </summary>
     public class TypeSerialization : ISerialization<Type>, ISerialization<object>
     {
-        /// <summary>
-        /// Specifies a possible method to use for serialization.
-        /// </summary>
-        public enum Method : byte
+        public TypeSerialization(Context Context)
         {
-            Reflexive,
-            Function,
-            String,
-            Data,
-            File,
+            this._Context = Context;
+        }
+
+        /// <summary>
+        /// Gets the context for this serialization method.
+        /// </summary>
+        public Context Context
+        {
+            get
+            {
+                return this._Context;
+            }
         }
 
         public void Serialize(Type Object, OutStream Stream)
         {
-            if (Object is ReflexiveType)
-            {
-                Stream.WriteByte((byte)Method.Reflexive);
-                return;
-            }
-
-            FunctionType ft = Object as FunctionType;
-            if (ft != null)
-            {
-                Stream.WriteByte((byte)Method.Function);
-                this.Serialize(ft.Argument, Stream);
-                this.Serialize(ft.Result, Stream);
-                return;
-            }
-
-            if (Object is StringType)
-            {
-                Stream.WriteByte((byte)Method.String);
-                return;
-            }
-
-            if (Object is DataType)
-            {
-                Stream.WriteByte((byte)Method.Data);
-                return;
-            }
-
-            if (Object is FileType)
-            {
-                Stream.WriteByte((byte)Method.File);
-                return;
-            }
+            Kind kind = Kind.ForType(Object.GetType());
+            Stream.WriteByte(kind.ID);
+            kind.GetTypeSerialization(this._Context).Serialize(Object, Stream);
         }
 
         public Type Deserialize(InStream Stream)
         {
-            switch ((Method)Stream.ReadByte())
-            {
-                case Method.Reflexive:
-                    return Type.Reflexive;
-                case Method.Function:
-                    Type arg = this.Deserialize(Stream);
-                    Type res = this.Deserialize(Stream);
-                    return Type.Function(arg, res);
-                case Method.String:
-                    return Type.String;
-                case Method.Data:
-                    return Type.Data;
-                case Method.File:
-                    return Type.File;
-                default:
-                    throw new DeserializationException();
-            }
+            byte kindid = Stream.ReadByte();
+            Kind kind = Kind.ForID(kindid);
+            return kind.GetTypeSerialization(this._Context).Deserialize(Stream);
         }
 
         void ISerialization<object>.Serialize(object Object, OutStream Stream)
@@ -232,5 +208,7 @@ namespace DUIP
                 return Maybe<long>.Nothing;
             }
         }
+
+        private Context _Context;
     }
 }

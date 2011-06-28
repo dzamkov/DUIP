@@ -159,6 +159,7 @@ namespace DUIP
     /// <summary>
     /// A type for a file.
     /// </summary>
+    [Kind(3)]
     public class FileType : Type
     {
         private FileType()

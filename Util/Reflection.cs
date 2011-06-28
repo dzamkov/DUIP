@@ -37,17 +37,15 @@ namespace DUIP
                 BindingFlags.Public;
 
             // Try as method
-            MethodInfo method = Type.GetMethod(Name, flags);
-            if (method != null)
+            foreach (MethodInfo method in Type.GetMethods(flags))
             {
-                Delegate del = Delegate.CreateDelegate(typeof(T), method, false);
-                if (del != null)
+                if(method.Name == Name)
                 {
-                    return Maybe<T>.Just((T)(object)del);
-                }
-                else
-                {
-                    return Maybe<T>.Nothing;
+                    Delegate del = Delegate.CreateDelegate(typeof(T), method, false);
+                    if (del != null)
+                    {
+                        return Maybe<T>.Just((T)(object)del);
+                    }
                 }
             }
                 
@@ -55,7 +53,15 @@ namespace DUIP
             FieldInfo field = Type.GetField(Name, flags);
             if (field != null)
             {
-                return Maybe<T>.Just((T)(object)field.GetValue(null));
+                object val = field.GetValue(null);
+                if (val is T)
+                {
+                    return Maybe<T>.Just((T)val);
+                }
+                else
+                {
+                    return Maybe<T>.Nothing;
+                }
             }
 
             // Default
