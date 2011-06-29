@@ -62,13 +62,12 @@ namespace DUIP.Net
     /// <summary>
     /// A component of a virtual connection that handles the assembly of received chunks into a stream.
     /// </summary>
-    public class InTerminal : InStream
+    public class InTerminal
     {
         public InTerminal(int InitialSequenceNumber)
         {
             this._AcknowledgementNumber = InitialSequenceNumber;
-            this._ReadNumber = this._AcknowledgementNumber;
-            this._Chunks = new Dictionary<int, byte[]>();
+            this._Chunks = new Dictionary<int, _Chunk>();
         }
 
         /// <summary>
@@ -83,55 +82,208 @@ namespace DUIP.Net
         }
 
         /// <summary>
-        /// Gets the sequence number of the next chunk to be read.
+        /// Processes the receipt of a chunk. Returns true and sets the message stream if a full message has been received.
         /// </summary>
-        public int ReadNumber
+        /// <param name="SequenceNumber">The sequence number for the received chunk.</param>
+        public bool Process(int SequenceNumber, byte[] Data, bool Initial, bool Final, ref Disposable<InStream> Message)
         {
-            get
+            _Chunk chunk;
+
+            // Make sure we need this chunk
+            if (this._Chunks.ContainsKey(SequenceNumber))
             {
-                return this._ReadNumber;
+                return false;
+            }
+
+            // Update acknowledgement number
+            bool remove = false;
+            if (this._AcknowledgementNumber == SequenceNumber)
+            {
+                remove = true;
+                while (this._Chunks.TryGetValue(++this._AcknowledgementNumber, out chunk))
+                {
+                    // If the chunk has already been read in a message, remove it
+                    if (chunk.Data == null)
+                    {
+                        this._Chunks.Remove(this._AcknowledgementNumber);
+                    }
+                }
+            }
+
+            // Add chunk
+            chunk = new _Chunk
+            {
+                Data = Data,
+                Initial = Initial,
+                Final = Final
+            };
+
+            // Find "First" chunk
+            _Chunk first;
+            int firstsq = SequenceNumber - 1;
+            if (!Initial && this._Chunks.TryGetValue(firstsq, out first))
+            {
+                firstsq = first.First;
+                first = this._Chunks[firstsq];
+                chunk.First = firstsq;
+            }
+            else
+            {
+                chunk.First = firstsq = SequenceNumber;
+                first = chunk;
+            }
+
+            // Find "Last" chunk
+            _Chunk last;
+            int lastsq = SequenceNumber + 1;
+            if (!Final && this._Chunks.TryGetValue(lastsq, out last))
+            {
+                lastsq = last.Last;
+                last = this._Chunks[lastsq];
+                chunk.Last = lastsq;
+            }
+            else
+            {
+                chunk.Last = lastsq = SequenceNumber;
+                last = chunk;
+            }
+
+            // Check if a full message can be formed
+            if (first.Initial && last.Final)
+            {
+                Message = new _ReceiveStream(firstsq, remove, this);
+                return true;
+            }
+            else
+            {
+                first.Last = lastsq;
+                last.First = firstsq;
+                return false;
             }
         }
 
         /// <summary>
-        /// Processes the receipt of a chunk.
+        /// A stream that reads assembled messages from a terminal.
         /// </summary>
-        /// <param name="SequenceNumber">The sequence number for the received chunk.</param>
-        public void Receive(int SequenceNumber, byte[] Chunk)
+        private class _ReceiveStream : InStream
         {
-            if (this._AcknowledgementNumber == SequenceNumber)
+            public _ReceiveStream(int SequenceNumber, bool Remove, InTerminal Terminal)
             {
-                this._AcknowledgementNumber++;
-                while (this._Chunks.ContainsKey(this._AcknowledgementNumber))
+                this._Remove = Remove;
+                this._Chunks = Terminal._Chunks;
+                this._SequenceNumber = SequenceNumber;
+                this._Current = this._Chunks[SequenceNumber];
+            }
+
+            public override byte Read()
+            {
+                byte[] data;
+                while ((data = this._Current.Data).Length - this._Offset < 1)
                 {
-                    this._AcknowledgementNumber++;
+                    this._Continue();
+                }
+                return data[this._Offset++];
+            }
+
+            /// <summary>
+            /// Advances to the next chunk.
+            /// </summary>
+            private void _Continue()
+            {
+                if (this._Current.Final)
+                {
+                    throw new StreamUnderflowException();
+                }
+                if (this._Remove)
+                {
+                    this._Chunks.Remove(this._SequenceNumber);
+                }
+                else
+                {
+                    this._Current.Data = null;
+                }
+                this._Offset = 0;
+                this._Current = this._Chunks[++this._SequenceNumber];
+            }
+
+            public void Dispose()
+            {
+                _Chunk current = this._Current;
+                int sq = this._SequenceNumber;
+                while (true)
+                {
+                    if (this._Remove)
+                    {
+                        this._Chunks.Remove(sq);
+                    }
+                    else
+                    {
+                        current.Data = null;
+                    }
+                    current = this._Chunks[++sq];
+                    if (current.Final)
+                    {
+                        break;
+                    }
                 }
             }
-            this._Chunks[SequenceNumber] = Chunk;
+
+            private bool _Remove;
+            private int _Offset;
+            private int _SequenceNumber;
+            private _Chunk _Current;
+            private Dictionary<int, _Chunk> _Chunks;
         }
 
-        public override byte Read()
+        /// <summary>
+        /// Information about a chunk received by the terminal.
+        /// </summary>
+        private class _Chunk
         {
-            throw new NotImplementedException();
+            /// <summary>
+            /// The data for the chunk.
+            /// </summary>
+            public byte[] Data;
+
+            /// <summary>
+            /// Indicates wether the chunk is the initial one in a message.
+            /// </summary>
+            public bool Initial;
+
+            /// <summary>
+            /// Indicates wether the chunk is the final one in a message.
+            /// </summary>
+            public bool Final;
+
+            /// <summary>
+            /// The chunk with the lowest possible sequence number such that the chunk is in the same message as this chunk and all chunks
+            /// between these have been received.
+            /// </summary>
+            /// <remarks>If a chunk is marked with Final and the chunk at First is marked with Initial, the span between
+            /// the two (inclusive) is a complete message.</remarks>
+            public int First;
+
+            /// <summary>
+            /// The chunk with the highest possible sequence number such that the chunk is in the same message as this chunk and all chunks
+            /// between these have been received.
+            /// </summary>
+            public int Last;
         }
 
         private int _AcknowledgementNumber;
-        private int _ReadNumber;
-        private int _Offset;
-        private byte[] _Current;
-        private Dictionary<int, byte[]> _Chunks;
+        private Dictionary<int, _Chunk> _Chunks;
     }
 
     /// <summary>
     /// A component of a virtual connection that breaks stream data into chunks for sending.
     /// </summary>
-    public class OutTerminal : OutStream
+    public class OutTerminal
     {
-        public OutTerminal(int InitialSequenceNumber, int ChunkSize)
+        public OutTerminal(int InitialSequenceNumber)
         {
             this._SequenceNumber = InitialSequenceNumber;
             this._AcknowledgementNumber = InitialSequenceNumber;
-            this._Chunks = new LinkedList<byte[]>();
+            this._Chunks = new LinkedList<_Chunk>();
         }
 
         /// <summary>
@@ -142,17 +294,6 @@ namespace DUIP.Net
             get
             {
                 return this._SequenceNumber;
-            }
-        }
-
-        /// <summary>
-        /// Gets the maximum size for a chunk sent by this terminal.
-        /// </summary>
-        public int ChunkSize
-        {
-            get
-            {
-                return this._ChunkSize;
             }
         }
 
@@ -175,9 +316,78 @@ namespace DUIP.Net
         }
 
         /// <summary>
+        /// Gives a stream that allows the sending of a message from this terminal. The stream must be disposed before the terminal can be accessed again.
+        /// </summary>
+        /// <param name="ChunkSize">The maximum size of the chunks to break the message into.</param>
+        public Disposable<OutStream> Send(int ChunkSize)
+        {
+            return new _SendStream(ChunkSize, this);
+        }
+
+        /// <summary>
+        /// A stream that writes a message to a terminal for sending.
+        /// </summary>
+        private class _SendStream : OutStream, IDisposable
+        {
+            public _SendStream(int ChunkSize, OutTerminal Terminal)
+            {
+                this._ChunkSize = ChunkSize;
+                this._Terminal = Terminal;
+                this._AppendChunk(true);
+            }
+
+
+            public override void Write(byte Data)
+            {
+                byte[] data;
+                while ((data = this._Current.Data).Length - this._Offset < 1)
+                {
+                    this._AppendChunk(false);
+                }
+                data[this._Offset] = Data;
+                this._Offset++;
+            }
+
+            /// <summary>
+            /// Adds a new chunk to the stream.
+            /// </summary>
+            private void _AppendChunk(bool Initial)
+            {
+                _Chunk chunk = new _Chunk 
+                { 
+                    Data = new byte[this._ChunkSize],
+                    Initial = Initial
+                };
+                this._Current = chunk;
+                this._Terminal._Chunks.AddLast(chunk);
+                this._Terminal._SequenceNumber++;
+                this._Offset = 0;
+            }
+
+            public void Dispose()
+            {
+                // Remove extra data
+                byte[] sdata = this._Current.Data;
+                byte[] ndata = new byte[this._Offset];
+                for (int t = 0; t < ndata.Length; t++)
+                {
+                    ndata[t] = sdata[t];
+                }
+
+                // Set the current chunk as final
+                this._Current.Final = true;
+            }
+
+            private int _ChunkSize;
+            private int _Offset;
+            private _Chunk _Current;
+            private OutTerminal _Terminal;
+        }
+
+        /// <summary>
         /// Gets the next chunk to be sent by this terminal, or returns false if there are no more chunks to send.
         /// </summary>
-        public bool Process(ref byte[] Data)
+        public bool Process(ref byte[] Data, ref bool Initial, ref bool Final)
         {
             if (this._SendNode == null)
             {
@@ -185,8 +395,11 @@ namespace DUIP.Net
             }
             else
             {
-                Data = this._SendNode.Value;
+                _Chunk chunk = this._SendNode.Value;
                 this._SendNode = this._SendNode.Next;
+                Data = chunk.Data;
+                Initial = chunk.Initial;
+                Final = chunk.Final;
                 return true;
             }
         }
@@ -205,23 +418,29 @@ namespace DUIP.Net
         }
 
         /// <summary>
-        /// Insures all written data is assigned to chunks and returns the sequence number for the final chunk
-        /// with data.
+        /// Information about a chunk to be sent by the terminal.
         /// </summary>
-        public int Flush()
+        private class _Chunk
         {
-            throw new NotImplementedException();
-        }
+            /// <summary>
+            /// The data for the chunk.
+            /// </summary>
+            public byte[] Data;
 
-        public override void Write(byte Data)
-        {
-            throw new NotImplementedException();
+            /// <summary>
+            /// Indicates wether the chunk is the initial one in a message.
+            /// </summary>
+            public bool Initial;
+
+            /// <summary>
+            /// Indicates wether the chunk is the final one in a message.
+            /// </summary>
+            public bool Final;
         }
 
         private int _AcknowledgementNumber;
         private int _SequenceNumber;
-        private int _ChunkSize;
-        private LinkedListNode<byte[]> _SendNode;
-        private LinkedList<byte[]> _Chunks;
+        private LinkedListNode<_Chunk> _SendNode;
+        private LinkedList<_Chunk> _Chunks;
     }
 }

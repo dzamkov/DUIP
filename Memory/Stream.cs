@@ -145,6 +145,14 @@ namespace DUIP
     }
 
     /// <summary>
+    /// Exception thrown when a read stream does not have enough data available to fufill a read operation.
+    /// </summary>
+    public class StreamUnderflowException : Exception
+    {
+
+    }
+
+    /// <summary>
     /// Contains the sizes of primitives in bytes.
     /// </summary>
     public static class StreamSize

@@ -15,7 +15,7 @@ namespace DUIP.Net
             this._EndPoint = EndPoint;
             this._LastSequenceNumber = AcknowledgementNumber;
             this._InTerminal = new InTerminal(AcknowledgementNumber);
-            this._OutTerminal = new OutTerminal(SequenceNumber, Hub.Settings.ChunkSize);
+            this._OutTerminal = new OutTerminal(SequenceNumber);
             this._CompleteChunks = new LinkedList<int>();
             this._Hub = Hub;
         }
@@ -66,27 +66,35 @@ namespace DUIP.Net
 
         public override void Send(Message Message)
         {
-            Message.Write(Message, this._OutTerminal);
-            this._CompleteChunks.AddLast(this._OutTerminal.Flush());
+            using (Disposable<OutStream> str = this._OutTerminal.Send(this._Hub.Settings.ChunkSize))
+            {
+                Message.Write(Message, str);
+            }
         }
 
         /// <summary>
         /// Processes a chunk of a message sent from this peer.
         /// </summary>
-        /// <param name="Complete">Indicates wether the chunk is the final one in a message.</param>
-        public void Process(int SequenceNumber, byte[] Chunk, bool Complete)
+        public void Process(int SequenceNumber, byte[] Chunk, bool Initial, bool Final)
         {
             if (_After(SequenceNumber, this._LastSequenceNumber))
             {
                 this._LastSequenceNumber = SequenceNumber;
             }
 
-            this._InTerminal.Receive(SequenceNumber, Chunk);
-            if (Complete)
+            Disposable<InStream> str = null;
+            if (this._InTerminal.Process(SequenceNumber, Chunk, Initial, Final, ref str))
             {
                 if (this.Receive != null)
                 {
-                    this.Receive(this, Message.Read(this._InTerminal));
+                    Message message = Message.Read(str);
+                    str.Dispose();
+
+                    this.Receive(this, message);
+                }
+                else
+                {
+                    str.Dispose();
                 }
             }
         }
