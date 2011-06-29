@@ -210,9 +210,11 @@ namespace DUIP
         /// <param name="Start">A pointer to the beginning of the block (including header).</param>
         private static BlockState _GetBlockState(Memory Source, long Start)
         {
-            InStream str = Source.Read(Start);
-            BlockState state = (BlockState)str.ReadByte();
-            str.Finish();
+            BlockState state;
+            using (Disposable<InStream> str = Source.Read(Start))
+            {
+                state = (BlockState)str.Object.ReadByte();
+            }
             return state;
         }
 
@@ -222,9 +224,10 @@ namespace DUIP
         /// <param name="Start">A pointer to the beginning of the block (including header).</param>
         private static void _SetBlockState(Memory Source, long Start, BlockState State)
         {
-            OutStream str = Source.Write(Start);
-            str.WriteByte((byte)State);
-            str.Finish();
+            using (Disposable<OutStream> str = Source.Write(Start))
+            {
+                str.Object.WriteByte((byte)State);
+            }
         }
 
         /// <summary>
@@ -250,9 +253,10 @@ namespace DUIP
         public static BuddyAllocator Create(Memory Source, Scheme Scheme)
         {
             // Initialize the first block in the allocator to empty
-            OutStream os = Source.Write();
-            os.WriteByte((byte)BlockState.Empty);
-            os.Finish();
+            using (Disposable<OutStream> os = Source.Write())
+            {
+                os.Object.WriteByte((byte)BlockState.Empty);
+            }
 
             // Return allocator
             return new BuddyAllocator

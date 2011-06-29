@@ -103,12 +103,12 @@ namespace DUIP
             }
         }
 
-        public override InStream Read(long Start)
+        public override Disposable<InStream> Read(long Start)
         {
             return this.Open() ? new _InStream(Start, this) : null;
         }
 
-        public override OutStream Write(long Start)
+        public override Disposable<OutStream> Write(long Start)
         {
             return this.Open() ? new _OutStream(Start, this) : null;
         }
@@ -124,7 +124,7 @@ namespace DUIP
         /// <summary>
         /// An input stream for file data.
         /// </summary>
-        private class _InStream : InStream
+        private class _InStream : InStream, IDisposable
         {
             public _InStream(long Position, FileMemory File)
             {
@@ -152,7 +152,7 @@ namespace DUIP
                 this._File._FileStream.Read(Buffer, Offset, Length);
             }
 
-            public override void Finish()
+            public void Dispose()
             {
                 this._File._Users--;
             }
@@ -164,7 +164,7 @@ namespace DUIP
         /// <summary>
         /// An output stream for file data.
         /// </summary>
-        private class _OutStream : OutStream
+        private class _OutStream : OutStream, IDisposable
         {
             public _OutStream(long Position, FileMemory File)
             {
@@ -192,7 +192,7 @@ namespace DUIP
                 this._Position += Amount;
             }
 
-            public override void Finish()
+            public void Dispose()
             {
                 this._File._Users--;
             }
@@ -222,7 +222,7 @@ namespace DUIP
     /// <summary>
     /// An input stream using a file as a source.
     /// </summary>
-    public class FileInStream : InStream
+    public class FileInStream : InStream, IDisposable
     {
         public FileInStream(FileStream FileStream)
         {
@@ -255,7 +255,7 @@ namespace DUIP
             this._FileStream.Read(Buffer, Offset, Length);
         }
 
-        public override void Finish()
+        public void Dispose()
         {
             this._FileStream.Close();
         }
@@ -266,7 +266,7 @@ namespace DUIP
     /// <summary>
     /// An output stream that writes to a file on the filesystem.
     /// </summary>
-    public class FileOutStream : OutStream
+    public class FileOutStream : OutStream, IDisposable
     {
         public FileOutStream(FileStream FileStream)
         {
@@ -299,7 +299,7 @@ namespace DUIP
             this._FileStream.Position += Amount;
         }
 
-        public override void Finish()
+        public void Dispose()
         {
             this._FileStream.Close();
         }

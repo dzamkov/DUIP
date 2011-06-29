@@ -10,19 +10,19 @@ namespace DUIP
     public abstract class Memory
     {
         /// <summary>
-        /// Creates a stream to read the memory from the beginning or returns null if not possible.
+        /// Creates a stream to read this memory, starting at the given position or returns null if not possible.
         /// </summary>
-        public InStream Read()
+        public virtual Disposable<InStream> Read(long Start)
         {
-            return Read(0);
+            return null;
         }
 
         /// <summary>
-        /// Creates a stream to read this memory, starting at the given position or returns null if not possible.
+        /// Creates a stream to read the memory from the beginning or returns null if not possible.
         /// </summary>
-        public virtual InStream Read(long Start)
+        public Disposable<InStream> Read()
         {
-            return null;
+            return Read(0);
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace DUIP
         /// Creates a stream to modify the memory starting at the given position or returns null if not possible. The modifing stream 
         /// may not go over the bounds of the memory.
         /// </summary>
-        public virtual OutStream Write(long Start)
+        public virtual Disposable<OutStream> Write(long Start)
         {
             return null;
         }
@@ -42,7 +42,7 @@ namespace DUIP
         /// <summary>
         /// Creates a stream to modify the memory from the beginning or returns null if not possible.
         /// </summary>
-        public OutStream Write()
+        public Disposable<OutStream> Write()
         {
             return Write(0);
         }
@@ -78,7 +78,7 @@ namespace DUIP
                 }
                 finally
                 {
-                    str.Finish();
+                    ((Disposable<InStream>)str).Dispose();
                 }
             }
             return null;
@@ -108,7 +108,7 @@ namespace DUIP
             }
         }
 
-        public override InStream Read(long Start)
+        public override Disposable<InStream> Read(long Start)
         {
             return this._Source.Read(this._Start + Start);
         }
@@ -121,7 +121,7 @@ namespace DUIP
             }
         }
 
-        public override OutStream Write(long Start)
+        public override Disposable<OutStream> Write(long Start)
         {
             return this._Source.Write(this._Start + Start);
         }

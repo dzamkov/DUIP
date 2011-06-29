@@ -252,9 +252,11 @@ namespace DUIP
         /// </summary>
         public Bucket GetBucket(long BucketIndex)
         {
-            InStream str = this._Source.Read(this.GetBucketOffset(BucketIndex));
-            Bucket b = this._Scheme.BucketSerialization.Deserialize(str);
-            str.Finish();
+            Bucket b;
+            using (Disposable<InStream> str = this._Source.Read(this.GetBucketOffset(BucketIndex)))
+            {
+                b = this._Scheme.BucketSerialization.Deserialize(str);
+            }
             return b;
         }
 
@@ -263,9 +265,10 @@ namespace DUIP
         /// </summary>
         public void SetBucket(long BucketIndex, Bucket Value)
         {
-            OutStream str = this._Source.Write(this.GetBucketOffset(BucketIndex));
-            this._Scheme.BucketSerialization.Serialize(Value, str);
-            str.Finish();
+            using (Disposable<OutStream> str = this._Source.Write(this.GetBucketOffset(BucketIndex)))
+            {
+                this._Scheme.BucketSerialization.Serialize(Value, str);
+            }
         }
 
         /// <summary>
@@ -284,18 +287,18 @@ namespace DUIP
                 {
                     Start = 0;
                 }
-                InStream str = this._Source.Read(this.GetBucketOffset(Start));
-                while (Start < tb)
+                using (Disposable<InStream> str = this._Source.Read(this.GetBucketOffset(Start)))
                 {
-                    Bucket b = scheme.BucketSerialization.Deserialize(str);
-                    if (b.Free == Free)
+                    while (Start < tb)
                     {
-                        str.Finish();
-                        return Start;
+                        Bucket b = scheme.BucketSerialization.Deserialize(str);
+                        if (b.Free == Free)
+                        {
+                            return Start;
+                        }
+                        Start++;
                     }
-                    Start++;
                 }
-                str.Finish();
                 Start = 0;
             }
         }
@@ -371,9 +374,10 @@ namespace DUIP
         /// </summary>
         private void _UpdateHeader()
         {
-            OutStream str = this._Source.Write();
-            this._Header.Write(str);
-            str.Finish();
+            using (Disposable<OutStream> str = this._Source.Write())
+            {
+                this._Header.Write(str);
+            }
         }
 
         public Memory Source
@@ -419,17 +423,18 @@ namespace DUIP
                 FirstFreeBucket = 0,
                 FirstFilledBucket = 0,
             };
-            OutStream os = Source.Write();
-            h.Write(os);
-            for (long t = 0; t < Scheme.Buckets; t++)
+            using (Disposable<OutStream> os = Source.Write())
             {
-                Scheme.BucketSerialization.Serialize(new Bucket()
-                    {
-                        Free = true,
-                        Reference = t
-                    }, os);
+                h.Write(os);
+                for (long t = 0; t < Scheme.Buckets; t++)
+                {
+                    Scheme.BucketSerialization.Serialize(new Bucket()
+                        {
+                            Free = true,
+                            Reference = t
+                        }, os);
+                }
             }
-            os.Finish();
 
             // Create an interface to the map
             return new HashMap<TKey, T>()
@@ -446,9 +451,11 @@ namespace DUIP
         public static HashMap<TKey, T> Restore(Memory Source, Scheme Scheme)
         {
             // Get the header
-            InStream str = Source.Read();
-            Header h = Header.Read(str);
-            str.Finish();
+            Header h;
+            using (Disposable<InStream> str = Source.Read())
+            {
+                h = Header.Read(str);
+            }
 
             // Return the map
             return new HashMap<TKey, T>()
@@ -692,8 +699,7 @@ namespace DUIP
             {
                 long cur = this._Header.FirstFilledBucket;
                 long end = cur;
-                InStream str = this._Source.Read(this.GetBucketOffset(cur));
-
+                Disposable<InStream> str = this._Source.Read(this.GetBucketOffset(cur));
                 try
                 {
                     while (true)
@@ -715,7 +721,7 @@ namespace DUIP
                         if (cur == this.BucketCount)
                         {
                             cur = 0;
-                            str.Finish();
+                            str.Dispose();
                             str = this._Source.Read(this.GetBucketOffset(cur));
                         }
 
@@ -728,7 +734,7 @@ namespace DUIP
                 }
                 finally
                 {
-                    str.Finish();
+                    str.Dispose();
                 }
             }
         }

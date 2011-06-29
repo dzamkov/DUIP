@@ -15,7 +15,8 @@ namespace DUIP.Net
             this._EndPoint = EndPoint;
             this._LastSequenceNumber = AcknowledgementNumber;
             this._InTerminal = new InTerminal(AcknowledgementNumber);
-            this._OutTerminal = new OutTerminal(SequenceNumber);
+            this._OutTerminal = new OutTerminal(SequenceNumber, Hub.Settings.ChunkSize);
+            this._CompleteChunks = new LinkedList<int>();
             this._Hub = Hub;
         }
 
@@ -65,26 +66,27 @@ namespace DUIP.Net
 
         public override void Send(Message Message)
         {
-            this._OutTerminal.Send(Message.Write(), this._Hub.Settings.ChunkSize);
+            Message.Write(Message, this._OutTerminal);
+            this._CompleteChunks.AddLast(this._OutTerminal.Flush());
         }
 
         /// <summary>
         /// Processes a chunk of a message sent from this peer.
         /// </summary>
-        public void Process(int SequenceNumber, Data Data, bool Initial, bool Final)
+        /// <param name="Complete">Indicates wether the chunk is the final one in a message.</param>
+        public void Process(int SequenceNumber, byte[] Chunk, bool Complete)
         {
             if (_After(SequenceNumber, this._LastSequenceNumber))
             {
                 this._LastSequenceNumber = SequenceNumber;
             }
 
-            Data d = null;
-            if (this._InTerminal.Receive(SequenceNumber, Data, Initial, Final, ref d))
+            this._InTerminal.Receive(SequenceNumber, Chunk);
+            if (Complete)
             {
-                Message m = Message.Read(d);
-                if (m != null && this.Receive != null)
+                if (this.Receive != null)
                 {
-                    this.Receive(this, m);
+                    this.Receive(this, Message.Read(this._InTerminal));
                 }
             }
         }
@@ -118,6 +120,7 @@ namespace DUIP.Net
         private IPEndPoint _EndPoint;
         private InTerminal _InTerminal;
         private OutTerminal _OutTerminal;
+        private LinkedList<int> _CompleteChunks;
         private int _LastSequenceNumber;
         private UDPHub _Hub;
     }

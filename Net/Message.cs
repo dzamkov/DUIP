@@ -28,8 +28,8 @@ namespace DUIP.Net
             foreach (var kvp in Reflection.SearchAttributes<MessageType>())
             {
                 MessageType mt = kvp.Value;
-                mt._Write = Reflection.Cast<Func<Message, Data>>(kvp.Key, "Write").Value;
-                mt._Read = Reflection.Cast<Func<Data, Message>>(kvp.Key, "Read").Value;
+                mt._Write = Reflection.Cast<Action<Message, OutStream>>(kvp.Key, "Write").Value;
+                mt._Read = Reflection.Cast<Func<InStream, Message>>(kvp.Key, "Read").Value;
                 _ForID[kvp.Value.ID] = mt;
                 _ForType[kvp.Key] = mt;
             }
@@ -45,20 +45,20 @@ namespace DUIP.Net
             return _ForType[Type];
         }
 
-        public Data Write(Message Message)
+        public void Write(Message Message, OutStream Stream)
         {
-            return this._Write(Message);
+            this._Write(Message, Stream);
         }
 
-        public Message Read(Data Data)
+        public Message Read(InStream Stream)
         {
-            return this._Read(Data);
+            return this._Read(Stream);
         }
 
         private static Dictionary<byte, MessageType> _ForID;
         private static Dictionary<System.Type, MessageType> _ForType;
-        private Func<Message, Data> _Write;
-        private Func<Data, Message> _Read;
+        private Action<Message, OutStream> _Write;
+        private Func<InStream, Message> _Read;
     }
 
     /// <summary>
@@ -67,19 +67,22 @@ namespace DUIP.Net
     public abstract class Message
     {
         /// <summary>
-        /// Creates a data representation of this message for transmission or storage.
+        /// Writes the given message to a stream.
         /// </summary>
-        public Data Write()
+        public static void Write(Message Message, OutStream Stream)
         {
-            return MessageType.ForType(this.GetType()).Write(this);
+            MessageType type = MessageType.ForType(Message.GetType());
+            Stream.WriteByte(type.ID);
+            type.Write(Message, Stream);
         }
 
         /// <summary>
-        /// Reads a message from data or returns null if the data could not be interpreted as a message.
+        /// Reads a message from a stream.
         /// </summary>
-        public static Message Read(Data Data)
+        public static Message Read(InStream Stream)
         {
-            return MessageType.ForID(Data[0]).Read(Data);
+            MessageType type = MessageType.ForID(Stream.ReadByte());
+            return type.Read(Stream);
         }
     }
 
@@ -89,12 +92,12 @@ namespace DUIP.Net
     [MessageType(0)]
     public class DataRequestMessage : Message
     {
-        public static Data Write(Message Message)
+        public static new void Write(Message Message, OutStream Stream)
         {
             throw new NotImplementedException();
         }
 
-        public static new Message Read(Data Data)
+        public static new Message Read(InStream Stream)
         {
             throw new NotImplementedException();
         }

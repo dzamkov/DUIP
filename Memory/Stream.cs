@@ -46,14 +46,6 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Called when reading is complete.
-        /// </summary>
-        public virtual void Finish()
-        {
-
-        }
-
-        /// <summary>
         /// Reads a boolean value from the source stream.
         /// </summary>
         public bool ReadBool()
@@ -214,14 +206,6 @@ namespace DUIP
             {
                 this.Write(0);
             }
-        }
-
-        /// <summary>
-        /// Called when writing is complete.
-        /// </summary>
-        public virtual void Finish()
-        {
-
         }
 
         /// <summary>

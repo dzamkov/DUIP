@@ -21,9 +21,11 @@ namespace DUIP
         {
             get
             {
-                InStream str = this.Read(Position);
-                byte val = str.ReadByte();
-                str.Finish();
+                byte val;
+                using (Disposable<InStream> str = this.Read(Position))
+                {
+                    val = str.Object.ReadByte();
+                }
                 return val;
             }
         }
@@ -31,7 +33,7 @@ namespace DUIP
         /// <summary>
         /// Gets a stream to read this data. There may be any number of open streams for a single data object at one time.
         /// </summary>
-        public InStream Read()
+        public Disposable<InStream> Read()
         {
             return this.Read(0);
         }
@@ -39,7 +41,7 @@ namespace DUIP
         /// <summary>
         /// Gets a stream to read this data beginning at the given position.
         /// </summary>
-        public abstract InStream Read(long Start);
+        public abstract Disposable<InStream> Read(long Start);
 
         /// <summary>
         /// Gets a partion of this data.
@@ -84,15 +86,26 @@ namespace DUIP
             if ((long)isize >= size)
             {
                 byte[] buffer = new byte[isize];
-                InStream str = Data.Read();
-                str.Read(buffer, 0, isize);
-                str.Finish();
+                using (Disposable<InStream> str = Data.Read())
+                {
+                    str.Object.Read(buffer, 0, isize);
+                }
                 return buffer;
             }
             else
             {
                 throw new NotImplementedException();
             }
+        }
+
+        public static ConcatData operator +(Data Initial, Data Final)
+        {
+            long isize = Initial.Size;
+            long fsize = Final.Size;
+            return new ConcatData(
+                new Data[] { Initial, Final },
+                new long[] { 0, isize },
+                isize + fsize);
         }
 
         /// <summary>
@@ -164,7 +177,7 @@ namespace DUIP
             }
         }
 
-        public override InStream Read(long Start)
+        public override Disposable<InStream> Read(long Start)
         {
             return new BufferInStream(this._Buffer, Start);
         }
@@ -222,7 +235,7 @@ namespace DUIP
             }
         }
 
-        public override InStream Read(long Start)
+        public override Disposable<InStream> Read(long Start)
         {
             return this._Source.Read(this._Start + Start);
         }
@@ -257,7 +270,7 @@ namespace DUIP
             }
         }
 
-        public override InStream Read(long Start)
+        public override Disposable<InStream> Read(long Start)
         {
             int part;
             long offset = Start;
@@ -295,7 +308,7 @@ namespace DUIP
         /// <summary>
         /// A stream for concatenated data.
         /// </summary>
-        public class Stream : InStream
+        public class Stream : InStream, IDisposable
         {
             public Stream(Data[] Parts, int LocalPart, long LocalStreamSize, InStream LocalStream)
             {
@@ -321,7 +334,7 @@ namespace DUIP
                 }
                 else
                 {
-                    this._LocalStream.Finish();
+                    ((Disposable<InStream>)this._LocalStream).Dispose();
                     Data next;
                     long size;
                     while ((size = (next = this._Parts[++this._LocalPart]).Size) < Amount)
@@ -340,11 +353,16 @@ namespace DUIP
             {
                 while (this._LocalStreamSize == 0)
                 {
-                    this._LocalStream.Finish();
+                    ((Disposable<InStream>)this._LocalStream).Dispose();
                     Data next = this._Parts[++this._LocalPart];
                     this._LocalStream = next.Read();
                     this._LocalStreamSize = next.Size;
                 }
+            }
+
+            public void Dispose()
+            {
+                ((Disposable<InStream>)this._LocalStream).Dispose();
             }
 
             private Data[] _Parts;

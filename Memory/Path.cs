@@ -201,7 +201,7 @@ namespace DUIP
         /// <summary>
         /// Creates a stream to read the file.
         /// </summary>
-        public FileInStream OpenRead()
+        public Disposable<FileInStream> OpenRead()
         {
             try
             {
@@ -216,7 +216,7 @@ namespace DUIP
         /// <summary>
         /// Creates a stream to write to or over a file. If the file already exists, its original contents will be lost.
         /// </summary>
-        public FileOutStream OpenWrite()
+        public Disposable<FileOutStream> OpenWrite()
         {
             try
             {
@@ -231,7 +231,7 @@ namespace DUIP
         /// <summary>
         /// Creates a stream to append data to a file.
         /// </summary>
-        public FileOutStream OpenAppend()
+        public Disposable<FileOutStream> OpenAppend()
         {
             try
             {
