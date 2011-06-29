@@ -113,6 +113,31 @@ namespace DUIP
             return A.A == B.A && A.B == B.B && A.C == B.C && A.D == B.D;
         }
 
+        /// <summary>
+        /// Writes an ID to a stream.
+        /// </summary>
+        public static void Write(ref ID ID, OutStream Stream)
+        {
+            Stream.WriteInt(ID.A);
+            Stream.WriteInt(ID.B);
+            Stream.WriteInt(ID.C);
+            Stream.WriteInt(ID.D);
+        }
+
+        /// <summary>
+        /// Reads an ID from a stream.
+        /// </summary>
+        public static ID Read(InStream Stream)
+        {
+            return new ID
+            {
+                A = Stream.ReadInt(),
+                B = Stream.ReadInt(),
+                C = Stream.ReadInt(),
+                D = Stream.ReadInt()
+            };
+        }
+
         public override int GetHashCode()
         {
             return this.A ^ this.B ^ this.C ^ this.D;
@@ -155,19 +180,12 @@ namespace DUIP
 
         public void Serialize(ID Object, OutStream Stream)
         {
-            Stream.WriteInt(Object.A);
-            Stream.WriteInt(Object.B);
-            Stream.WriteInt(Object.C);
-            Stream.WriteInt(Object.D);
+            ID.Write(ref Object, Stream);
         }
 
         public ID Deserialize(InStream Stream)
         {
-            return new ID(
-                Stream.ReadInt(),
-                Stream.ReadInt(),
-                Stream.ReadInt(),
-                Stream.ReadInt());
+            return ID.Read(Stream);
         }
 
         void ISerialization<object>.Serialize(object Object, OutStream Stream)

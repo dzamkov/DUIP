@@ -46,7 +46,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Reads a boolean value from the source stream.
+        /// Reads a boolean value from the stream.
         /// </summary>
         public bool ReadBool()
         {
@@ -54,7 +54,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Reads a byte from the source stream.
+        /// Reads a byte from the stream.
         /// </summary>
         public byte ReadByte()
         {
@@ -62,31 +62,42 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Reads a 32-bit integer from the source stream.
+        /// Reads a 32-bit integer from the stream.
         /// </summary>
         public int ReadInt()
         {
-            return
-                this.Read() |
-                this.Read() << 8 |
-                this.Read() << 16 |
-                this.Read() << 24;
+            byte[] buf = new byte[4];
+            this.Read(buf, 0, 4);
+            int val = BitConverter.ToInt32(buf, 0);
+            if (!BitConverter.IsLittleEndian)
+            {
+                Endian.Swap(ref val);
+            }
+            return val;
         }
 
         /// <summary>
-        /// Reads a 64-bit integer from the source stream.
+        /// Reads a 64-bit integer from the stream.
         /// </summary>
         public long ReadLong()
         {
-            return
-                this.Read() |
-                this.Read() << 8 |
-                this.Read() << 16 |
-                this.Read() << 24 |
-                this.Read() << 32 |
-                this.Read() << 40 |
-                this.Read() << 48 |
-                this.Read() << 56;
+            byte[] buf = new byte[8];
+            this.Read(buf, 0, 8);
+            long val = BitConverter.ToInt64(buf, 0);
+            if (!BitConverter.IsLittleEndian)
+            {
+                Endian.Swap(ref val);
+            }
+            return val;
+        }
+
+        /// <summary>
+        /// Reads a 64-bit floating point number from the stream.
+        /// </summary>
+        public double ReadDouble()
+        {
+            long lval = this.ReadLong();
+            return BitConverter.Int64BitsToDouble(lval);
         }
 
         /// <summary>
@@ -217,7 +228,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Writes a boolean value to the source stream.
+        /// Writes a boolean value to the stream.
         /// </summary>
         public void WriteBool(bool Value)
         {
@@ -225,7 +236,7 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Writes a byte to the source stream.
+        /// Writes a byte to the stream.
         /// </summary>
         public void WriteByte(byte Value)
         {
@@ -233,29 +244,36 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Writes a 32-bit integer to the source stream.
+        /// Writes a 32-bit integer to the stream.
         /// </summary>
         public void WriteInt(int Value)
         {
-            this.Write((byte)(Value));
-            this.Write((byte)(Value >> 8));
-            this.Write((byte)(Value >> 16));
-            this.Write((byte)(Value >> 24));
+            if (!BitConverter.IsLittleEndian)
+            {
+                Endian.Swap(ref Value);
+            }
+            this.Write(BitConverter.GetBytes(Value), 0, 4);
         }
 
         /// <summary>
-        /// Writes a 64-bit integer to the source stream.
+        /// Writes a 64-bit integer to the stream.
         /// </summary>
         public void WriteLong(long Value)
         {
-            this.Write((byte)(Value));
-            this.Write((byte)(Value >> 8));
-            this.Write((byte)(Value >> 16));
-            this.Write((byte)(Value >> 24));
-            this.Write((byte)(Value >> 32));
-            this.Write((byte)(Value >> 40));
-            this.Write((byte)(Value >> 48));
-            this.Write((byte)(Value >> 56));
+            if (!BitConverter.IsLittleEndian)
+            {
+                Endian.Swap(ref Value);
+            }
+            this.Write(BitConverter.GetBytes(Value), 0, 8);
+        }
+
+        /// <summary>
+        /// Writes a 64-bit floating point number to the stream.
+        /// </summary>
+        public void WriteDouble(double Value)
+        {
+            long lval = BitConverter.DoubleToInt64Bits(Value);
+            this.WriteLong(lval);
         }
 
         /// <summary>

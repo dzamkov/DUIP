@@ -94,12 +94,18 @@ namespace DUIP.Net
     {
         public static new void Write(Message Message, OutStream Stream)
         {
-            throw new NotImplementedException();
+            DataRequestMessage drm = (DataRequestMessage)Message;
+            ID.Write(ref drm.Index, Stream);
+            Bounty.Write(ref drm.Bounty, Stream);
         }
 
         public static new Message Read(InStream Stream)
         {
-            throw new NotImplementedException();
+            return new DataRequestMessage
+            {
+                Index = ID.Read(Stream),
+                Bounty = Bounty.Read(Stream)
+            };
         }
 
         /// <summary>
@@ -123,6 +129,33 @@ namespace DUIP.Net
     /// possible responders how much (if any) effort they should take to respond to the query.</remarks>
     public struct Bounty
     {
+        public Bounty(double Base, double Decay)
+        {
+            this.Base = Base;
+            this.Decay = Decay;
+        }
+
+        /// <summary>
+        /// Writes a bounty to a stream.
+        /// </summary>
+        public static void Write(ref Bounty Bounty, OutStream Stream)
+        {
+            Stream.WriteDouble(Bounty.Base);
+            Stream.WriteDouble(Bounty.Decay);
+        }
+
+        /// <summary>
+        /// Reads a bounty from a stream.
+        /// </summary>
+        public static Bounty Read(InStream Stream)
+        {
+            return new Bounty
+            {
+                Base = Stream.ReadDouble(),
+                Decay = Stream.ReadDouble()
+            };
+        }
+
         /// <summary>
         /// The base reward (in favor) of the bounty. If a peer immediately (or preemptively) responds to the query, its favor will
         /// increase by this amount.

@@ -97,6 +97,7 @@
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Util\Disposable.cs" />
+    <Compile Include="Util\Endian.cs" />
     <Compile Include="Util\Maybe.cs" />
     <Compile Include="Util\Random.cs" />
     <Compile Include="Util\Ref.cs" />
