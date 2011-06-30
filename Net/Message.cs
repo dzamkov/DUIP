@@ -96,6 +96,7 @@ namespace DUIP.Net
         {
             DataRequestMessage drm = (DataRequestMessage)Message;
             ID.Write(ref drm.Index, Stream);
+            DataRegion.Write(ref drm.Region, Stream);
             Bounty.Write(ref drm.Bounty, Stream);
         }
 
@@ -104,6 +105,7 @@ namespace DUIP.Net
             return new DataRequestMessage
             {
                 Index = ID.Read(Stream),
+                Region = DataRegion.Read(Stream),
                 Bounty = Bounty.Read(Stream)
             };
         }
@@ -112,6 +114,11 @@ namespace DUIP.Net
         /// The index for the requested data.
         /// </summary>
         public ID Index;
+
+        /// <summary>
+        /// The region of the reqest data to get.
+        /// </summary>
+        public DataRegion Region;
 
         /// <summary>
         /// The bounty for a successful response to the request.

@@ -52,6 +52,17 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Gets a region of this data. The resulting data will have a size smaller than requested if the bounds of the region exceeds
+        /// the size of the data.
+        /// </summary>
+        public Data GetRegion(DataRegion Region)
+        {
+            long dsize = this.Size;
+            long size = Math.Max(0, Math.Min(Region.Size, dsize - Region.Start));
+            return this.GetPartion(Region.Start, size);
+        }
+
+        /// <summary>
         /// Gets if the two data are equivalent in content.
         /// </summary>
         public static bool Equal(Data A, Data B)
@@ -152,6 +163,87 @@ namespace DUIP
                 yield return this.GetPartion(i, Math.Min(ChunkSize, size));
                 size -= ChunkSize;
                 i += ChunkSize;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Specifies a region in data.
+    /// </summary>
+    public struct DataRegion
+    {
+        public DataRegion(long Start, long Size)
+        {
+            this.Start = Start;
+            this.Size = Size;
+        }
+
+        /// <summary>
+        /// A data region that covers the entirety of any data it is applied to.
+        /// </summary>
+        public static readonly DataRegion Full = new DataRegion
+        {
+            Start = 0,
+            Size = long.MaxValue
+        };
+
+        /// <summary>
+        /// Writes a region to a stream.
+        /// </summary>
+        public static void Write(ref DataRegion Region, OutStream Stream)
+        {
+            Stream.WriteLong(Region.Start);
+            Stream.WriteLong(Region.Size);
+        }
+
+        /// <summary>
+        /// Reads a region from a stream.
+        /// </summary>
+        public static DataRegion Read(InStream Stream)
+        {
+            return new DataRegion
+            {
+                Start = Stream.ReadLong(),
+                Size = Stream.ReadLong()
+            };
+        }
+
+        /// <summary>
+        /// The position of the first byte in the region.
+        /// </summary>
+        public long Start;
+
+        /// <summary>
+        /// The maximum size of the region.
+        /// </summary>
+        public long Size;
+    }
+
+    /// <summary>
+    /// Data with 0 bytes.
+    /// </summary>
+    public class NullData : Data
+    {
+        private NullData()
+        {
+
+        }
+
+        /// <summary>
+        /// The only instance of this class.
+        /// </summary>
+        public static readonly NullData Instance = new NullData();
+
+        public override Disposable<InStream> Read(long Start)
+        {
+            return null;
+        }
+
+        public override long Size
+        {
+            get
+            {
+                return 0;
             }
         }
     }

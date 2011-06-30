@@ -70,6 +70,7 @@ namespace DUIP
                 peer.Send(new DataRequestMessage
                 {
                     Index = new ID(1, 2, 3, 4),
+                    Region = DataRegion.Full,
                     Bounty = new Bounty(49.0, 0.9)
                 });
             });
