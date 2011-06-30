@@ -63,6 +63,14 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Gets data from a buffer.
+        /// </summary>
+        public static PartionData FromBuffer(byte[] Buffer, long Offset, long Size)
+        {
+            return new PartionData(new BufferData(Buffer), Offset, Size);
+        }
+
+        /// <summary>
         /// Gets if the two data are equivalent in content.
         /// </summary>
         public static bool Equal(Data A, Data B)

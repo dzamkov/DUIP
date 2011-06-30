@@ -231,7 +231,7 @@ namespace DUIP.Net
                             BufferOutStream bos = new BufferOutStream(settings.SendBuffer, 0);
                             bos.WriteByte((byte)PacketFlags.ConnectionRequest);
                             bos.WriteInt(cr.AcknowledgementNumber);
-                            this._UDP.Send(e, bos.Buffer, (int)bos.Position);
+                            this._UDP.Send(e, DUIP.Data.FromBuffer(bos.Buffer, 0, bos.Position));
 
                             cr.Delay += reqrate;
                         }
@@ -250,8 +250,10 @@ namespace DUIP.Net
 
         }
 
-        private void _Receive(IPEndPoint From, byte[] Packet)
+        private void _Receive(IPEndPoint From, Temporary<Data> Data)
         {
+            Data data = Data;
+            int size = (int)data.Size;
             UDPHubSettings settings = this._Settings;
 
             // Find the peer that sent this message
@@ -262,58 +264,61 @@ namespace DUIP.Net
             }
 
             // See if this packet is a connection request, or a response to one
-            if (Packet.Length >= 5)
+            if (size >= 5)
             {
-                BufferInStream bis = new BufferInStream(Packet, 0);
-                PacketFlags flags = (PacketFlags)bis.ReadByte();
-                if (flags == PacketFlags.ConnectionRequest && Packet.Length == 5)
+                using (Disposable<InStream> dstr = data.Read())
                 {
-                    int seq = bis.ReadInt();
-
-                    if (_ShouldConnect(From))
+                    InStream str = dstr;
+                    PacketFlags flags = (PacketFlags)str.ReadByte();
+                    if (flags == PacketFlags.ConnectionRequest && size == 5)
                     {
-                        int ack = settings.Random.Integer();
+                        int seq = str.ReadInt();
 
-                        peer = new UDPPeer(this, From, seq, ack);
-                        if (this.Accept != null)
+                        if (_ShouldConnect(From))
                         {
-                            this.Accept(peer);
+                            int ack = settings.Random.Integer();
+
+                            peer = new UDPPeer(this, From, seq, ack);
+                            if (this.Accept != null)
+                            {
+                                this.Accept(peer);
+                            }
+
+                            BufferOutStream bos = new BufferOutStream(settings.SendBuffer, 0);
+                            bos.WriteByte((byte)PacketFlags.ConnectionAccept);
+                            bos.WriteInt(seq);
+                            bos.WriteInt(ack); 
+                            this._UDP.Send(From, DUIP.Data.FromBuffer(bos.Buffer, 0, bos.Position));
                         }
+                        else
+                        {
+                            BufferOutStream bos = new BufferOutStream(settings.SendBuffer, 0);
+                            bos.WriteByte((byte)PacketFlags.ConnectionRefuse);
+                            bos.WriteInt(seq);
+                            this._UDP.Send(From, DUIP.Data.FromBuffer(bos.Buffer, 0, bos.Position));
+                        }
+                    }
 
-                        BufferOutStream bos = new BufferOutStream(settings.SendBuffer, 0);
-                        bos.WriteByte((byte)PacketFlags.ConnectionAccept);
-                        bos.WriteInt(seq);
-                        bos.WriteInt(ack);
-                        this._UDP.Send(From, bos.Buffer, (int)bos.Position);
-                    }
-                    else
+                    _ConnectionRequest cr;
+                    if (flags == PacketFlags.ConnectionAccept && size == 9 && this._ConnectionRequests.TryGetValue(From, out cr))
                     {
-                        BufferOutStream bos = new BufferOutStream(settings.SendBuffer, 0);
-                        bos.WriteByte((byte)PacketFlags.ConnectionRefuse);
-                        bos.WriteInt(seq);
-                        this._UDP.Send(From, bos.Buffer, (int)bos.Position);
+                        int ack = str.ReadInt();
+                        int seq = str.ReadInt();
+                        if (ack == cr.AcknowledgementNumber)
+                        {
+                            peer = new UDPPeer(this, From, seq, ack);
+                            cr.Query.Complete(peer);
+                            this._ConnectionRequests.Remove(From);
+                        }
                     }
-                }
-
-                _ConnectionRequest cr;
-                if (flags == PacketFlags.ConnectionAccept && Packet.Length == 9 && this._ConnectionRequests.TryGetValue(From, out cr))
-                {
-                    int ack = bis.ReadInt();
-                    int seq = bis.ReadInt();
-                    if (ack == cr.AcknowledgementNumber)
+                    if (flags == PacketFlags.ConnectionRefuse && size == 5 && this._ConnectionRequests.TryGetValue(From, out cr))
                     {
-                        peer = new UDPPeer(this, From, seq, ack);
-                        cr.Query.Complete(peer);
-                        this._ConnectionRequests.Remove(From);
-                    }
-                }
-                if (flags == PacketFlags.ConnectionRefuse && Packet.Length == 5 && this._ConnectionRequests.TryGetValue(From, out cr))
-                {
-                    int ack = bis.ReadInt();
-                    if (ack == cr.AcknowledgementNumber)
-                    {
-                        cr.Query.Cancel();
-                        this._ConnectionRequests.Remove(From);
+                        int ack = str.ReadInt();
+                        if (ack == cr.AcknowledgementNumber)
+                        {
+                            cr.Query.Cancel();
+                            this._ConnectionRequests.Remove(From);
+                        }
                     }
                 }
             }

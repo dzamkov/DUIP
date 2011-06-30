@@ -6,7 +6,8 @@ namespace DUIP
 {
     /// <summary>
     /// An object with a requirement to be disposed when no longer needed. If this structure is given as a result of
-    /// a method, it is assumed that the caller will be responsible for the management of the object.
+    /// a method, it is assumed that the caller will be responsible for the management of the object. If given as an argument,
+    /// the object will need to be disposed in the method.
     /// </summary>
     public struct Disposable<T> : IDisposable
     {

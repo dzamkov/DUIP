@@ -104,6 +104,7 @@
     <Compile Include="Util\Reflection.cs" />
     <Compile Include="Util\Registry.cs" />
     <Compile Include="Util\Relation.cs" />
+    <Compile Include="Util\Temporary.cs" />
     <Compile Include="Util\Void.cs" />
     <Compile Include="Util\ID.cs" />
     <Compile Include="Memory\Allocator\Allocator.cs" />
