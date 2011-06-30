@@ -16,7 +16,6 @@ namespace DUIP.Net
             this._LastSequenceNumber = AcknowledgementNumber;
             this._InTerminal = new InTerminal(AcknowledgementNumber);
             this._OutTerminal = new OutTerminal(SequenceNumber);
-            this._CompleteChunks = new LinkedList<int>();
             this._Hub = Hub;
         }
 
@@ -66,16 +65,19 @@ namespace DUIP.Net
 
         public override void Send(Message Message)
         {
-            using (Disposable<OutStream> str = this._OutTerminal.Send(this._Hub.Settings.ChunkSize))
+            lock (this) // Prevents two send streams from being open at the same time
             {
-                Message.Write(Message, str);
+                using (Disposable<OutStream> str = this._OutTerminal.Send(this._Hub.Settings.ChunkSize))
+                {
+                    Message.Write(Message, str);
+                }
             }
         }
 
         /// <summary>
         /// Processes a chunk of a message sent from this peer.
         /// </summary>
-        public void Process(int SequenceNumber, byte[] Chunk, bool Initial, bool Final)
+        private void _Process(int SequenceNumber, byte[] Chunk, bool Initial, bool Final)
         {
             if (_After(SequenceNumber, this._LastSequenceNumber))
             {
@@ -102,7 +104,7 @@ namespace DUIP.Net
         /// <summary>
         /// Determines wether a packet with the given sequence number is likely to be valid (authentic).
         /// </summary>
-        public bool Valid(int SequenceNumber)
+        private bool _Valid(int SequenceNumber)
         {
             return
                 _After(SequenceNumber, this._InTerminal.AcknowledgementNumber) &&
@@ -123,12 +125,147 @@ namespace DUIP.Net
             return A >= B || A < (B ^ int.MinValue);
         }
 
+        /// <summary>
+        /// Called when this peer is disconnected, either explicitly (disconnect packet) or implicitly.
+        /// </summary>
+        internal void _Disconnect()
+        {
+            if (this.Disconnect != null)
+            {
+                this.Disconnect(this);
+            }
+        }
+
+        /// <summary>
+        /// Creates a chunk packet to be sent to this peer.
+        /// </summary>
+        internal void _ConstructChunk(int SequenceNumber, byte[] Data, bool Initial, bool Final, OutStream Stream)
+        {
+            PacketFlags flags = PacketFlags.Chunk;
+            if (Initial) flags |= PacketFlags.ChunkInitial;
+            if (Final) flags |= PacketFlags.ChunkFinal;
+
+            Stream.WriteByte((byte)flags);
+            Stream.WriteInt(SequenceNumber);
+
+            Stream.Write(Data, 0, Data.Length);
+        }
+
+        /// <summary>
+        /// Creates a keep alive packet to be sent to this peer.
+        /// </summary>
+        internal void _ConstructKeepAlive(OutStream Stream)
+        {
+
+        }
+
+        /// <summary>
+        /// Updates the state of the peer and sends packets if needed.
+        /// </summary>
+        internal void _Update(UDPHubSettings Settings, UDP UDP, double Time, out bool Remove)
+        {
+            // Send chunk packet if possible
+            this._SendDelay -= Time;
+            while (this._SendDelay <= 0.0)
+            {
+                byte[] chunkdata = null;
+                bool chunkinitial = false;
+                bool chunkfinal = false;
+                int chunksequencenumber = 0;
+                if (this.OutTerminal.Process(ref chunksequencenumber, ref chunkdata, ref chunkinitial, ref chunkfinal))
+                {
+                    BufferOutStream bos = new BufferOutStream(Settings.SendBuffer, 0);
+                    this._ConstructChunk(chunksequencenumber, chunkdata, chunkinitial, chunkfinal, bos);
+                    UDP.Send(this.EndPoint, DUIP.Data.FromBuffer(bos.Buffer, 0, bos.Position));
+                    this._SendDelay += this._SendRate;
+                    this._KeepAliveDelay = Settings.KeepAliveRate;
+                }
+                else
+                {
+                    this._SendDelay = 0.0;
+                    break;
+                }
+            }
+
+            // Send keep alive if needed
+            this._KeepAliveDelay -= Time;
+            if (this._KeepAliveDelay <= 0.0)
+            {
+                BufferOutStream bos = new BufferOutStream(Settings.SendBuffer, 0);
+                this._ConstructKeepAlive(bos);
+                UDP.Send(this.EndPoint, DUIP.Data.FromBuffer(bos.Buffer, 0, bos.Position));
+                this._KeepAliveDelay = Settings.KeepAliveRate;
+            }
+
+            // Check for implicit disconnect
+            Remove = false;
+            this._ExpireDelay -= Time;
+            if (this._ExpireDelay <= 0.0)
+            {
+                this._Disconnect();
+                Remove = true;
+            }
+        }
+
+        /// <summary>
+        /// Called when an (unvalidated) packet is received for this peer.
+        /// </summary>
+        internal void _Receive(UDPHubSettings Settings, InStream Stream, int Size, out bool Remove)
+        {
+            int rsize = Size;
+            Remove = false;
+
+            // Check for minimal header containing flags and sequence number (for validation)
+            if ((rsize -= 5) < 0) return;
+            PacketFlags flags = (PacketFlags)Stream.ReadByte();
+            int seqnum = Stream.ReadInt();
+
+            // Validate
+            if (this._Valid(seqnum))
+            {
+                this._ExpireDelay = Settings.ExpireDelay;
+
+                // Process chunk if any received
+                if ((flags & PacketFlags.Chunk) == PacketFlags.Chunk)
+                {
+                    byte[] chunk = new byte[rsize];
+                    Stream.Read(chunk, 0, chunk.Length);
+                    this._Process(seqnum, chunk, (flags & PacketFlags.ChunkInitial) == PacketFlags.ChunkInitial, (flags & PacketFlags.ChunkFinal) == PacketFlags.ChunkFinal);
+                }
+            }
+        }
+
         public override event Action<Peer, Message> Receive;
+        public override event Action<Peer> Disconnect;
+
+        /// <summary>
+        /// The amount of time until a keep alive packet should be sent if no other packets are sent.
+        /// </summary>
+        internal double _KeepAliveDelay;
+
+        /// <summary>
+        /// The amount of time until the peer is considered disconnected unless a packet is received.
+        /// </summary>
+        internal double _ExpireDelay;
+
+        /// <summary>
+        /// The amount of time until a chunk packet should be sent.
+        /// </summary>
+        internal double _SendDelay;
+
+        /// <summary>
+        /// The current amount of time between chunk packets.
+        /// </summary>
+        internal double _SendRate;
+
+        /// <summary>
+        /// An estimate of the current round trip time for packets sent to this peer.
+        /// </summary>
+        internal double _RoundTripTime;
 
         private IPEndPoint _EndPoint;
         private InTerminal _InTerminal;
         private OutTerminal _OutTerminal;
-        private LinkedList<int> _CompleteChunks;
         private int _LastSequenceNumber;
         private UDPHub _Hub;
     }
@@ -209,9 +346,16 @@ namespace DUIP.Net
         /// </summary>
         public void Update(double Time)
         {
-            UDPHubSettings settings = this._Settings;
+            this._UpdateConnectionRequests(Time);
+            this._UpdatePeers(Time);
+        }
 
-            // Handle outgoing connection requests, if any
+        /// <summary>
+        /// Updates the state of outgoing connection requests for this hub.
+        /// </summary>
+        private void _UpdateConnectionRequests(double Time)
+        {
+            UDPHubSettings settings = this.Settings;
             if (this._ConnectionRequests.Count > 0)
             {
                 List<IPEndPoint> toremove = new List<IPEndPoint>();
@@ -228,6 +372,7 @@ namespace DUIP.Net
                         cr.Delay -= Time;
                         while (cr.Delay <= 0.0)
                         {
+                            // Send request packet
                             BufferOutStream bos = new BufferOutStream(settings.SendBuffer, 0);
                             bos.WriteByte((byte)PacketFlags.ConnectionRequest);
                             bos.WriteInt(cr.AcknowledgementNumber);
@@ -247,7 +392,28 @@ namespace DUIP.Net
                     this._ConnectionRequests.Remove(r);
                 }
             }
+        }
 
+        /// <summary>
+        /// Updates the peers for this hub.
+        /// </summary>
+        private void _UpdatePeers(double Time)
+        {
+            UDPHubSettings settings = this.Settings;
+            List<IPEndPoint> toremove = new List<IPEndPoint>();
+            foreach (UDPPeer peer in this._Peers.Values)
+            {
+                bool remove;
+                peer._Update(settings, this._UDP, Time, out remove);
+                if (remove)
+                {
+                    toremove.Add(peer.EndPoint);
+                }
+            }
+            foreach (IPEndPoint r in toremove)
+            {
+                this._Peers.Remove(r);
+            }
         }
 
         private void _Receive(IPEndPoint From, Temporary<Data> Data)
@@ -260,7 +426,15 @@ namespace DUIP.Net
             UDPPeer peer;
             if (this._Peers.TryGetValue(From, out peer))
             {
-                throw new NotImplementedException();
+                bool remove;
+                using (Disposable<InStream> str = data.Read())
+                {
+                    peer._Receive(settings, str, size, out remove);
+                }
+                if (remove)
+                {
+                    this._Peers.Remove(From);
+                }
             }
 
             // See if this packet is a connection request, or a response to one
@@ -272,13 +446,22 @@ namespace DUIP.Net
                     PacketFlags flags = (PacketFlags)str.ReadByte();
                     if (flags == PacketFlags.ConnectionRequest && size == 5)
                     {
+                        // Connection requested
                         int seq = str.ReadInt();
 
                         if (_ShouldConnect(From))
                         {
                             int ack = settings.Random.Integer();
 
-                            peer = new UDPPeer(this, From, seq, ack);
+                            this._Peers[From] = peer = new UDPPeer(this, From, seq, ack)
+                            {
+                                _ExpireDelay = settings.InitialExpireDelay,
+                                _KeepAliveDelay = settings.KeepAliveRate,
+                                _RoundTripTime = settings.InitialRoundTripTime,
+                                _SendRate = settings.InitialSendRate,
+                                _SendDelay = 0.0
+                            };
+
                             if (this.Accept != null)
                             {
                                 this.Accept(peer);
@@ -302,17 +485,27 @@ namespace DUIP.Net
                     _ConnectionRequest cr;
                     if (flags == PacketFlags.ConnectionAccept && size == 9 && this._ConnectionRequests.TryGetValue(From, out cr))
                     {
+                        // Connection accepted by peer
                         int ack = str.ReadInt();
                         int seq = str.ReadInt();
                         if (ack == cr.AcknowledgementNumber)
                         {
-                            peer = new UDPPeer(this, From, seq, ack);
+                            this._Peers[From] = peer = new UDPPeer(this, From, seq, ack)
+                            {
+                                _ExpireDelay = settings.ExpireDelay,
+                                _KeepAliveDelay = 0.0,
+                                _RoundTripTime = cr.Time,
+                                _SendRate = settings.InitialSendRate,
+                                _SendDelay = 0.0
+                            };
+
                             cr.Query.Complete(peer);
                             this._ConnectionRequests.Remove(From);
                         }
                     }
                     if (flags == PacketFlags.ConnectionRefuse && size == 5 && this._ConnectionRequests.TryGetValue(From, out cr))
                     {
+                        // Connection explicitly refused by peer
                         int ack = str.ReadInt();
                         if (ack == cr.AcknowledgementNumber)
                         {
@@ -390,6 +583,33 @@ namespace DUIP.Net
         /// The amount of time, in seconds, between the sending of connection request packets.
         /// </summary>
         public double ConnectionRequestRate = 1.0;
+
+        /// <summary>
+        /// The amount of time, in seconds, for a newly connected peer to be considered disconnected if no packets
+        /// are received.
+        /// </summary>
+        public double InitialExpireDelay = 3.0;
+
+        /// <summary>
+        /// The maximum amount of time, in seconds, a connected peer may remain connected if no packets
+        /// are received.
+        /// </summary>
+        public double ExpireDelay = 25.0;
+
+        /// <summary>
+        /// The maximum amount of time, in seconds, between packets sent by the hub to any given peer.
+        /// </summary>
+        public double KeepAliveRate = 10.0;
+
+        /// <summary>
+        /// The amount of time, in seconds, between the sending of data packets of to a newly connected peer.
+        /// </summary>
+        public double InitialSendRate = 0.1;
+
+        /// <summary>
+        /// The initial estimate of the round trip time between peers before it is explicitly tested or given.
+        /// </summary>
+        public double InitialRoundTripTime = 0.1;
 
         /// <summary>
         /// The buffer used to construct packets for sending.

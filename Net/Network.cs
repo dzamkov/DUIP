@@ -12,26 +12,4 @@ namespace DUIP.Net
     {
 
     }
-
-    /// <summary>
-    /// Represents a connected peer that can send and receive network messages.
-    /// </summary>
-    public abstract class Peer
-    {
-        /// <summary>
-        /// The favor of the peer, which acts as an estimate of the ability of the peer to respond to queries while maintaining
-        /// (and requesting) a low level of network traffic.
-        /// </summary>
-        public double Favor;
-
-        /// <summary>
-        /// Sends a network message to this peer.
-        /// </summary>
-        public abstract void Send(Message Message);
-
-        /// <summary>
-        /// Event fired when a message is received from this peer.
-        /// </summary>
-        public abstract event Action<Peer, Message> Receive;
-    }
 }

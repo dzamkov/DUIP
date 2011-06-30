@@ -149,6 +149,7 @@ namespace DUIP.Net
             }
 
             // Check if a full message can be formed
+            this._Chunks[SequenceNumber] = chunk;
             if (first.Initial && last.Final)
             {
                 Message = new _ReceiveStream(firstsq, remove, this);
@@ -316,7 +317,7 @@ namespace DUIP.Net
         }
 
         /// <summary>
-        /// Gives a stream that allows the sending of a message from this terminal. The stream must be disposed before the terminal can be accessed again.
+        /// Gives a stream that allows the sending of a message from this terminal. Only one such send stream may be open at a time.
         /// </summary>
         /// <param name="ChunkSize">The maximum size of the chunks to break the message into.</param>
         public Disposable<OutStream> Send(int ChunkSize)
@@ -333,7 +334,11 @@ namespace DUIP.Net
             {
                 this._ChunkSize = ChunkSize;
                 this._Terminal = Terminal;
-                this._AppendChunk(true);
+                this._Current = new _Chunk
+                {
+                    Data = new byte[ChunkSize],
+                    Initial = true
+                };
             }
 
 
@@ -342,28 +347,23 @@ namespace DUIP.Net
                 byte[] data;
                 while ((data = this._Current.Data).Length - this._Offset < 1)
                 {
-                    this._AppendChunk(false);
+                    this._NextChunk();
                 }
                 data[this._Offset] = Data;
                 this._Offset++;
             }
 
             /// <summary>
-            /// Adds a new chunk to the stream.
+            /// Adds the current chunk to the terminal and starts a new chunk.
             /// </summary>
-            private void _AppendChunk(bool Initial)
+            private void _NextChunk()
             {
-                _Chunk chunk = new _Chunk 
-                { 
-                    Data = new byte[this._ChunkSize],
-                    Initial = Initial
+                this._Terminal._Push(this._Current);
+                this._Current = new _Chunk()
+                {
+                    Data = new byte[this._ChunkSize]
                 };
-                this._Current = chunk;
-                this._Terminal._Chunks.AddLast(chunk);
-                this._Terminal._SequenceNumber++;
-                this._Offset = 0;
             }
-
             public void Dispose()
             {
                 // Remove extra data
@@ -373,9 +373,13 @@ namespace DUIP.Net
                 {
                     ndata[t] = sdata[t];
                 }
+                this._Current.Data = ndata;
 
                 // Set the current chunk as final
                 this._Current.Final = true;
+
+                // Final push
+                this._Terminal._Push(this._Current);
             }
 
             private int _ChunkSize;
@@ -385,9 +389,26 @@ namespace DUIP.Net
         }
 
         /// <summary>
+        /// Appends a new chunk to this terminal.
+        /// </summary>
+        private void _Push(_Chunk Chunk)
+        {
+            lock (this)
+            {
+                LinkedListNode<_Chunk> node = this._Chunks.AddLast(Chunk);
+                if (this._SendNode == null)
+                {
+                    this._SendNode = node;
+                    this._SendNumber = this._SequenceNumber;
+                }
+                this._SequenceNumber++;
+            }
+        }
+
+        /// <summary>
         /// Gets the next chunk to be sent by this terminal, or returns false if there are no more chunks to send.
         /// </summary>
-        public bool Process(ref byte[] Data, ref bool Initial, ref bool Final)
+        public bool Process(ref int SequenceNumber, ref byte[] Data, ref bool Initial, ref bool Final)
         {
             if (this._SendNode == null)
             {
@@ -395,12 +416,16 @@ namespace DUIP.Net
             }
             else
             {
-                _Chunk chunk = this._SendNode.Value;
-                this._SendNode = this._SendNode.Next;
-                Data = chunk.Data;
-                Initial = chunk.Initial;
-                Final = chunk.Final;
-                return true;
+                lock (this)
+                {
+                    _Chunk chunk = this._SendNode.Value;
+                    this._SendNode = this._SendNode.Next;
+                    SequenceNumber = this._SendNumber++;
+                    Data = chunk.Data;
+                    Initial = chunk.Initial;
+                    Final = chunk.Final;
+                    return true;
+                }
             }
         }
 
@@ -409,6 +434,7 @@ namespace DUIP.Net
         /// </summary>
         public void Reset(int SequenceNumber)
         {
+            this._SendNumber = SequenceNumber;
             int off = SequenceNumber - this._AcknowledgementNumber;
             this._SendNode = this._Chunks.First;
             while (off-- > 0 && this._SendNode != null)
@@ -440,6 +466,7 @@ namespace DUIP.Net
 
         private int _AcknowledgementNumber;
         private int _SequenceNumber;
+        private int _SendNumber;
         private LinkedListNode<_Chunk> _SendNode;
         private LinkedList<_Chunk> _Chunks;
     }

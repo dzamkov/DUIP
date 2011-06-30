@@ -53,6 +53,7 @@
     <Compile Include="Memory\Map.cs" />
     <Compile Include="Net\Message.cs" />
     <Compile Include="Net\Packet.cs" />
+    <Compile Include="Net\Peer.cs" />
     <Compile Include="Net\UDPPeer.cs" />
     <Compile Include="UI\Ambience\Ambience.cs" />
     <Compile Include="UI\Block\Grid.cs" />
