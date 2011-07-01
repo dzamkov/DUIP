@@ -64,7 +64,7 @@ namespace DUIP.Net
         /// <summary>
         /// The packet is a response to a ping request.
         /// </summary>
-        PingRespose = 0x40,
+        PingResponse = 0x40,
 
         /// <summary>
         /// The packet contains the current estimate for the round trip time for the connection.
@@ -73,11 +73,151 @@ namespace DUIP.Net
     }
 
     /// <summary>
-    /// Contains functions that allow the processing and creation of packets.
+    /// Information about the contents of a packet.
     /// </summary>
-    public static class Packet
+    public class Packet
     {
+        /// <summary>
+        /// Writes a packet to a stream.
+        /// </summary>
+        public static void Write(Packet Packet, OutStream Stream)
+        {
+            // Build flags and header
+            PacketFlags flags = PacketFlags.Empty;
+            if (Packet.AcknowledgementNumber.HasValue)
+                flags |= PacketFlags.Acknowledgement;
+            if (Packet.RoundTripTime.HasValue)
+                flags |= PacketFlags.RoundTripTime;
+            if (Packet.ChunkData != null)
+            {
+                flags |= PacketFlags.Chunk;
+                if (Packet.ChunkInitial)
+                    flags |= PacketFlags.ChunkInitial;
+                if (Packet.ChunkFinal)
+                    flags |= PacketFlags.ChunkFinal;
+            }
+            if (Packet.PingRequest)
+                flags |= PacketFlags.PingRequest;
+            if (Packet.PingResponse)
+                flags |= PacketFlags.PingResponse;
+            if (Packet.Disconnect)
+                flags |= PacketFlags.Disconnect;
+            Stream.WriteByte((byte)flags);
+            Stream.WriteInt(Packet.SequenceNumber);
+            
+            // Additional information
+            int ack;
+            if (Packet.AcknowledgementNumber.TryGetValue(out ack))
+                Stream.WriteInt(ack);
 
+            double rtt;
+            if (Packet.RoundTripTime.TryGetValue(out rtt))
+                Stream.WriteDouble(rtt);
+
+            // Chunk
+            if (Packet.ChunkData != null)
+                Stream.Write(Packet.ChunkData, 0, Packet.ChunkData.Length);
+        }
+
+        /// <summary>
+        /// Reads a packet from a stream with the given size in bytes or returns null if the packet cannot be parsed.
+        /// </summary>
+        public static Packet Read(InStream Stream, int Size)
+        {
+            Packet packet = new Packet();
+
+            // Read flags and header
+            if ((Size -= StreamSize.Byte + StreamSize.Int) < 0)
+                return null;
+            PacketFlags flags = (PacketFlags)Stream.ReadByte();
+            packet.SequenceNumber = Stream.ReadInt();
+            packet.PingRequest = (flags & PacketFlags.PingRequest) == PacketFlags.PingRequest;
+            packet.PingResponse = (flags & PacketFlags.PingResponse) == PacketFlags.PingResponse;
+
+            // Read additional information
+            if ((flags & PacketFlags.Acknowledgement) == PacketFlags.Acknowledgement)
+            {
+                if ((Size -= StreamSize.Int) < 0)
+                    return null;
+                packet.AcknowledgementNumber = Stream.ReadInt();
+            }
+            if ((flags & PacketFlags.RoundTripTime) == PacketFlags.RoundTripTime)
+            {
+                if ((Size -= StreamSize.Double) < 0)
+                    return null;
+                packet.RoundTripTime = Stream.ReadDouble();
+            }
+
+            // Read chunk if any
+            if ((flags & PacketFlags.Chunk) == PacketFlags.Chunk)
+            {
+                packet.ChunkInitial = (flags & PacketFlags.ChunkInitial) == PacketFlags.ChunkInitial;
+                packet.ChunkFinal = (flags & PacketFlags.ChunkFinal) == PacketFlags.ChunkFinal;
+
+                byte[] data = new byte[Size];
+                Stream.Read(data, 0, data.Length);
+                packet.ChunkData = data;
+
+                return packet;
+            }
+            else
+            {
+                // A packet can only be a disconnect if it does not have a chunk
+                packet.Disconnect = (flags & PacketFlags.Disconnect) == PacketFlags.Disconnect;
+
+                // Make sure this is the end of the packet
+                if (Size == 0)
+                    return packet;
+                else
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// The sequence number for the packet. If the packet contains a chunk, then this is the sequence number for that chunk. If there is no
+        /// chunk data, this number is used to validate the packet.
+        /// </summary>
+        public int SequenceNumber;
+
+        /// <summary>
+        /// An optional acknowledgement number that gives the sequence number of the next chunk expected from the receiver of the packet.
+        /// </summary>
+        public Maybe<int> AcknowledgementNumber;
+
+        /// <summary>
+        /// An optional field given an estimate of the round trip time of communication channel.
+        /// </summary>
+        public Maybe<double> RoundTripTime;
+
+        /// <summary>
+        /// Data for the chunk included with the packet, or null if the packet does not contain a chunk.
+        /// </summary>
+        public byte[] ChunkData;
+
+        /// <summary>
+        /// Indicates wether the chunk for this packet is the initial one in a message.
+        /// </summary>
+        public bool ChunkInitial;
+
+        /// <summary>
+        /// Indicates wether the chunk for this packet is the final one in a message.
+        /// </summary>
+        public bool ChunkFinal;
+
+        /// <summary>
+        /// Indicates wether this packet is a ping request.
+        /// </summary>
+        public bool PingRequest;
+
+        /// <summary>
+        /// Indicates wether this packet is a ping response.
+        /// </summary>
+        public bool PingResponse;
+
+        /// <summary>
+        /// Indicates wether this packet signals a disconnect.
+        /// </summary>
+        public bool Disconnect;
     }
 
     /// <summary>
