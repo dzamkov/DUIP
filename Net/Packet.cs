@@ -11,6 +11,11 @@ namespace DUIP.Net
     public enum PacketFlags : byte
     {
         /// <summary>
+        /// The packet has no explicit contents.
+        /// </summary>
+        Empty = 0x00,
+
+        /// <summary>
         /// The packet contains part of a message.
         /// </summary>
         Chunk = 0x01,
@@ -49,6 +54,22 @@ namespace DUIP.Net
         /// The packet contains an acknowledgement number.
         /// </summary>
         Acknowledgement = 0x10,
+
+        /// <summary>
+        /// The packet contains a ping request. Once received, a packet with a PingResponse flag should be sent
+        /// immediately (or not at all).
+        /// </summary>
+        PingRequest = 0x20,
+
+        /// <summary>
+        /// The packet is a response to a ping request.
+        /// </summary>
+        PingRespose = 0x40,
+
+        /// <summary>
+        /// The packet contains the current estimate for the round trip time for the connection.
+        /// </summary>
+        RoundTripTime = 0x80,
     }
 
     /// <summary>
@@ -309,9 +330,15 @@ namespace DUIP.Net
             }
             set
             {
-                while (this._AcknowledgementNumber++ != value)
+                LinkedListNode<_Chunk> node;
+                while (this._AcknowledgementNumber != value && (node = this._Chunks.First) != null)
                 {
+                    if (node == this._SendNode)
+                    {
+                        this._SendNode = null;
+                    }
                     this._Chunks.RemoveFirst();
+                    this._AcknowledgementNumber++;
                 }
             }
         }

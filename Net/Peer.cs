@@ -22,6 +22,12 @@ namespace DUIP.Net
         public abstract void Send(Message Message);
 
         /// <summary>
+        /// Gets the average amount of time, in seconds, it would take for messages to be sent both ways, to and
+        /// from this peer.
+        /// </summary>
+        public abstract double RoundTripTime { get; }
+
+        /// <summary>
         /// Event fired when a message is received from this peer.
         /// </summary>
         public abstract event Action<Peer, Message> Receive;

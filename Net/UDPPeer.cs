@@ -74,6 +74,14 @@ namespace DUIP.Net
             }
         }
 
+        public override double RoundTripTime
+        {
+            get
+            {
+                return this._RoundTripTime;
+            }
+        }
+
         /// <summary>
         /// Processes a chunk of a message sent from this peer.
         /// </summary>
@@ -139,24 +147,106 @@ namespace DUIP.Net
         /// <summary>
         /// Creates a chunk packet to be sent to this peer.
         /// </summary>
-        internal void _ConstructChunk(int SequenceNumber, byte[] Data, bool Initial, bool Final, OutStream Stream)
+        internal void _ConstructChunk(
+            PacketFlags AdditionalFlags, int SequenceNumber, byte[] Data, 
+            bool Initial, bool Final, OutStream Stream)
         {
             PacketFlags flags = PacketFlags.Chunk;
             if (Initial) flags |= PacketFlags.ChunkInitial;
             if (Final) flags |= PacketFlags.ChunkFinal;
+            flags |= AdditionalFlags;
 
+            // Header
             Stream.WriteByte((byte)flags);
             Stream.WriteInt(SequenceNumber);
 
+            // Additional information
+            this._WriteAdditional(flags, Stream);
+
+            // Data
             Stream.Write(Data, 0, Data.Length);
         }
 
         /// <summary>
         /// Creates a keep alive packet to be sent to this peer.
         /// </summary>
-        internal void _ConstructKeepAlive(OutStream Stream)
+        internal void _ConstructKeepAlive(PacketFlags AdditionalFlags, OutStream Stream)
         {
+            PacketFlags flags = PacketFlags.Empty;
+            flags |= AdditionalFlags;
 
+            // Header
+            Stream.WriteByte((byte)flags);
+            Stream.WriteInt(this._OutTerminal.SequenceNumber);
+
+            // Additional information
+            this._WriteAdditional(flags, Stream);
+        }
+
+        /// <summary>
+        /// Gets the flags for the additional information to be added to the next sent packet.
+        /// </summary>
+        private PacketFlags _AdditionalFlags
+        {
+            get
+            {
+                PacketFlags flags = PacketFlags.Empty;
+                flags |= PacketFlags.Acknowledgement;
+
+                if (this._ShouldSendRoundTripTime)
+                {
+                    flags |= PacketFlags.RoundTripTime;
+                    this._ShouldSendRoundTripTime = false;
+                }
+
+                return flags;
+            }
+        }
+
+        /// <summary>
+        /// Writes additional (supplimentary) packet information to the given stream.
+        /// </summary>
+        private void _WriteAdditional(PacketFlags Flags, OutStream Stream)
+        {
+            // Acknowledgement number
+            if ((Flags & PacketFlags.Acknowledgement) == PacketFlags.Acknowledgement)
+            {
+                Stream.WriteInt(this._InTerminal.AcknowledgementNumber);
+            }
+
+            // Round trip time
+            if ((Flags & PacketFlags.RoundTripTime) == PacketFlags.RoundTripTime)
+            {
+                Stream.WriteDouble(this._RoundTripTime);
+            }
+        }
+
+        /// <summary>
+        /// Reads additional packet information from the given stream.
+        /// </summary>
+        /// <param name="Size">The size of the remaining bytes in the stream.</param>
+        /// <returns>True if the information is valid, false otherwise.</returns>
+        private bool _ReadAdditional(PacketFlags Flags, InStream Stream, ref int Size)
+        {
+            // Acknowledgement number
+            if ((Flags & PacketFlags.Acknowledgement) == PacketFlags.Acknowledgement)
+            {
+                if ((Size -= StreamSize.Int) < 0)
+                    return false;
+                this._OutTerminal.AcknowledgementNumber = Stream.ReadInt();
+            }
+
+            // Round trip time
+            if ((Flags & PacketFlags.RoundTripTime) == PacketFlags.RoundTripTime)
+            {
+                // Assume that the peer is not lying, as it wouldn't be very helpful 
+                // to either of us
+                if ((Size -= StreamSize.Double) < 0)
+                    return false;
+                this._RoundTripTime = Stream.ReadDouble();
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -175,7 +265,7 @@ namespace DUIP.Net
                 if (this.OutTerminal.Process(ref chunksequencenumber, ref chunkdata, ref chunkinitial, ref chunkfinal))
                 {
                     BufferOutStream bos = new BufferOutStream(Settings.SendBuffer, 0);
-                    this._ConstructChunk(chunksequencenumber, chunkdata, chunkinitial, chunkfinal, bos);
+                    this._ConstructChunk(this._AdditionalFlags, chunksequencenumber, chunkdata, chunkinitial, chunkfinal, bos);
                     UDP.Send(this.EndPoint, DUIP.Data.FromBuffer(bos.Buffer, 0, bos.Position));
                     this._SendDelay += this._SendRate;
                     this._KeepAliveDelay = Settings.KeepAliveRate;
@@ -192,7 +282,7 @@ namespace DUIP.Net
             if (this._KeepAliveDelay <= 0.0)
             {
                 BufferOutStream bos = new BufferOutStream(Settings.SendBuffer, 0);
-                this._ConstructKeepAlive(bos);
+                this._ConstructKeepAlive(this._AdditionalFlags, bos);
                 UDP.Send(this.EndPoint, DUIP.Data.FromBuffer(bos.Buffer, 0, bos.Position));
                 this._KeepAliveDelay = Settings.KeepAliveRate;
             }
@@ -210,13 +300,13 @@ namespace DUIP.Net
         /// <summary>
         /// Called when an (unvalidated) packet is received for this peer.
         /// </summary>
-        internal void _Receive(UDPHubSettings Settings, InStream Stream, int Size, out bool Remove)
+        internal void _Receive(UDPHubSettings Settings, UDP UDP, InStream Stream, int Size, out bool Remove)
         {
             int rsize = Size;
             Remove = false;
 
             // Check for minimal header containing flags and sequence number (for validation)
-            if ((rsize -= 5) < 0) return;
+            if ((rsize -= StreamSize.Byte + StreamSize.Int) < 0) return;
             PacketFlags flags = (PacketFlags)Stream.ReadByte();
             int seqnum = Stream.ReadInt();
 
@@ -225,6 +315,18 @@ namespace DUIP.Net
             {
                 this._ExpireDelay = Settings.ExpireDelay;
 
+                // Disconnect?
+                if ((flags & PacketFlags.Disconnect) == PacketFlags.Disconnect)
+                {
+                    Remove = true;
+                    this._Disconnect();
+                    return;
+                }
+
+                // Process additional information
+                if (!this._ReadAdditional(flags, Stream, ref rsize))
+                    return;
+
                 // Process chunk if any received
                 if ((flags & PacketFlags.Chunk) == PacketFlags.Chunk)
                 {
@@ -232,7 +334,36 @@ namespace DUIP.Net
                     Stream.Read(chunk, 0, chunk.Length);
                     this._Process(seqnum, chunk, (flags & PacketFlags.ChunkInitial) == PacketFlags.ChunkInitial, (flags & PacketFlags.ChunkFinal) == PacketFlags.ChunkFinal);
                 }
+
+                // Ping request?
+                if ((flags & PacketFlags.PingRequest) == PacketFlags.PingRequest)
+                {
+                    this._SendPingResponse(Settings, UDP);
+                }
             }
+        }
+
+        /// <summary>
+        /// Immediately sends a ping response packet of some sort.
+        /// </summary>
+        private void _SendPingResponse(UDPHubSettings Settings, UDP UDP)
+        {
+            BufferOutStream bos = new BufferOutStream(Settings.SendBuffer, 0);
+            byte[] data = null;
+            bool initial = false;
+            bool final = false;
+            int sequencenumber = 0;
+            if (this.OutTerminal.Process(ref sequencenumber, ref data, ref initial, ref final))
+            {
+                this._ConstructChunk(this._AdditionalFlags | PacketFlags.PingRespose, sequencenumber, data, initial, final, bos);
+                this._SendDelay = this._SendRate;
+            }
+            else
+            {
+                this._ConstructKeepAlive(this._AdditionalFlags | PacketFlags.PingRespose, bos);
+            }
+            UDP.Send(this.EndPoint, DUIP.Data.FromBuffer(bos.Buffer, 0, bos.Position));
+            this._KeepAliveDelay = 0.0;
         }
 
         public override event Action<Peer, Message> Receive;
@@ -262,6 +393,11 @@ namespace DUIP.Net
         /// An estimate of the current round trip time for packets sent to this peer.
         /// </summary>
         internal double _RoundTripTime;
+
+        /// <summary>
+        /// Should the round trip time be sent with the next packet?
+        /// </summary>
+        internal bool _ShouldSendRoundTripTime;
 
         private IPEndPoint _EndPoint;
         private InTerminal _InTerminal;
@@ -429,7 +565,7 @@ namespace DUIP.Net
                 bool remove;
                 using (Disposable<InStream> str = data.Read())
                 {
-                    peer._Receive(settings, str, size, out remove);
+                    peer._Receive(settings, this._UDP, str, size, out remove);
                 }
                 if (remove)
                 {
@@ -458,6 +594,7 @@ namespace DUIP.Net
                                 _ExpireDelay = settings.InitialExpireDelay,
                                 _KeepAliveDelay = settings.KeepAliveRate,
                                 _RoundTripTime = settings.InitialRoundTripTime,
+                                _ShouldSendRoundTripTime = false,
                                 _SendRate = settings.InitialSendRate,
                                 _SendDelay = 0.0
                             };
@@ -495,6 +632,7 @@ namespace DUIP.Net
                                 _ExpireDelay = settings.ExpireDelay,
                                 _KeepAliveDelay = 0.0,
                                 _RoundTripTime = cr.Time,
+                                _ShouldSendRoundTripTime = true,
                                 _SendRate = settings.InitialSendRate,
                                 _SendDelay = 0.0
                             };

@@ -168,10 +168,11 @@ namespace DUIP
     /// </summary>
     public static class StreamSize
     {
-        public const long Bool = 1;
-        public const long Byte = 1;
-        public const long Int = 4;
-        public const long Long = 8;
+        public const int Bool = 1;
+        public const int Byte = 1;
+        public const int Int = 4;
+        public const int Long = 8;
+        public const int Double = 8;
     }
 
     /// <summary>
