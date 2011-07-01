@@ -327,7 +327,7 @@ namespace DUIP.Net
         /// <summary>
         /// A stream that reads assembled messages from a terminal.
         /// </summary>
-        private class _ReceiveStream : InStream
+        private class _ReceiveStream : InStream, IDisposable
         {
             public _ReceiveStream(int SequenceNumber, bool Remove, InTerminal Terminal)
             {
@@ -382,10 +382,14 @@ namespace DUIP.Net
                     {
                         current.Data = null;
                     }
-                    current = this._Chunks[++sq];
+
                     if (current.Final)
                     {
                         break;
+                    }
+                    else
+                    {
+                        current = this._Chunks[++sq];
                     }
                 }
             }
