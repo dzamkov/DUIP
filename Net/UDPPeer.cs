@@ -17,6 +17,8 @@ namespace DUIP.Net
             this._InTerminal = new InTerminal(AcknowledgementNumber);
             this._OutTerminal = new OutTerminal(SequenceNumber);
             this._Hub = Hub;
+
+            this._RequireAcknowledgementDelay = double.PositiveInfinity;
         }
 
         /// <summary>
@@ -85,7 +87,7 @@ namespace DUIP.Net
         /// <summary>
         /// Processes a chunk of a message sent from this peer.
         /// </summary>
-        private void _Process(int SequenceNumber, byte[] Chunk, bool Initial, bool Final)
+        private void _Process(UDPHubSettings Settings, int SequenceNumber, byte[] Chunk, bool Initial, bool Final)
         {
             if (_After(SequenceNumber, this._LastSequenceNumber))
             {
@@ -93,7 +95,8 @@ namespace DUIP.Net
             }
 
             Disposable<InStream> str = null;
-            if (this._InTerminal.Process(SequenceNumber, Chunk, Initial, Final, ref str))
+            bool acknowledged;
+            if (this._InTerminal.Process(SequenceNumber, Chunk, Initial, Final, out acknowledged, ref str))
             {
                 if (this.Receive != null)
                 {
@@ -106,6 +109,13 @@ namespace DUIP.Net
                 {
                     str.Dispose();
                 }
+            }
+
+            // Make sure an acknowledgement number is sent for a new chunk
+            this._ShouldSendAcknowledgement = true;
+            if (acknowledged)
+            {
+                this._KeepAliveDelay = Math.Min(this._KeepAliveDelay, Settings.AcknowledgementDelay);
             }
         }
 
@@ -130,7 +140,7 @@ namespace DUIP.Net
         /// </summary>
         private static bool _After(int A, int B)
         {
-            return A >= B || A < (B ^ int.MinValue);
+            return A - B >= 0;
         }
 
         /// <summary>
@@ -145,9 +155,9 @@ namespace DUIP.Net
         }
 
         /// <summary>
-        /// Constructs a packet for the given chunk.
+        /// Constructs a packet for the given chunk for immediate sending.
         /// </summary>
-        private Packet _ConstructChunk(int SequenceNumber, byte[] Data, bool Initial, bool Final)
+        private Packet _ConstructChunk(UDPHubSettings Settings, int SequenceNumber, byte[] Data, bool Initial, bool Final)
         {
             Packet packet = new Packet
             {
@@ -156,19 +166,34 @@ namespace DUIP.Net
                 ChunkInitial = Initial,
                 ChunkFinal = Final
             };
+
+            // If this is a new chunk, it needs to be acknowledged with RequiredAcknowledgementDelay
+            if (SequenceNumber == this._OutTerminal.AcknowledgementNumber)
+            {
+                this._RequireAcknowledgementDelay = Settings.RequireAcknowledgementDelay + this._RoundTripTime;
+            }
+
+            // Update send-related delays
+            this._SendDelay += this._SendRate;
+            this._KeepAliveDelay = Settings.KeepAliveRate;
+
             this._FillAdditional(packet);
             return packet;
         }
 
         /// <summary>
-        /// Construct a keep alive packet.
+        /// Construct a keep alive packet for immediate sending.
         /// </summary>
-        private Packet _ConstructKeepAlive()
+        private Packet _ConstructKeepAlive(UDPHubSettings Settings)
         {
             Packet packet = new Packet()
             {
                 SequenceNumber = this._OutTerminal.SequenceNumber
             };
+
+            // Update keep alive delay
+            this._KeepAliveDelay = Settings.KeepAliveRate;
+
             this._FillAdditional(packet);
             return packet;
         }
@@ -178,7 +203,12 @@ namespace DUIP.Net
         /// </summary>
         private void _FillAdditional(Packet Packet)
         {
-            Packet.AcknowledgementNumber = this.InTerminal.AcknowledgementNumber;
+            if (this._ShouldSendAcknowledgement)
+            {
+                this._ShouldSendAcknowledgement = false;
+                Packet.AcknowledgementNumber = this.InTerminal.AcknowledgementNumber;
+            }
+
             if (this._ShouldSendRoundTripTime)
             {
                 this._ShouldSendRoundTripTime = false;
@@ -191,6 +221,18 @@ namespace DUIP.Net
         /// </summary>
         internal void _Update(UDPHubSettings Settings, UDPHub Hub, double Time, out bool Remove)
         {
+            // Check if any acknowledgements are required
+            OutTerminal oterm = this._OutTerminal;
+            if (oterm.SequenceNumber != oterm.AcknowledgementNumber)
+            {
+                this._RequireAcknowledgementDelay -= Time;
+                if (this._RequireAcknowledgementDelay <= 0.0)
+                {
+                    this._RequireAcknowledgementDelay = double.PositiveInfinity;
+                    this._PacketLoss(Settings, oterm.AcknowledgementNumber);
+                }
+            }
+
             // Send chunk packet if possible
             this._SendDelay -= Time;
             while (this._SendDelay <= 0.0)
@@ -199,11 +241,9 @@ namespace DUIP.Net
                 byte[] chunkdata = null;
                 bool chunkinitial = false;
                 bool chunkfinal = false;
-                if (this.OutTerminal.Process(ref chunksequencenumber, ref chunkdata, ref chunkinitial, ref chunkfinal))
+                if (oterm.Process(ref chunksequencenumber, ref chunkdata, ref chunkinitial, ref chunkfinal))
                 {
-                    Hub.Send(this._ConstructChunk(chunksequencenumber, chunkdata, chunkinitial, chunkfinal), this.EndPoint);
-                    this._SendDelay += this._SendRate;
-                    this._KeepAliveDelay = Settings.KeepAliveRate;
+                    Hub.Send(this._ConstructChunk(Settings, chunksequencenumber, chunkdata, chunkinitial, chunkfinal), this.EndPoint);
                 }
                 else
                 {
@@ -216,8 +256,7 @@ namespace DUIP.Net
             this._KeepAliveDelay -= Time;
             if (this._KeepAliveDelay <= 0.0)
             {
-                Hub.Send(this._ConstructKeepAlive(), this.EndPoint);
-                this._KeepAliveDelay = Settings.KeepAliveRate;
+                Hub.Send(this._ConstructKeepAlive(Settings), this.EndPoint);
             }
 
             // Check for implicit disconnect
@@ -248,11 +287,14 @@ namespace DUIP.Net
                 return;
             }
 
+            // Reset expire delay
+            this._ExpireDelay = Settings.ExpireDelay;
+
             // Read additional information
             int ack;
             if (Packet.AcknowledgementNumber.TryGetValue(out ack))
             {
-                this._OutTerminal.AcknowledgementNumber = ack;
+                this._ReceiveAcknowledgement(Settings, ack);
             }
             double rtt;
             if (Packet.RoundTripTime.TryGetValue(out rtt))
@@ -263,20 +305,55 @@ namespace DUIP.Net
             // Chunk?
             if (Packet.ChunkData != null)
             {
-                this._Process(Packet.SequenceNumber, Packet.ChunkData, Packet.ChunkInitial, Packet.ChunkFinal);
+                this._Process(Settings, Packet.SequenceNumber, Packet.ChunkData, Packet.ChunkInitial, Packet.ChunkFinal);
             }
 
             // Ping?
             if (Packet.PingRequest)
             {
-                this._SendPingResponse(Hub);
+                this._SendPingResponse(Settings, Hub);
             }
+        }
+
+        /// <summary>
+        /// Called when an acknowledgement number is received.
+        /// </summary>
+        private void _ReceiveAcknowledgement(UDPHubSettings Settings, int AcknowledgementNumber)
+        {
+            OutTerminal term = this._OutTerminal;
+            int dif = AcknowledgementNumber - term.AcknowledgementNumber;
+            int sdif = term.SequenceNumber - term.AcknowledgementNumber;
+            
+            // Reset acknowledgement counter if a chunk was acknowledged
+            if (dif > 0)
+            {
+                term.AcknowledgementNumber = AcknowledgementNumber;
+                if (sdif > 0)
+                {
+                    this._RequireAcknowledgementDelay = Settings.RequireAcknowledgementDelay + this._RoundTripTime;
+                }
+            }
+
+            // Duplicate acknowledgements aren't good (considering that only one acknowledgement should be sent per received chunk).
+            if (dif == 0 && sdif > 0)
+            {
+                this._PacketLoss(Settings, AcknowledgementNumber);
+            }
+        }
+
+        /// <summary>
+        /// Called when the chunk sent with the given sequence number is inferred to be lost.
+        /// </summary>
+        private void _PacketLoss(UDPHubSettings Settings, int SequenceNumber)
+        {
+            // Reset the out terminal to that packet
+            this._OutTerminal.Reset(SequenceNumber);
         }
 
         /// <summary>
         /// Immediately sends a ping response packet of some sort.
         /// </summary>
-        private void _SendPingResponse(UDPHub Hub)
+        private void _SendPingResponse(UDPHubSettings Settings, UDPHub Hub)
         {
             byte[] data = null;
             bool initial = false;
@@ -284,8 +361,8 @@ namespace DUIP.Net
             int sequencenumber = 0;
             Packet packet = 
                 this.OutTerminal.Process(ref sequencenumber, ref data, ref initial, ref final) ?
-                this._ConstructChunk(sequencenumber, data, initial, final) :
-                this._ConstructKeepAlive();
+                this._ConstructChunk(Settings, sequencenumber, data, initial, final) :
+                this._ConstructKeepAlive(Settings);
             packet.PingResponse = true;
             Hub.Send(packet, this.EndPoint);
         }
@@ -314,6 +391,12 @@ namespace DUIP.Net
         internal double _SendRate;
 
         /// <summary>
+        /// The amount of time until the chunk at this._OutTerminal.AcknowledgmentNumber is considered lost unless
+        /// it is equal to this._OutTerminal.SequenceNumber or changes sometime before the delay.
+        /// </summary>
+        internal double _RequireAcknowledgementDelay;
+
+        /// <summary>
         /// An estimate of the current round trip time for packets sent to this peer.
         /// </summary>
         internal double _RoundTripTime;
@@ -322,6 +405,11 @@ namespace DUIP.Net
         /// Should the round trip time be sent with the next packet?
         /// </summary>
         internal bool _ShouldSendRoundTripTime;
+
+        /// <summary>
+        /// Should the acknowledgement number be sent with the next packet?
+        /// </summary>
+        internal bool _ShouldSendAcknowledgement;
 
         private IPEndPoint _EndPoint;
         private InTerminal _InTerminal;
@@ -682,6 +770,16 @@ namespace DUIP.Net
         /// The initial estimate of the round trip time between peers before it is explicitly tested or given.
         /// </summary>
         public double InitialRoundTripTime = 0.1;
+
+        /// <summary>
+        /// The maximum amount of time, in seconds, until an acknowledgement for a newly-received chunk packet must be sent.
+        /// </summary>
+        public double AcknowledgementDelay = 0.5;
+
+        /// <summary>
+        /// The amount of time, in seconds, in addition to round trip time before an unacknowledged packet that was sent by the hub is considered lost.
+        /// </summary>
+        public double RequireAcknowledgementDelay = 1.0;
 
         /// <summary>
         /// The buffer used to construct packets for sending.

@@ -246,21 +246,21 @@ namespace DUIP.Net
         /// Processes the receipt of a chunk. Returns true and sets the message stream if a full message has been received.
         /// </summary>
         /// <param name="SequenceNumber">The sequence number for the received chunk.</param>
-        public bool Process(int SequenceNumber, byte[] Data, bool Initial, bool Final, ref Disposable<InStream> Message)
+        /// <param name="Acknowledged">Indicates wether the receipt of this chunk has changed the acknowledgement number.</param>
+        public bool Process(int SequenceNumber, byte[] Data, bool Initial, bool Final, out bool Acknowledged, ref Disposable<InStream> Message)
         {
             _Chunk chunk;
 
             // Make sure we need this chunk
             if (this._Chunks.ContainsKey(SequenceNumber))
             {
+                Acknowledged = false;
                 return false;
             }
 
             // Update acknowledgement number
-            bool remove = false;
-            if (this._AcknowledgementNumber == SequenceNumber)
+            if (Acknowledged = this._AcknowledgementNumber == SequenceNumber)
             {
-                remove = true;
                 while (this._Chunks.TryGetValue(++this._AcknowledgementNumber, out chunk))
                 {
                     // If the chunk has already been read in a message, remove it
@@ -313,7 +313,7 @@ namespace DUIP.Net
             this._Chunks[SequenceNumber] = chunk;
             if (first.Initial && last.Final)
             {
-                Message = new _ReceiveStream(firstsq, remove, this);
+                Message = new _ReceiveStream(firstsq, Acknowledged, this);
                 return true;
             }
             else
