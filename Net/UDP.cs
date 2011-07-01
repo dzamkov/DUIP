@@ -178,10 +178,20 @@ namespace DUIP.Net
                     EndPoint endpoint = new IPEndPoint(Socket.AddressFamily == AddressFamily.InterNetwork ? IPAddress.Any : IPAddress.IPv6Any, 0);
                     Socket.BeginReceiveFrom(Buffer, offset, Buffer.Length, SocketFlags.None, ref endpoint, delegate(IAsyncResult ar)
                     {
-                        int size = Socket.EndReceiveFrom(ar, ref endpoint);
-                        if (this.Receive != null)
+                        try
                         {
-                            this.Receive((IPEndPoint)endpoint, new BufferData(Buffer).GetPartion(0, size));
+                            int size = Socket.EndReceiveFrom(ar, ref endpoint);
+                            if (this.Receive != null)
+                            {
+                                this.Receive((IPEndPoint)endpoint, new BufferData(Buffer).GetPartion(0, size));
+                            }
+                        }
+                        catch (SocketException se)
+                        {
+                            if (!_CanIgnore(se))
+                            {
+                                throw se;
+                            }
                         }
 
                         // Restart receive cycle
