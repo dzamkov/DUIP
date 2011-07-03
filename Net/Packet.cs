@@ -252,7 +252,7 @@ namespace DUIP.Net
             _Chunk chunk;
 
             // Make sure we need this chunk
-            if (this._Chunks.ContainsKey(SequenceNumber))
+            if (this._Chunks.ContainsKey(SequenceNumber) || this._AcknowledgementNumber - SequenceNumber > 0)
             {
                 Acknowledged = false;
                 return false;
@@ -449,6 +449,7 @@ namespace DUIP.Net
         {
             this._SequenceNumber = InitialSequenceNumber;
             this._AcknowledgementNumber = InitialSequenceNumber;
+            this._SendNumber = InitialSequenceNumber;
             this._Chunks = new LinkedList<_Chunk>();
         }
 
@@ -460,6 +461,21 @@ namespace DUIP.Net
             get
             {
                 return this._SequenceNumber;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the sequence number of the next chunk to be sent by this terminal.
+        /// </summary>
+        public int SendNumber
+        {
+            get
+            {
+                return this._SendNumber;
+            }
+            set
+            {
+                this.Reset(value);
             }
         }
 

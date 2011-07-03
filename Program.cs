@@ -76,6 +76,7 @@ namespace DUIP
                 peer.Receive += delegate(Peer npeer, Net.Message Message)
                 {
                     peer.Send(Message);
+                    peer.Send(Message);
                 };
             });
             mainhub.Accept += delegate(UDPPeer peer)
