@@ -6,7 +6,7 @@ using System.Net;
 namespace DUIP.Net
 {
     /// <summary>
-    /// A type of message that can be sent.
+    /// Identifies a type of message that can be sent.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class)]
     public class MessageType : Attribute

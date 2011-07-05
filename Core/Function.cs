@@ -5,7 +5,89 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// A relation between an argument and a result.
+    /// Identifies a method of describing a function.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class FunctionKind : Attribute
+    {
+        public FunctionKind(byte ID)
+        {
+            this.ID = ID;
+        }
+
+        /// <summary>
+        /// The identifier for this function kind.
+        /// </summary>
+        public byte ID;
+
+        static FunctionKind()
+        {
+            _ForID = new Dictionary<byte, List<FunctionKind>>();
+            _ForType = new Dictionary<System.Type, FunctionKind>();
+            foreach (var kvp in Reflection.SearchAttributes<FunctionKind>())
+            {
+                FunctionKind fk = kvp.Value;
+
+                _ForType[kvp.Key] = fk;
+                List<FunctionKind> forid;
+                if (!_ForID.TryGetValue(fk.ID, out forid))
+                {
+                    _ForID[fk.ID] = forid = new List<FunctionKind>();
+                }
+                forid.Add(fk);
+
+                Maybe<Func<FunctionType, bool>> isvalid = Reflection.Cast<Func<FunctionType, bool>>(kvp.Key, "IsValid");
+                if (isvalid.HasValue)
+                {
+                    fk._IsValid = isvalid.Value;
+                }
+                else
+                {
+                    fk._IsValid = (x) => true;
+                }
+
+                Maybe<Function> instance = Reflection.Cast<Function>(kvp.Key, "Instance");
+                if (instance.HasValue)
+                {
+                    ConstantSerialization<Function> serialization = new ConstantSerialization<Function>(instance.Value);
+                    fk._GetSerialization = (x) => serialization;
+                    continue;
+                }
+
+                fk._GetSerialization = Reflection.Cast<Func<FunctionType, ISerialization<Function>>>(kvp.Key, "GetSerialization").Value;
+            }
+        }
+
+        public static FunctionKind ForID(byte ID, FunctionType Type)
+        {
+            foreach (FunctionKind fk in _ForID[ID])
+            {
+                if (fk._IsValid(Type))
+                {
+                    return fk;
+                }
+            }
+            return null;
+        }
+
+        public static FunctionKind ForType(System.Type Type)
+        {
+            return _ForType[Type];
+        }
+
+        public ISerialization<Function> GetSerialization(FunctionType Type)
+        {
+            return this._GetSerialization(Type);
+        }
+
+        private static Dictionary<byte, List<FunctionKind>> _ForID;
+        private static Dictionary<System.Type, FunctionKind> _ForType;
+        private Func<FunctionType, ISerialization<Function>> _GetSerialization;
+        private Func<FunctionType, bool> _IsValid;
+    }
+
+    /// <summary>
+    /// A pure function that relates values of certain types.
     /// </summary>
     public abstract class Function
     {
@@ -14,33 +96,6 @@ namespace DUIP
         /// in the case of a computational error.
         /// </summary>
         public abstract object Evaluate(object Argument);
-
-        /// <summary>
-        /// Gets the identity function.
-        /// </summary>
-        public static IdentityFunction Identity
-        {
-            get
-            {
-                return IdentityFunction.Instance;
-            }
-        }
-
-        /// <summary>
-        /// Gets a function that always returns the given constant value.
-        /// </summary>
-        public static ConstantFunction Constant(object Value)
-        {
-            return new ConstantFunction(Value);
-        }
-
-        /// <summary>
-        /// Gets a call function.
-        /// </summary>
-        public static CallFunction Call(Type Inner, Function Function, Function Argument)
-        {
-            return new CallFunction(Inner, Function, Argument);
-        }
     }
 
     /// <summary>
@@ -55,6 +110,7 @@ namespace DUIP
     /// <summary>
     /// A function which returns its argument.
     /// </summary>
+    [FunctionKind(0)]
     public sealed class IdentityFunction : Function
     {
         private IdentityFunction()
@@ -67,6 +123,11 @@ namespace DUIP
         /// </summary>
         public static readonly IdentityFunction Instance = new IdentityFunction();
 
+        public static bool IsValid(FunctionType Type)
+        {
+            return ReflexiveType.Equal(Type.Argument, Type.Result);
+        }
+
         public override object Evaluate(object Argument)
         {
             return Argument;
@@ -76,6 +137,7 @@ namespace DUIP
     /// <summary>
     /// A function whose result is always a certain value.
     /// </summary>
+    [FunctionKind(1)]
     public sealed class ConstantFunction : Function
     {
         public ConstantFunction(object Value)
@@ -99,6 +161,37 @@ namespace DUIP
             return this._Value;
         }
 
+        public static ISerialization<Function> GetSerialization(FunctionType Type)
+        {
+            return new _Serialization
+            {
+                ValueSerialization = Type.Result.Serialization
+            };
+        }
+
+        private class _Serialization : ISerialization<Function>
+        {
+            public void Write(ref Function Object, OutStream Stream)
+            {
+                this.ValueSerialization.Write(ref ((ConstantFunction)Object)._Value, Stream);
+            }
+
+            Function ISerialization<Function>.Read(InStream Stream)
+            {
+                return new ConstantFunction(this.ValueSerialization.Read(Stream));
+            }
+
+            Maybe<long> ISerialization<Function>.Size
+            {
+                get 
+                {
+                    return Maybe<long>.Nothing;
+                }
+            }
+
+            public ISerialization<object> ValueSerialization;
+        }
+
         private object _Value;
     }
 
@@ -108,6 +201,7 @@ namespace DUIP
     /// </summary>
     /// <remarks>This type of function can be thought of as the composition of two constant functions of types
     /// (A -> B -> C) and (A -> B) to form a function of type (A -> C) with B being the inner type.</remarks>
+    [FunctionKind(2)]
     public sealed class CallFunction : Function
     {
         public CallFunction(Type InnerType, Function Function, Function Argument)
@@ -152,11 +246,64 @@ namespace DUIP
             }
         }
 
+        /// <summary>
+        /// Gets the type of "Function" with the given source function type and inner type.
+        /// </summary>
+        public static FunctionType GetFunctionType(FunctionType SourceType, Type InnerType)
+        {
+            return new FunctionType(SourceType.Argument, new FunctionType(InnerType, SourceType.Result));
+        }
+
+        /// <summary>
+        /// Gets the type of "Argument" with the given source function type and inner type.
+        /// </summary>
+        public static FunctionType GetArgumentType(FunctionType SourceType, Type InnerType)
+        {
+            return new FunctionType(SourceType.Result, InnerType);
+        }
+
         public override object Evaluate(object Argument)
         {
             object func = this._Function.Evaluate(Argument);
             object arg = this._Argument.Evaluate(Argument);
             return ((Function)func).Evaluate(arg);
+        }
+
+        public static ISerialization<Function> GetSerialization(FunctionType Type)
+        {
+            return new _Serialization
+            {
+                SourceType = Type
+            };
+        }
+
+        private class _Serialization : ISerialization<Function>
+        {
+            public void Write(ref Function Object, OutStream Stream)
+            {
+                CallFunction cf = (CallFunction)Object;
+                Type.Write(ref cf._InnerType, Stream);
+                GetFunctionType(this.SourceType, cf._InnerType).Write(ref cf._Function, Stream);
+                GetArgumentType(this.SourceType, cf._InnerType).Write(ref cf._Argument, Stream);
+            }
+
+            Function ISerialization<Function>.Read(InStream Stream)
+            {
+                Type innertype = Type.Read(Stream);
+                Function function = GetFunctionType(this.SourceType, innertype).Read(Stream);
+                Function argument = GetArgumentType(this.SourceType, innertype).Read(Stream);
+                return new CallFunction(innertype, function, argument);
+            }
+
+            Maybe<long> ISerialization<Function>.Size
+            {
+                get
+                {
+                    return Maybe<long>.Nothing;
+                }
+            }
+
+            public FunctionType SourceType;
         }
 
         private Type _InnerType;
@@ -212,33 +359,20 @@ namespace DUIP
             }
         }
 
-        private sealed class _KindSerialization : ISerialization<FunctionType>, ISerialization<Type>
+        private sealed class _KindSerialization :  ISerialization<Type>
         {
             public static _KindSerialization Instance = new _KindSerialization();
 
-            public void Serialize(FunctionType Object, OutStream Stream)
+            void ISerialization<Type>.Write(ref Type Object, OutStream Stream)
             {
-                ISerialization<Type> typeserialization = ReflexiveType.Instance;
-                typeserialization.Serialize(Object._Argument, Stream);
-                typeserialization.Serialize(Object._Result, Stream);
+                FunctionType ft = (FunctionType)Object;
+                Type.Write(ref ft._Argument, Stream);
+                Type.Write(ref ft._Result, Stream);
             }
 
-            public FunctionType Deserialize(InStream Stream)
+            Type ISerialization<Type>.Read(InStream Stream)
             {
-                ISerialization<Type> typeserialization = ReflexiveType.Instance;
-                return new FunctionType(
-                    typeserialization.Deserialize(Stream),
-                    typeserialization.Deserialize(Stream));
-            }
-
-            void ISerialization<Type>.Serialize(Type Object, OutStream Stream)
-            {
-                this.Serialize((FunctionType)Object, Stream);
-            }
-
-            Type ISerialization<Type>.Deserialize(InStream Stream)
-            {
-                return this.Deserialize(Stream);
+                return new FunctionType(Type.Read(Stream), Type.Read(Stream));
             }
 
             public Maybe<long> Size
@@ -280,82 +414,28 @@ namespace DUIP
             }
         }
 
-        /// <summary>
-        /// Specifies a possible method to use for serialization.
-        /// </summary>
-        public enum Method
+        public void Write(ref Function Object, OutStream Stream)
         {
-            Identity,
-            Constant,
-            Call
+            FunctionKind kind = FunctionKind.ForType(Object.GetType());
+            Stream.WriteByte(kind.ID);
+            kind.GetSerialization(this).Write(ref Object, Stream);
         }
 
-        public void Serialize(Function Object, OutStream Stream)
+        public new Function Read(InStream Stream)
         {
-            if (Object == IdentityFunction.Instance)
-            {
-                Stream.WriteByte((byte)Method.Identity);
-                return;
-            }
-
-            ConstantFunction cf = Object as ConstantFunction;
-            if (cf != null)
-            {
-                Stream.WriteByte((byte)Method.Constant);
-                this.Result.Serialization.Serialize(cf.Value, Stream);
-                return;
-            }
-
-            CallFunction ccf = Object as CallFunction;
-            if (ccf != null)
-            {
-                Stream.WriteByte((byte)Method.Call);
-                ReflexiveType.Instance.Serialize(ccf.InnerType, Stream);
-
-                FunctionType functiontype = new FunctionType(this.Argument, new FunctionType(ccf.InnerType, this.Result));
-                FunctionType argumenttype = new FunctionType(this.Argument, ccf.InnerType);
-
-                functiontype.Serialization.Serialize(ccf.Function, Stream);
-                argumenttype.Serialization.Serialize(ccf.Argument, Stream);
-                return;
-            }
+            FunctionKind kind = FunctionKind.ForID(Stream.ReadByte(), this);
+            return kind.GetSerialization(this).Read(Stream);
         }
 
-        public Function Deserialize(InStream Stream)
+        void ISerialization<object>.Write(ref object Object, OutStream Stream)
         {
-            switch ((Method)Stream.ReadByte())
-            {
-                case Method.Identity:
-                    if (!Type.Equal(this.Argument, this.Result))
-                    {
-                        throw new DeserializationException();
-                    }
-                    return IdentityFunction.Instance;
-                case Method.Constant:
-                    object value = this.Result.Serialization.Deserialize(Stream);
-                    return new ConstantFunction(value);
-                case Method.Call:
-                    Type inner = ReflexiveType.Instance.Deserialize(Stream) as Type;
-
-                    FunctionType functiontype = new FunctionType(this.Argument, new FunctionType(inner, this.Result));
-                    FunctionType argumenttype = new FunctionType(this.Argument, inner);
-
-                    object function = functiontype.Serialization.Deserialize(Stream);
-                    object argument = argumenttype.Serialization.Deserialize(Stream);
-                    return new CallFunction(inner, function as Function, argument as Function);
-                default:
-                    throw new DeserializationException();
-            }
+            Function func = (Function)Object;
+            this.Write(ref func, Stream);
         }
 
-        void ISerialization<object>.Serialize(object Object, OutStream Stream)
+        object ISerialization<object>.Read(InStream Stream)
         {
-            this.Serialize(Object as Function, Stream);
-        }
-
-        object ISerialization<object>.Deserialize(InStream Stream)
-        {
-            return this.Deserialize(Stream);
+            return this.Read(Stream);
         }
 
         public Maybe<long> Size

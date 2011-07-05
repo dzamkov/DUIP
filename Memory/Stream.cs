@@ -153,6 +153,11 @@ namespace DUIP
             int size = this.ReadInt();
             return this.ReadBigInt(size);
         }
+
+        public static implicit operator InStream(byte[] Data)
+        {
+            return new BufferInStream(Data, 0);
+        }
     }
 
     /// <summary>
@@ -324,6 +329,11 @@ namespace DUIP
             int bs = Value.ByteSize;
             this.WriteInt(bs);
             this.WriteBigInt(Value, bs);
+        }
+
+        public static implicit operator OutStream(byte[] Data)
+        {
+            return new BufferOutStream(Data, 0);
         }
     }
 

@@ -178,24 +178,25 @@ namespace DUIP
             }
         }
 
-        public void Serialize(ID Object, OutStream Stream)
+        public void Write(ref ID Object, OutStream Stream)
         {
             ID.Write(ref Object, Stream);
         }
 
-        public ID Deserialize(InStream Stream)
+        public new ID Read(InStream Stream)
         {
             return ID.Read(Stream);
         }
 
-        void ISerialization<object>.Serialize(object Object, OutStream Stream)
+        void ISerialization<object>.Write(ref object Object, OutStream Stream)
         {
-            this.Serialize((ID)Object, Stream);
+            ID id = (ID)Object;
+            this.Write(ref id, Stream);
         }
 
-        object ISerialization<object>.Deserialize(InStream Stream)
+        object ISerialization<object>.Read(InStream Stream)
         {
-            return this.Deserialize(Stream);
+            return this.Read(Stream);
         }
 
         public Maybe<long> Size

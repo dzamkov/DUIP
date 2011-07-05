@@ -5,7 +5,7 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// A "type of a type" that allows serialization and equality testing of instances of the kind.
+    /// Identifies a "type of a type" that allows serialization and equality testing of instances of the kind.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class)]
     public class Kind : Attribute
@@ -127,6 +127,25 @@ namespace DUIP
 
             throw new ComputationalException();
         }
+
+        /// <summary>
+        /// Writes a type to a stream.
+        /// </summary>
+        public static void Write(ref Type Type, OutStream Stream)
+        {
+            Kind kind = Kind.ForType(Type.GetType());
+            Stream.WriteByte(kind.ID);
+            kind.Serialization.Write(ref Type, Stream);
+        }
+
+        /// <summary>
+        /// Reads a type from a stream.
+        /// </summary>
+        public static Type Read(InStream Stream)
+        {
+            Kind kind = Kind.ForID(Stream.ReadByte());
+            return kind.Serialization.Read(Stream);
+        }
     }
 
     /// <summary>
@@ -158,28 +177,25 @@ namespace DUIP
             }
         }
 
-        public void Serialize(Type Object, OutStream Stream)
+        public new void Write(ref Type Object, OutStream Stream)
         {
-            Kind kind = Kind.ForType(Object.GetType());
-            Stream.WriteByte(kind.ID);
-            kind.Serialization.Serialize(Object, Stream);
+            Write(ref Object, Stream);
         }
 
-        public Type Deserialize(InStream Stream)
+        public new Type Read(InStream Stream)
         {
-            byte kindid = Stream.ReadByte();
-            Kind kind = Kind.ForID(kindid);
-            return kind.Serialization.Deserialize(Stream);
+            return Read(Stream);   
         }
 
-        void ISerialization<object>.Serialize(object Object, OutStream Stream)
+        void ISerialization<object>.Write(ref object Object, OutStream Stream)
         {
-            this.Serialize(Object as Type, Stream);
+            Type t = Object as Type;
+            Type.Write(ref t, Stream);
         }
 
-        object ISerialization<object>.Deserialize(InStream Stream)
+        object ISerialization<object>.Read(InStream Stream)
         {
-            return this.Deserialize(Stream) as Type;
+            return Type.Read(Stream);
         }
 
         public Maybe<long> Size

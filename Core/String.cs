@@ -33,22 +33,22 @@ namespace DUIP
             }
         }
 
-        public void Serialize(string Object, OutStream Stream)
+        public void Write(ref string Object, OutStream Stream)
         {
             throw new NotImplementedException();
         }
 
-        public string Deserialize(InStream Stream)
+        public new string Read(InStream Stream)
         {
             throw new NotImplementedException();
         }
 
-        void ISerialization<object>.Serialize(object Object, OutStream Stream)
+        void ISerialization<object>.Write(ref object Object, OutStream Stream)
         {
             throw new NotImplementedException();
         }
 
-        object ISerialization<object>.Deserialize(InStream Stream)
+        object ISerialization<object>.Read(InStream Stream)
         {
             throw new NotImplementedException();
         }

@@ -497,7 +497,7 @@ namespace DUIP.Net
         public void Send(Packet Packet, IPEndPoint To)
         {
             BufferOutStream bos = new BufferOutStream(this._Settings.SendBuffer, 0);
-            Packet.Write(Packet, bos);
+            Packet.Write(ref Packet, bos);
             this._UDP.Send(To, Data.FromBuffer(bos.Buffer, 0, bos.Position));
         }
 

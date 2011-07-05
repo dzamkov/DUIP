@@ -255,7 +255,7 @@ namespace DUIP
             Bucket b;
             using (Disposable<InStream> str = this._Source.Read(this.GetBucketOffset(BucketIndex)))
             {
-                b = this._Scheme.BucketSerialization.Deserialize(str);
+                b = this._Scheme.BucketSerialization.Read(str);
             }
             return b;
         }
@@ -267,7 +267,7 @@ namespace DUIP
         {
             using (Disposable<OutStream> str = this._Source.Write(this.GetBucketOffset(BucketIndex)))
             {
-                this._Scheme.BucketSerialization.Serialize(Value, str);
+                this._Scheme.BucketSerialization.Write(ref Value, str);
             }
         }
 
@@ -291,7 +291,7 @@ namespace DUIP
                 {
                     while (Start < tb)
                     {
-                        Bucket b = scheme.BucketSerialization.Deserialize(str);
+                        Bucket b = scheme.BucketSerialization.Read(str);
                         if (b.Free == Free)
                         {
                             return Start;
@@ -428,11 +428,12 @@ namespace DUIP
                 h.Write(os);
                 for (long t = 0; t < Scheme.Buckets; t++)
                 {
-                    Scheme.BucketSerialization.Serialize(new Bucket()
-                        {
-                            Free = true,
-                            Reference = t
-                        }, os);
+                    Bucket bucket = new Bucket()
+                    {
+                        Free = true,
+                        Reference = t
+                    };
+                    Scheme.BucketSerialization.Write(ref bucket, os);
                 }
             }
 
@@ -599,7 +600,7 @@ namespace DUIP
                     this._Size = KeySerialization.Size.OrExcept + ValueSerialization.Size.OrExcept + StreamSize.Bool + StreamSize.Long;
                 }
 
-                public void Serialize(Bucket Object, OutStream Stream)
+                public void Write(ref Bucket Object, OutStream Stream)
                 {
                     Stream.WriteBool(Object.Free);
                     Stream.WriteLong(Object.Reference);
@@ -609,12 +610,12 @@ namespace DUIP
                     }
                     else
                     {
-                        this._KeySerialization.Serialize(Object.Key, Stream);
-                        this._ValueSerialization.Serialize(Object.Value, Stream);
+                        this._KeySerialization.Write(ref Object.Key, Stream);
+                        this._ValueSerialization.Write(ref Object.Value, Stream);
                     }
                 }
 
-                public Bucket Deserialize(InStream Stream)
+                public Bucket Read(InStream Stream)
                 {
                     if (Stream.ReadBool())
                     {
@@ -632,8 +633,8 @@ namespace DUIP
                         {
                             Free = false,
                             Reference = Stream.ReadLong(),
-                            Key = this._KeySerialization.Deserialize(Stream),
-                            Value = this._ValueSerialization.Deserialize(Stream)
+                            Key = this._KeySerialization.Read(Stream),
+                            Value = this._ValueSerialization.Read(Stream)
                         };
                     }
                 }
@@ -706,7 +707,7 @@ namespace DUIP
                     {
                         // Get bucket
                         long bi = cur;
-                        Bucket b = this._Scheme.BucketSerialization.Deserialize(str);
+                        Bucket b = this._Scheme.BucketSerialization.Read(str);
                         if (!b.Free)
                         {
                             yield return new Item()

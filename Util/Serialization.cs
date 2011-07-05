@@ -6,21 +6,21 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// Describes a method of serializing and deserializing an object of a certain type to a stream.
+    /// Describes a method of reading and writing an object of a certain type to a stream.
     /// </summary>
     /// <typeparam name="T">The common base type for serializable objects.</typeparam>
     public interface ISerialization<T>
     {
         /// <summary>
-        /// Serializes an object to a stream. An exception may be thrown if there is a stream error.
+        /// Writes an object to a stream. An exception may be thrown if there is a stream error.
         /// </summary>
-        void Serialize(T Object, OutStream Stream);
+        void Write(ref T Object, OutStream Stream);
 
         /// <summary>
-        /// Deserializes an object from the stream. An exception may be thrown if there is a stream error, or no object could
+        /// Reads an object from the stream. An exception may be thrown if there is a stream error, or no object could
         /// be derived from the stream.
         /// </summary>
-        T Deserialize(InStream Stream);
+        T Read(InStream Stream);
 
         /// <summary>
         /// Gets the length in bytes of this serializable object for all values, or nothing if the size is variable or unbounded.
@@ -58,12 +58,12 @@ namespace DUIP
             }
         }
 
-        public void Serialize(T Object, OutStream Stream)
+        public void Write(ref T Object, OutStream Stream)
         {
 
         }
 
-        public T Deserialize(InStream Stream)
+        public T Read(InStream Stream)
         {
             return this._Value;
         }
@@ -90,12 +90,12 @@ namespace DUIP
         ISerialization<long>,
         ISerialization<ulong>
     {
-        void ISerialization<bool>.Serialize(bool Object, OutStream Stream)
+        void ISerialization<bool>.Write(ref bool Object, OutStream Stream)
         {
             Stream.WriteBool(Object);
         }
 
-        bool ISerialization<bool>.Deserialize(InStream Stream)
+        bool ISerialization<bool>.Read(InStream Stream)
         {
             return Stream.ReadBool();
         }
@@ -108,12 +108,12 @@ namespace DUIP
             }
         }
 
-        void ISerialization<byte>.Serialize(byte Object, OutStream Stream)
+        void ISerialization<byte>.Write(ref byte Object, OutStream Stream)
         {
             Stream.WriteByte(Object);
         }
 
-        byte ISerialization<byte>.Deserialize(InStream Stream)
+        byte ISerialization<byte>.Read(InStream Stream)
         {
             return Stream.ReadByte();
         }
@@ -126,12 +126,12 @@ namespace DUIP
             }
         }
 
-        void ISerialization<int>.Serialize(int Object, OutStream Stream)
+        void ISerialization<int>.Write(ref int Object, OutStream Stream)
         {
             Stream.WriteInt(Object);
         }
 
-        int ISerialization<int>.Deserialize(InStream Stream)
+        int ISerialization<int>.Read(InStream Stream)
         {
             return Stream.ReadInt();
         }
@@ -144,12 +144,12 @@ namespace DUIP
             }
         }
 
-        void ISerialization<uint>.Serialize(uint Object, OutStream Stream)
+        void ISerialization<uint>.Write(ref uint Object, OutStream Stream)
         {
             Stream.WriteInt((int)Object);
         }
 
-        uint ISerialization<uint>.Deserialize(InStream Stream)
+        uint ISerialization<uint>.Read(InStream Stream)
         {
             return (uint)Stream.ReadInt();
         }
@@ -162,12 +162,12 @@ namespace DUIP
             }
         }
 
-        void ISerialization<long>.Serialize(long Object, OutStream Stream)
+        void ISerialization<long>.Write(ref long Object, OutStream Stream)
         {
             Stream.WriteLong(Object);
         }
 
-        long ISerialization<long>.Deserialize(InStream Stream)
+        long ISerialization<long>.Read(InStream Stream)
         {
             return Stream.ReadLong();
         }
@@ -180,12 +180,12 @@ namespace DUIP
             }
         }
 
-        void ISerialization<ulong>.Serialize(ulong Object, OutStream Stream)
+        void ISerialization<ulong>.Write(ref ulong Object, OutStream Stream)
         {
             Stream.WriteLong((long)Object);
         }
 
-        ulong ISerialization<ulong>.Deserialize(InStream Stream)
+        ulong ISerialization<ulong>.Read(InStream Stream)
         {
             return (ulong)Stream.ReadLong();
         }
