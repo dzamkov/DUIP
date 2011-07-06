@@ -66,15 +66,15 @@ namespace DUIP.UI
             return this._Inner.Object.CreateLayout(sr, out Size);
         }
 
-        public override event Action<Block> LayoutUpdate
+        public override event Action<Block> LayoutInvalidated
         {
             add
             {
-                this.Inner.LayoutUpdate += value;
+                this.Inner.LayoutInvalidated += value;
             }
             remove
             {
-                this.Inner.LayoutUpdate -= value;
+                this.Inner.LayoutInvalidated -= value;
             }
         }
 

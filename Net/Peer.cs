@@ -30,11 +30,6 @@ namespace DUIP.Net
         /// <summary>
         /// Event fired when a message is received from this peer.
         /// </summary>
-        public abstract event Action<Peer, Message> Receive;
-
-        /// <summary>
-        /// Event fired when this peer has been disconnected and may no longer send or receive messages.
-        /// </summary>
-        public abstract event Action<Peer> Disconnect;
+        public abstract event Action<Peer, Message> Received;
     }
 }

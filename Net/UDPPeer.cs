@@ -133,17 +133,6 @@ namespace DUIP.Net
         }
 
         /// <summary>
-        /// Called when this peer is disconnected, either explicitly (disconnect packet) or implicitly.
-        /// </summary>
-        internal void _Disconnect()
-        {
-            if (this.Disconnect != null)
-            {
-                this.Disconnect(this);
-            }
-        }
-
-        /// <summary>
         /// Processes a chunk of a message sent from this peer.
         /// </summary>
         private void _Process(int SequenceNumber, byte[] Chunk, bool Initial, bool Final)
@@ -152,12 +141,12 @@ namespace DUIP.Net
             bool acknowledged;
             if (this._InTerminal.Process(SequenceNumber, Chunk, Initial, Final, out acknowledged, ref str))
             {
-                if (this.Receive != null)
+                if (this.Received != null)
                 {
                     Message message = Message.Read(str);
                     str.Dispose();
 
-                    this.Receive(this, message);
+                    this.Received(this, message);
                 }
                 else
                 {
@@ -280,7 +269,6 @@ namespace DUIP.Net
             this._ExpireDelay -= Time;
             if (this._ExpireDelay <= 0.0)
             {
-                this._Disconnect();
                 Remove = true;
             }
         }
@@ -362,8 +350,7 @@ namespace DUIP.Net
             Hub.Send(packet, this.EndPoint);
         }
 
-        public override event Action<Peer, Message> Receive;
-        public override event Action<Peer> Disconnect;
+        public override event Action<Peer, Message> Received;
 
         /// <summary>
         /// The amount of time until a keep alive packet should be sent if no other packets are sent.
@@ -423,7 +410,7 @@ namespace DUIP.Net
             this._ConnectionRequests = new Dictionary<IPEndPoint, _ConnectionRequest>();
             this._UDP = UDP;
 
-            UDP.Receive += new UDP.ReceiveRawPacketHandler(this._Receive);
+            UDP.Received += new UDP.ReceiveRawPacketHandler(this._Receive);
         }
 
         public UDPHub(UDP UDP)
@@ -489,6 +476,22 @@ namespace DUIP.Net
         {
             this._UpdateConnectionRequests(Time);
             this._UpdatePeers(Time);
+        }
+
+        /// <summary>
+        /// Links this hub to a network so that whenever a peer is connected to this hub, it will be added to
+        /// the network.
+        /// </summary>
+        public void Link(Network Network)
+        {
+            this.Connected += delegate(UDPPeer Peer)
+            {
+                Network.AddPeer(Peer);
+            };
+            this.Disconnected += delegate(UDPPeer Peer)
+            {
+                Network.RemovePeer(Peer);
+            };
         }
 
         /// <summary>
@@ -558,6 +561,7 @@ namespace DUIP.Net
                 peer._Update(this, Time, out remove);
                 if (remove)
                 {
+                    this._Disconnect(peer);
                     toremove.Add(peer.EndPoint);
                 }
             }
@@ -584,6 +588,7 @@ namespace DUIP.Net
                 }
                 if (remove)
                 {
+                    this._Disconnect(peer);
                     this._Peers.Remove(From);
                 }
             }
@@ -600,15 +605,15 @@ namespace DUIP.Net
                         // Connection requested
                         int seq = str.ReadInt();
 
-                        if (_ShouldConnect(From))
+                        if (_ShouldAccept(From))
                         {
                             int ack = settings.Random.Integer();
 
-                            this._Peers[From] = peer = UDPPeer._InitializeServer(settings, From, seq, ack);
+                            this._Connect(peer = UDPPeer._InitializeServer(settings, From, seq, ack));
 
-                            if (this.Accept != null)
+                            if (this.Accepted != null)
                             {
-                                this.Accept(peer);
+                                this.Accepted(peer);
                             }
 
                             BufferOutStream bos = new BufferOutStream(settings.SendBuffer, 0);
@@ -634,7 +639,7 @@ namespace DUIP.Net
                         int seq = str.ReadInt();
                         if (ack == cr.AcknowledgementNumber)
                         {
-                            this._Peers[From] = peer = UDPPeer._InitializeClient(settings, From, seq, ack, cr.Time);
+                            this._Connect(peer = UDPPeer._InitializeClient(settings, From, seq, ack, cr.Time));
                             cr.Query.Complete(peer);
                             this._ConnectionRequests.Remove(From);
                         }
@@ -656,9 +661,32 @@ namespace DUIP.Net
         /// <summary>
         /// Determines wether to accept a connection from the given endpoint.
         /// </summary>
-        private bool _ShouldConnect(IPEndPoint EndPoint)
+        private bool _ShouldAccept(IPEndPoint EndPoint)
         {
             return true;
+        }
+
+        /// <summary>
+        /// Adds a new peer to be managed by this hub.
+        /// </summary>
+        private void _Connect(UDPPeer Peer)
+        {
+            this._Peers[Peer.EndPoint] = Peer;
+            if (this.Connected != null)
+            {
+                this.Connected(Peer);
+            }
+        }
+
+        /// <summary>
+        /// Indicates that a peer managed by this hub is disconnect, without removing the peer.
+        /// </summary>
+        private void _Disconnect(UDPPeer Peer)
+        {
+            if (this.Disconnected != null)
+            {
+                this.Disconnected(Peer);
+            }
         }
 
         /// <summary>
@@ -694,9 +722,20 @@ namespace DUIP.Net
         }
 
         /// <summary>
-        /// Event fired when a new peer is accepted by the hub.
+        /// Event fired when a new peer is connected with this hub.
         /// </summary>
-        public event Action<UDPPeer> Accept;
+        public event Action<UDPPeer> Connected;
+
+        /// <summary>
+        /// Event fired when a peer managed by this hub is disconnected.
+        /// </summary>
+        public event Action<UDPPeer> Disconnected;
+
+        /// <summary>
+        /// Event fired when a new peer is accepted by the hub due to an incoming connection request.
+        /// </summary>
+        /// <remarks>Note that Connected is called with this event.</remarks>
+        public event Action<UDPPeer> Accepted;
 
         private UDP _UDP;
         private UDPHubSettings _Settings;

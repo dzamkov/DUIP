@@ -173,20 +173,20 @@ namespace DUIP.UI
             return Sizes;
         }
 
-        public override event Action<Block> LayoutUpdate
+        public override event Action<Block> LayoutInvalidated
         {
             add
             {
                 foreach (Block block in this._Cells)
                 {
-                    block.LayoutUpdate += value;
+                    block.LayoutInvalidated += value;
                 }
             }
             remove
             {
                 foreach (Block block in this._Cells)
                 {
-                    block.LayoutUpdate -= value;
+                    block.LayoutInvalidated -= value;
                 }
             }
         }

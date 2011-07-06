@@ -181,9 +181,9 @@ namespace DUIP.Net
                         try
                         {
                             int size = Socket.EndReceiveFrom(ar, ref endpoint);
-                            if (this.Receive != null)
+                            if (this.Received != null)
                             {
-                                this.Receive((IPEndPoint)endpoint, new BufferData(Buffer).GetPartion(0, size));
+                                this.Received((IPEndPoint)endpoint, new BufferData(Buffer).GetPartion(0, size));
                             }
                         }
                         catch (SocketException se)
@@ -217,7 +217,7 @@ namespace DUIP.Net
         /// <summary>
         /// Event fired whenever this UDP interface receives data.
         /// </summary>
-        public event ReceiveRawPacketHandler Receive;
+        public event ReceiveRawPacketHandler Received;
 
         /// <summary>
         /// Gets if the specified exception can safely be ignored.

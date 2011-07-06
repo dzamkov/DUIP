@@ -34,7 +34,7 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Destructively updates the given layout (of this block) with the given size range. The new layout will be equivalent 
+        /// Destructively updates the given layout (of this block) with the given size range (which may new, or the same as the last). The new layout will be equivalent 
         /// to the one produced with "CreateLayout".
         /// </summary>
         public virtual void UpdateLayout(ref Layout Layout, Rectangle SizeRange, out Point Size)
@@ -43,10 +43,12 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Event fired when the layout for the block has changed. When this is fired, all layouts for the control are no longer valid and need to be updated
-        /// using UpdateLayout, or removed.
+        /// Event fired when the block has changed in a way that requires its layouts to be updated. When 
+        /// this is fired, all layouts for the control must be updated using UpdateLayout, or removed. Conversely, 
+        /// if this has not fired since the last layout update or layout creation, UpdateLayout will have no
+        /// effect on the layout.
         /// </summary>
-        public virtual event Action<Block> LayoutUpdate
+        public virtual event Action<Block> LayoutInvalidated
         {
             add
             {

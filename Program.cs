@@ -73,14 +73,14 @@ namespace DUIP
                     Region = DataRegion.Full,
                     Bounty = new Bounty(49.0, 0.9)
                 });
-                peer.Receive += delegate(Peer npeer, Net.Message Message)
+                peer.Received += delegate(Peer npeer, Net.Message Message)
                 {
                     peer.Send(Message);
                 };
             });
-            mainhub.Accept += delegate(UDPPeer peer)
+            mainhub.Accepted += delegate(UDPPeer peer)
             {
-                peer.Receive += delegate(Peer npeer, Net.Message Message)
+                peer.Received += delegate(Peer npeer, Net.Message Message)
                 {
                     peer.Send(Message);
                 };
