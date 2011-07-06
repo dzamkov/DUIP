@@ -64,6 +64,18 @@ namespace DUIP.UI
             return this._Inner.Object.CreateLayout(sr, out Size);
         }
 
+        public override event Action<Block> LayoutUpdate
+        {
+            add
+            {
+                this.Inner.LayoutUpdate += value;
+            }
+            remove
+            {
+                this.Inner.LayoutUpdate -= value;
+            }
+        }
+
         public void Dispose()
         {
             this._Inner.Dispose();

@@ -43,6 +43,22 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Event fired when the layout for the block has changed. When this is fired, all layouts for the control are no longer valid and need to be updated
+        /// using UpdateLayout, or removed.
+        /// </summary>
+        public virtual event Action<Block> LayoutUpdate
+        {
+            add
+            {
+
+            }
+            remove
+            {
+
+            }
+        }
+
+        /// <summary>
         /// A particular spatial arrangement of elements within a block.
         /// </summary>
         public abstract class Layout

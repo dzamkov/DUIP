@@ -5,7 +5,7 @@ using System.Linq;
 namespace DUIP.UI
 {
     /// <summary>
-    /// An object the user can view or interact with.
+    /// An (logical) object the user can view or interact with.
     /// </summary>
     public abstract class Content
     {

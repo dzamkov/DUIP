@@ -83,6 +83,18 @@ namespace DUIP.UI
             }
         }
 
+        public override event Action<Block> LayoutUpdate
+        {
+            add
+            {
+                this.Inner.LayoutUpdate += value;
+            }
+            remove
+            {
+                this.Inner.LayoutUpdate -= value;
+            }
+        }
+
         private class _Layout : Layout
         {
             public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)

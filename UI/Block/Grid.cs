@@ -169,6 +169,24 @@ namespace DUIP.UI
             return Sizes;
         }
 
+        public override event Action<Block> LayoutUpdate
+        {
+            add
+            {
+                foreach (Block block in this._Cells)
+                {
+                    block.LayoutUpdate += value;
+                }
+            }
+            remove
+            {
+                foreach (Block block in this._Cells)
+                {
+                    block.LayoutUpdate -= value;
+                }
+            }
+        }
+
         private class _Layout : Layout
         {
             public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
