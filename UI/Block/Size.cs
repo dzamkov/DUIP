@@ -25,6 +25,7 @@ namespace DUIP.UI
         /// block will be the intersection of this and the size range given to the size block (with some
         /// clamping to ensure that the resulting size range has a positive area).
         /// </summary>
+        [StaticProperty]
         public Rectangle LimitSizeRange
         {
             get
@@ -40,6 +41,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets the inner block for this size block.
         /// </summary>
+        [StaticProperty]
         public Block Inner
         {
             get

@@ -17,6 +17,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets the amount of columns in this grid.
         /// </summary>
+        [StaticProperty]
         public int Columns
         {
             get
@@ -28,6 +29,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets the amount of rows in this grid.
         /// </summary>
+        [StaticProperty]
         public int Rows
         {
             get
@@ -39,6 +41,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets the border that acts as the seperator between cells.
         /// </summary>
+        [StaticProperty]
         public Border Seperator
         {
             get
@@ -54,6 +57,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets a cell in this grid.
         /// </summary>
+        [StaticProperty]
         public Block this[int Column, int Row]
         {
             get

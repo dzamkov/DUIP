@@ -23,6 +23,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets the size of the margin applied by this block.
         /// </summary>
+        [StaticProperty]
         public Compass<double> Margin
         {
             get
@@ -38,6 +39,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets the inner block for this margin block.
         /// </summary>
+        [StaticProperty]
         public Block Inner
         {
             get

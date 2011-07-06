@@ -23,6 +23,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets the color of the background applied by this block.
         /// </summary>
+        [DynamicProperty]
         public Color Color
         {
             get
@@ -38,6 +39,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets the inner block for this background block. This block is displayed above the background.
         /// </summary>
+        [StaticProperty]
         public Block Inner
         {
             get

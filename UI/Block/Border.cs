@@ -23,6 +23,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets the border this block applies.
         /// </summary>
+        [StaticProperty]
         public Border Border
         {
             get
@@ -38,6 +39,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets the inner block for this border block.
         /// </summary>
+        [StaticProperty]
         public Block Inner
         {
             get
@@ -53,6 +55,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets the size that is added to the inner block when the border is applied.
         /// </summary>
+        [StaticProperty]
         public Point SizePadding
         {
             get

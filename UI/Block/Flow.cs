@@ -24,6 +24,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets the style of the flow for the block.
         /// </summary>
+        [StaticProperty]
         public FlowStyle Style
         {
             get
@@ -39,6 +40,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets the method used to determine the size of the block.
         /// </summary>
+        [StaticProperty]
         public FlowFit Fit
         {
             get
@@ -54,6 +56,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets or sets the items in the flow block.
         /// </summary>
+        [StaticProperty]
         public List<FlowItem> Items
         {
             get
