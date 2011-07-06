@@ -33,7 +33,7 @@ namespace DUIP
             }
         }
 
-        public void Write(ref string Object, OutStream Stream)
+        public void Write(string Object, OutStream Stream)
         {
             throw new NotImplementedException();
         }
@@ -43,7 +43,7 @@ namespace DUIP
             throw new NotImplementedException();
         }
 
-        void ISerialization<object>.Write(ref object Object, OutStream Stream)
+        void ISerialization<object>.Write(object Object, OutStream Stream)
         {
             throw new NotImplementedException();
         }

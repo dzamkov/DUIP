@@ -131,11 +131,11 @@ namespace DUIP
         /// <summary>
         /// Writes a type to a stream.
         /// </summary>
-        public static void Write(ref Type Type, OutStream Stream)
+        public static void Write(Type Type, OutStream Stream)
         {
             Kind kind = Kind.ForType(Type.GetType());
             Stream.WriteByte(kind.ID);
-            kind.Serialization.Write(ref Type, Stream);
+            kind.Serialization.Write(Type, Stream);
         }
 
         /// <summary>
@@ -177,9 +177,9 @@ namespace DUIP
             }
         }
 
-        public new void Write(ref Type Object, OutStream Stream)
+        public new void Write(Type Object, OutStream Stream)
         {
-            Write(ref Object, Stream);
+            Write(Object, Stream);
         }
 
         public new Type Read(InStream Stream)
@@ -187,10 +187,10 @@ namespace DUIP
             return Read(Stream);   
         }
 
-        void ISerialization<object>.Write(ref object Object, OutStream Stream)
+        void ISerialization<object>.Write(object Object, OutStream Stream)
         {
             Type t = Object as Type;
-            Type.Write(ref t, Stream);
+            Type.Write(t, Stream);
         }
 
         object ISerialization<object>.Read(InStream Stream)

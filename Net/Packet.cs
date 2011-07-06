@@ -80,7 +80,7 @@ namespace DUIP.Net
         /// <summary>
         /// Writes a packet to a stream.
         /// </summary>
-        public static void Write(ref Packet Packet, OutStream Stream)
+        public static void Write(Packet Packet, OutStream Stream)
         {
             // Build flags and header
             PacketFlags flags = PacketFlags.Empty;

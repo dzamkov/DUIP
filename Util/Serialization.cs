@@ -14,7 +14,7 @@ namespace DUIP
         /// <summary>
         /// Writes an object to a stream. An exception may be thrown if there is a stream error.
         /// </summary>
-        void Write(ref T Object, OutStream Stream);
+        void Write(T Object, OutStream Stream);
 
         /// <summary>
         /// Reads an object from the stream. An exception may be thrown if there is a stream error, or no object could
@@ -58,7 +58,7 @@ namespace DUIP
             }
         }
 
-        public void Write(ref T Object, OutStream Stream)
+        public void Write(T Object, OutStream Stream)
         {
 
         }
@@ -90,7 +90,7 @@ namespace DUIP
         ISerialization<long>,
         ISerialization<ulong>
     {
-        void ISerialization<bool>.Write(ref bool Object, OutStream Stream)
+        void ISerialization<bool>.Write(bool Object, OutStream Stream)
         {
             Stream.WriteBool(Object);
         }
@@ -108,7 +108,7 @@ namespace DUIP
             }
         }
 
-        void ISerialization<byte>.Write(ref byte Object, OutStream Stream)
+        void ISerialization<byte>.Write(byte Object, OutStream Stream)
         {
             Stream.WriteByte(Object);
         }
@@ -126,7 +126,7 @@ namespace DUIP
             }
         }
 
-        void ISerialization<int>.Write(ref int Object, OutStream Stream)
+        void ISerialization<int>.Write(int Object, OutStream Stream)
         {
             Stream.WriteInt(Object);
         }
@@ -144,7 +144,7 @@ namespace DUIP
             }
         }
 
-        void ISerialization<uint>.Write(ref uint Object, OutStream Stream)
+        void ISerialization<uint>.Write(uint Object, OutStream Stream)
         {
             Stream.WriteInt((int)Object);
         }
@@ -162,7 +162,7 @@ namespace DUIP
             }
         }
 
-        void ISerialization<long>.Write(ref long Object, OutStream Stream)
+        void ISerialization<long>.Write(long Object, OutStream Stream)
         {
             Stream.WriteLong(Object);
         }
@@ -180,7 +180,7 @@ namespace DUIP
             }
         }
 
-        void ISerialization<ulong>.Write(ref ulong Object, OutStream Stream)
+        void ISerialization<ulong>.Write(ulong Object, OutStream Stream)
         {
             Stream.WriteLong((long)Object);
         }

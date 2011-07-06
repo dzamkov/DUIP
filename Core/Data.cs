@@ -198,7 +198,7 @@ namespace DUIP
         /// <summary>
         /// Writes a region to a stream.
         /// </summary>
-        public static void Write(ref DataRegion Region, OutStream Stream)
+        public static void Write(DataRegion Region, OutStream Stream)
         {
             Stream.WriteLong(Region.Start);
             Stream.WriteLong(Region.Size);

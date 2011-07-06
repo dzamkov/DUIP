@@ -116,7 +116,7 @@ namespace DUIP
         /// <summary>
         /// Writes an ID to a stream.
         /// </summary>
-        public static void Write(ref ID ID, OutStream Stream)
+        public static void Write(ID ID, OutStream Stream)
         {
             Stream.WriteInt(ID.A);
             Stream.WriteInt(ID.B);
@@ -178,9 +178,9 @@ namespace DUIP
             }
         }
 
-        public void Write(ref ID Object, OutStream Stream)
+        public void Write(ID Object, OutStream Stream)
         {
-            ID.Write(ref Object, Stream);
+            ID.Write(Object, Stream);
         }
 
         public new ID Read(InStream Stream)
@@ -188,10 +188,10 @@ namespace DUIP
             return ID.Read(Stream);
         }
 
-        void ISerialization<object>.Write(ref object Object, OutStream Stream)
+        void ISerialization<object>.Write(object Object, OutStream Stream)
         {
             ID id = (ID)Object;
-            this.Write(ref id, Stream);
+            this.Write(id, Stream);
         }
 
         object ISerialization<object>.Read(InStream Stream)

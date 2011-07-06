@@ -95,9 +95,9 @@ namespace DUIP.Net
         public static new void Write(Message Message, OutStream Stream)
         {
             DataRequestMessage drm = (DataRequestMessage)Message;
-            ID.Write(ref drm.Index, Stream);
-            DataRegion.Write(ref drm.Region, Stream);
-            Bounty.Write(ref drm.Bounty, Stream);
+            ID.Write(drm.Index, Stream);
+            DataRegion.Write(drm.Region, Stream);
+            Bounty.Write(drm.Bounty, Stream);
         }
 
         public static new Message Read(InStream Stream)
@@ -145,7 +145,7 @@ namespace DUIP.Net
         /// <summary>
         /// Writes a bounty to a stream.
         /// </summary>
-        public static void Write(ref Bounty Bounty, OutStream Stream)
+        public static void Write(Bounty Bounty, OutStream Stream)
         {
             Stream.WriteDouble(Bounty.Base);
             Stream.WriteDouble(Bounty.Decay);

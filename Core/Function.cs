@@ -171,9 +171,9 @@ namespace DUIP
 
         private class _Serialization : ISerialization<Function>
         {
-            public void Write(ref Function Object, OutStream Stream)
+            public void Write(Function Object, OutStream Stream)
             {
-                this.ValueSerialization.Write(ref ((ConstantFunction)Object)._Value, Stream);
+                this.ValueSerialization.Write(((ConstantFunction)Object)._Value, Stream);
             }
 
             Function ISerialization<Function>.Read(InStream Stream)
@@ -185,7 +185,7 @@ namespace DUIP
             {
                 get 
                 {
-                    return Maybe<long>.Nothing;
+                    return this.ValueSerialization.Size;
                 }
             }
 
@@ -279,12 +279,12 @@ namespace DUIP
 
         private class _Serialization : ISerialization<Function>
         {
-            public void Write(ref Function Object, OutStream Stream)
+            public void Write(Function Object, OutStream Stream)
             {
                 CallFunction cf = (CallFunction)Object;
-                Type.Write(ref cf._InnerType, Stream);
-                GetFunctionType(this.SourceType, cf._InnerType).Write(ref cf._Function, Stream);
-                GetArgumentType(this.SourceType, cf._InnerType).Write(ref cf._Argument, Stream);
+                Type.Write(cf._InnerType, Stream);
+                GetFunctionType(this.SourceType, cf._InnerType).Write(cf._Function, Stream);
+                GetArgumentType(this.SourceType, cf._InnerType).Write(cf._Argument, Stream);
             }
 
             Function ISerialization<Function>.Read(InStream Stream)
@@ -363,11 +363,11 @@ namespace DUIP
         {
             public static _KindSerialization Instance = new _KindSerialization();
 
-            void ISerialization<Type>.Write(ref Type Object, OutStream Stream)
+            void ISerialization<Type>.Write(Type Object, OutStream Stream)
             {
                 FunctionType ft = (FunctionType)Object;
-                Type.Write(ref ft._Argument, Stream);
-                Type.Write(ref ft._Result, Stream);
+                Type.Write(ft._Argument, Stream);
+                Type.Write(ft._Result, Stream);
             }
 
             Type ISerialization<Type>.Read(InStream Stream)
@@ -414,11 +414,11 @@ namespace DUIP
             }
         }
 
-        public void Write(ref Function Object, OutStream Stream)
+        public void Write(Function Object, OutStream Stream)
         {
             FunctionKind kind = FunctionKind.ForType(Object.GetType());
             Stream.WriteByte(kind.ID);
-            kind.GetSerialization(this).Write(ref Object, Stream);
+            kind.GetSerialization(this).Write(Object, Stream);
         }
 
         public new Function Read(InStream Stream)
@@ -427,10 +427,10 @@ namespace DUIP
             return kind.GetSerialization(this).Read(Stream);
         }
 
-        void ISerialization<object>.Write(ref object Object, OutStream Stream)
+        void ISerialization<object>.Write(object Object, OutStream Stream)
         {
             Function func = (Function)Object;
-            this.Write(ref func, Stream);
+            this.Write(func, Stream);
         }
 
         object ISerialization<object>.Read(InStream Stream)
