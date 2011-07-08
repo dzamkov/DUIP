@@ -17,9 +17,9 @@ namespace DUIP.UI
         public abstract Disposable<Figure> GetGlyph(char Char);
 
         /// <summary>
-        /// Gets a drawer for this font.
+        /// Creates and start a drawer for this font. The context given should not be used until end is called on the corresponding drawer.
         /// </summary>
-        public virtual Drawer GetDrawer()
+        public virtual Drawer CreateDrawer(RenderContext Context)
         {
             return new DefaultDrawer(this);
         }
@@ -30,19 +30,20 @@ namespace DUIP.UI
         public abstract class Drawer
         {
             /// <summary>
-            /// Begins drawing on the given context.
-            /// </summary>
-            public virtual void Begin(RenderContext Context)
-            {
-
-            }
-
-            /// <summary>
             /// Draws a glyph for a character at the given offset.
             /// </summary>
             public virtual void Draw(RenderContext Context, char Char, Point Offset)
             {
 
+            }
+
+            /// <summary>
+            /// Switches the font used. If this is called, it should be called in place of End.
+            /// </summary>
+            public virtual Drawer Switch(RenderContext Context, Font Font)
+            {
+                this.End(Context);
+                return Font.CreateDrawer(Context);
             }
 
             /// <summary>
@@ -52,6 +53,62 @@ namespace DUIP.UI
             {
 
             }
+        }
+
+        /// <summary>
+        /// Draws glyphs from a selectable font consecutively.
+        /// </summary>
+        public struct MultiDrawer
+        {
+            /// <summary>
+            /// Gets the font this drawer uses.
+            /// </summary>
+            public Font Font
+            {
+                get
+                {
+                    return this._Font;
+                }
+            }
+
+            /// <summary>
+            /// Sets the font this drawer uses.
+            /// </summary>
+            public void Select(RenderContext Context, Font Font)
+            {
+                this._Font = Font;
+                if (this._Drawer != null)
+                {
+                    this._Drawer.Switch(Context, Font);
+                }
+            }
+
+            /// <summary>
+            /// Draws a glyph for a character at the given offset.
+            /// </summary>
+            public void Draw(RenderContext Context, char Char, Point Offset)
+            {
+                if (this._Drawer == null)
+                {
+                    this._Drawer = this._Font.CreateDrawer(Context);
+                }
+                this._Drawer.Draw(Context, Char, Offset);
+            }
+
+            /// <summary>
+            /// Temporarily ends font drawing operations to allow the render context to be used. This should also be called
+            /// when the drawer will no longer be used.
+            /// </summary>
+            public void Flush(RenderContext Context)
+            {
+                if (this._Drawer != null)
+                {
+                    this._Drawer.End(Context);
+                }
+            }
+
+            private Font _Font;
+            private Drawer _Drawer;
         }
 
         /// <summary>

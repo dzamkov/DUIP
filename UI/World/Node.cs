@@ -161,7 +161,7 @@ namespace DUIP.UI
         {
             this._Position += this._Velocity * Time;
             this._Velocity *= Math.Pow(World.Damping, Time);
-            this._Layout.Update(this._Position, Probes, Time);
+            this._Layout.Update(this._Position, Probes);
 
             // Handle dragging
             if (this._DragState == null)

@@ -63,29 +63,6 @@ namespace DUIP
             Path data = work["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
 
-            UDPHub mainhub = new UDPHub(new UDP(101));
-            UDPHub testhub = new UDPHub(new UDP());
-            testhub.Connect(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 101)).Register(delegate(UDPPeer peer)
-            {
-                peer.Send(new DataRequestMessage
-                {
-                    Index = new ID(1, 2, 3, 4),
-                    Region = DataRegion.Full,
-                    Bounty = new Bounty(49.0, 0.9)
-                });
-                peer.Received += delegate(Peer npeer, Net.Message Message)
-                {
-                    peer.Send(Message);
-                };
-            });
-            mainhub.Accepted += delegate(UDPPeer peer)
-            {
-                peer.Received += delegate(Peer npeer, Net.Message Message)
-                {
-                    peer.Send(Message);
-                };
-            };
-
             Application.EnableVisualStyles();
             MainForm mf = new MainForm();
             mf.Icon = Icon;
@@ -101,8 +78,6 @@ namespace DUIP
                 double updatetime = (now - lastupdate).TotalSeconds;
                 lastupdate = now;
                 view.Update(updatetime);
-                mainhub.Update(updatetime);
-                testhub.Update(updatetime);
 
                 Application.DoEvents();
             }

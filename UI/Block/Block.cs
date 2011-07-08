@@ -34,30 +34,12 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Destructively updates the given layout (of this block) with the given size range (which may new, or the same as the last). The new layout will be equivalent 
-        /// to the one produced with "CreateLayout".
+        /// Destructively updates the given layout (of this block) with the given size range (which may new, or the same as the last).
+        /// The layout will retain its event handlers.
         /// </summary>
         public virtual void UpdateLayout(ref Layout Layout, Rectangle SizeRange, out Point Size)
         {
-            Layout = CreateLayout(SizeRange, out Size);
-        }
-
-        /// <summary>
-        /// Event fired when the block has changed in a way that requires its layouts to be updated. When 
-        /// this is fired, all layouts for the control must be updated using UpdateLayout, or removed. Conversely, 
-        /// if this has not fired since the last layout update or layout creation, UpdateLayout will have no
-        /// effect on the layout.
-        /// </summary>
-        public virtual event Action<Block> LayoutInvalidated
-        {
-            add
-            {
-
-            }
-            remove
-            {
-
-            }
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -66,12 +48,12 @@ namespace DUIP.UI
         public abstract class Layout
         {
             /// <summary>
-            /// Updates the state of the block this layout is for by the given amount of time while receiving input from probes. Note that this
-            /// does not change the state of the layout itself.
+            /// Updates the state of the block this layout is for by receiving input from probes. Note that this
+            /// should not change the state of the layout itself.
             /// </summary>
             /// <param name="Offset">The offset of the block from the probes.</param>
             /// <param name="Probes">The probes that affect the block.</param>
-            public virtual void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+            public virtual void Update(Point Offset, IEnumerable<Probe> Probes)
             {
 
             }
@@ -82,6 +64,22 @@ namespace DUIP.UI
             public virtual void Render(RenderContext Context)
             {
 
+            }
+
+            /// <summary>
+            /// Event fired when the layout is made invalid due to a change in the associated block. When this is
+            /// fired, the layout must be removed, or updated with the UpdateLayout method on the associated block.
+            /// </summary>
+            public virtual event Action Invalidated
+            {
+                add
+                {
+
+                }
+                remove
+                {
+
+                }
             }
         }
 

@@ -127,13 +127,8 @@ namespace DUIP.Net
     }
 
     /// <summary>
-    /// Describes the reward given to a peer for successfully responding to a query. The bounty of a query lets
-    /// peers know how important a query is, wether they should respond, and how timely the response must be.
+    /// Describes a subjective time-dependant reward to a peer for completing a network task.
     /// </summary>
-    /// <remarks>When the query is given to multiple peers, the bounty will be distributed among the responders so that the total
-    /// favor granted is equal to the value of the bounty at the earliest time the result of the query is known. It is not required for
-    /// a peer to explicitly track the favor of connected peers, however, queries still need to be associated with bounties to inform
-    /// possible responders how much (if any) effort they should take to respond to the query.</remarks>
     public struct Bounty
     {
         public Bounty(double Base, double Decay)
@@ -164,16 +159,34 @@ namespace DUIP.Net
         }
 
         /// <summary>
-        /// The base reward (in favor) of the bounty. If a peer immediately (or preemptively) responds to the query, its favor will
-        /// increase by this amount.
+        /// The base reward of the bounty. This is given in units of favor of the peer that issued the bounty. The value of a unit of favor can vary between
+        /// peers but it must be consistent for any given peer and should be around the average reward for a query.
         /// </summary>
-        /// <remarks>A unit of favor is defined as the average cost of sending or receiving a network packet. This means that responding to a query
-        /// with a reward of 1.0 favor will balance out the transmission of 1 packet in terms of favor.</remarks>
         public double Base;
 
         /// <summary>
         /// The portion of the reward that remains after each second. This determines how time-sensitive the query is.
         /// </summary>
         public double Decay;
+
+        /// <summary>
+        /// Gets the reward (in favor) of the bounty after the given time in seconds.
+        /// </summary>
+        public double Evaluate(double Time)
+        {
+            return this.Base * Math.Pow(this.Decay, Time);
+        }
+
+        /// <summary>
+        /// Gets the integral of the possible rewards of this bounty up until the given time in seconds.
+        /// </summary>
+        public double Integrate(double Time)
+        {
+            if (this.Decay == 1.0) // Special case
+            {
+                return this.Base * Time;
+            }
+            return this.Base * (Math.Pow(this.Decay, Time) - 1) / Math.Log(this.Decay);
+        }
     }
 }

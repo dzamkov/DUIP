@@ -144,7 +144,7 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+            public override void Update(Point Offset, IEnumerable<Probe> Probes)
             {
 
             }
@@ -155,9 +155,7 @@ namespace DUIP.UI
                 Axis minoraxis = style.MinorAxis;
                 Alignment linealign = style.LineAlignment;
 
-                Font.Drawer curdrawer = null;
-                Font curfont = null;
-
+                Font.MultiDrawer fontdrawer = new Font.MultiDrawer();
                 foreach (Line line in this.Lines)
                 {
                     double majoff = line.MajorOffset;
@@ -177,32 +175,13 @@ namespace DUIP.UI
                             Point size = font.GetSize(name).Shift(minoraxis);
                             Point off = new Point(minoff, majoff + Align.AxisOffset(linealign, majsize, size.Y)).Shift(minoraxis);
 
-                            // Switch font drawers if needed
-                            if (curfont != font)
-                            {
-                                if (curdrawer != null)
-                                {
-                                    curdrawer.End(Context);
-                                }
-                                curfont = font;
-                            }
-                            if(curdrawer == null)
-                            {
-                                curdrawer = font.GetDrawer();
-                                curdrawer.Begin(Context);
-                            }
-
-                            // Draw character
-                            curdrawer.Draw(Context, name, off);
+                            fontdrawer.Select(Context, font);
+                            fontdrawer.Draw(Context, name, off);
                         }
                     }
                 }
 
-                // Make sure to stop drawing text
-                if (curdrawer != null)
-                {
-                    curdrawer.End(Context);
-                }
+                fontdrawer.Flush(Context);
             }
 
             /// <summary>

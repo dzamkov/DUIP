@@ -173,27 +173,9 @@ namespace DUIP.UI
             return Sizes;
         }
 
-        public override event Action<Block> LayoutInvalidated
-        {
-            add
-            {
-                foreach (Block block in this._Cells)
-                {
-                    block.LayoutInvalidated += value;
-                }
-            }
-            remove
-            {
-                foreach (Block block in this._Cells)
-                {
-                    block.LayoutInvalidated -= value;
-                }
-            }
-        }
-
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+            public override void Update(Point Offset, IEnumerable<Probe> Probes)
             {
                 for (int c = 0; c < this.ColumnOffsets.Length; c++)
                 {
@@ -201,7 +183,7 @@ namespace DUIP.UI
                     for (int r = 0; r < this.RowOffsets.Length; r++)
                     {
                         double roff = this.RowOffsets[r];
-                        this.Cells[c, r].Update(Offset + new Point(coff, roff), Probes, Time);
+                        this.Cells[c, r].Update(Offset + new Point(coff, roff), Probes);
                     }
                 }
             }
@@ -241,6 +223,24 @@ namespace DUIP.UI
                             double roff = this.RowOffsets[r];
                             Context.OutputLine(new Point(0.0, roff - hw), new Point(this.Size.X, roff - hw));
                         }
+                    }
+                }
+            }
+
+            public override event Action Invalidated
+            {
+                add
+                {
+                    foreach (Layout cell in this.Cells)
+                    {
+                        cell.Invalidated += value;
+                    }
+                }
+                remove
+                {
+                    foreach (Layout cell in this.Cells)
+                    {
+                        cell.Invalidated -= value;
                     }
                 }
             }

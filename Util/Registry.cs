@@ -5,7 +5,7 @@ using System.Linq;
 namespace DUIP
 {
     /// <summary>
-    /// A collection of weakly-referenced cached objects of a certain type.
+    /// A collection of weakly-referenced objects of a certain type.
     /// </summary>
     public class Registry<T> : IEnumerable<T>
         where T : class

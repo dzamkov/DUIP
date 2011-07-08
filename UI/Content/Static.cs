@@ -19,7 +19,7 @@ namespace DUIP.UI
         {
             Border border; Color background;
             Theme.GetNodeStyle(out border, out background);
-            return this._Type.CreateBlock(this._Value, Theme).WithBorder(border).WithBackground(background);
+            return this._Type.CreateBlock(this._Value, Theme).WithBackground(background).WithBorder(border);
         }
 
         /// <summary>

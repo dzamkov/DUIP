@@ -16,9 +16,9 @@ namespace DUIP.UI
             this._Color = Color;
         }
 
-        public override Font.Drawer GetDrawer()
+        public override Font.Drawer CreateDrawer(RenderContext Context)
         {
-            return new Drawer(this);
+            return new Drawer(Context, this);
         }
 
         /// <summary>
@@ -26,16 +26,12 @@ namespace DUIP.UI
         /// </summary>
         public new class Drawer : Font.Drawer
         {
-            public Drawer(BitmapFont Font)
+            public Drawer(RenderContext Context, BitmapFont Font)
             {
-                this._Font = Font;
-            }
-
-            public override void Begin(RenderContext Context)
-            {
-                Context.SetColor(this._Font._Color);
-                Context.SetTexture(this._Font._Typeface.Texture);
+                Context.SetColor(Font._Color);
+                Context.SetTexture(Font._Typeface.Texture);
                 Context.DrawQuads();
+                this._Font = Font;
             }
 
             public override void Draw(RenderContext Context, char Char, Point Offset)
@@ -48,6 +44,22 @@ namespace DUIP.UI
                     Rectangle dst = Rectangle.FromOffsetSize(-gly.LayoutOffset * scale + Offset, src.Size * scale);
                     Context.OutputTexturedQuad(src, dst);
                 }
+            }
+
+            public override Font.Drawer Switch(RenderContext Context, Font Font)
+            {
+                BitmapFont ofont = Font as BitmapFont;
+                if (ofont != null)
+                {
+                    if (ofont._Typeface == this._Font._Typeface)
+                    {
+                        this._Font = ofont;
+                        Context.SetColor(ofont._Color);
+                        return this;
+                    }
+                }
+
+                return base.Switch(Context, Font);
             }
 
             public override void End(RenderContext Context)

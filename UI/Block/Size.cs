@@ -54,28 +54,28 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
+        /// <summary>
+        /// Gets the limited size range created by this size block when given the full available size range.
+        /// </summary>
+        public Rectangle GetLimitedSizeRange(Rectangle SizeRange)
         {
-            Rectangle lsr = LimitSizeRange;
+            Rectangle lsr = this._LimitSizeRange;
             Rectangle csr = SizeRange;
-            Rectangle sr = new Rectangle(
+            return new Rectangle(
                 Math.Max(csr.Left, Math.Min(csr.Right, lsr.Left)),
                 Math.Max(csr.Top, Math.Min(csr.Bottom, lsr.Top)),
                 Math.Max(csr.Left, Math.Min(csr.Right, lsr.Right)),
                 Math.Max(csr.Top, Math.Min(csr.Bottom, lsr.Bottom)));
-            return this._Inner.Object.CreateLayout(sr, out Size);
         }
 
-        public override event Action<Block> LayoutInvalidated
+        public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
         {
-            add
-            {
-                this.Inner.LayoutInvalidated += value;
-            }
-            remove
-            {
-                this.Inner.LayoutInvalidated -= value;
-            }
+            return this.Inner.CreateLayout(this.GetLimitedSizeRange(SizeRange), out Size);
+        }
+
+        public override void UpdateLayout(ref Block.Layout Layout, Rectangle SizeRange, out Point Size)
+        {
+            this.Inner.UpdateLayout(ref Layout, this.GetLimitedSizeRange(SizeRange), out Size);
         }
 
         public void Dispose()

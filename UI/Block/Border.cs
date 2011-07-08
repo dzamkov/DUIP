@@ -86,24 +86,12 @@ namespace DUIP.UI
             }
         }
 
-        public override event Action<Block> LayoutInvalidated
-        {
-            add
-            {
-                this.Inner.LayoutInvalidated += value;
-            }
-            remove
-            {
-                this.Inner.LayoutInvalidated -= value;
-            }
-        }
-
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+            public override void Update(Point Offset, IEnumerable<Probe> Probes)
             {
                 double w = this.Block.Border.Weight;
-                this.Inner.Update(Offset + new Point(w, w), Probes, Time);
+                this.Inner.Update(Offset + new Point(w, w), Probes);
             }
 
             public override void Render(RenderContext Context)
@@ -114,6 +102,18 @@ namespace DUIP.UI
                     this.Inner.Render(Context);
                 }
                 bord.Render(Context, this.Size);
+            }
+
+            public override event Action Invalidated
+            {
+                add
+                {
+                    this.Inner.Invalidated += value;
+                }
+                remove
+                {
+                    this.Inner.Invalidated -= value;
+                }
             }
 
             public BorderBlock Block;
@@ -140,10 +140,10 @@ namespace DUIP.UI
 
         private class _BorderBackgroundLayout : Layout
         {
-            public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+            public override void Update(Point Offset, IEnumerable<Probe> Probes)
             {
                 double w = this.BorderBlock.Border.Weight;
-                this.Inner.Update(Offset + new Point(w, w), Probes, Time);
+                this.Inner.Update(Offset + new Point(w, w), Probes);
             }
 
             public override void Render(RenderContext Context)

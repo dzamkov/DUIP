@@ -57,6 +57,8 @@
     <Compile Include="Net\UDPPeer.cs" />
     <Compile Include="UI\Ambience\Ambience.cs" />
     <Compile Include="UI\Block\Grid.cs" />
+    <Compile Include="UI\Block\TextPad.cs" />
+    <Compile Include="UI\Content\Editor.cs" />
     <Compile Include="UI\Theme.cs" />
     <Compile Include="UI\Content\Content.cs" />
     <Compile Include="UI\Content\Static.cs" />

@@ -65,23 +65,11 @@ namespace DUIP.UI
             };
         }
 
-        public override event Action<Block> LayoutInvalidated
-        {
-            add
-            {
-                this.Inner.LayoutInvalidated += value;
-            }
-            remove
-            {
-                this.Inner.LayoutInvalidated -= value;
-            }
-        }
-
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+            public override void Update(Point Offset, IEnumerable<Probe> Probes)
             {
-                this.Inner.Update(Offset + this.Offset, Probes, Time);
+                this.Inner.Update(Offset + this.Offset, Probes);
             }
 
             public override void Render(RenderContext Context)
@@ -89,6 +77,18 @@ namespace DUIP.UI
                 using (Context.Translate(this.Offset))
                 {
                     this.Inner.Render(Context);
+                }
+            }
+
+            public override event Action Invalidated
+            {
+                add
+                {
+                    this.Inner.Invalidated += value;
+                }
+                remove
+                {
+                    this.Inner.Invalidated -= value;
                 }
             }
 

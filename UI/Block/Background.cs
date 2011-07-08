@@ -70,11 +70,12 @@ namespace DUIP.UI
             }
         }
 
+
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IEnumerable<Probe> Probes, double Time)
+            public override void Update(Point Offset, IEnumerable<Probe> Probes)
             {
-                this.Inner.Update(Offset, Probes, Time);
+                this.Inner.Update(Offset, Probes);
             }
 
             public override void Render(RenderContext Context)
