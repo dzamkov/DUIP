@@ -22,7 +22,7 @@ namespace DUIP.UI
             this._Layout = this._Block.Object.CreateLayout(SizeRange, out this._Size);
         }
 
-        public Node(Disposable<Content> Content, Disposable<Block> Block, Block.Layout Layout, Point Size, Point Position, Point Velocity)
+        public Node(Disposable<Content> Content, Disposable<Block> Block, Layout Layout, Point Size, Point Position, Point Velocity)
         {
             this._Content = Content;
             this._Block = Block;
@@ -309,7 +309,7 @@ namespace DUIP.UI
         private DragState _DragState;
         private Disposable<Content> _Content;
         private Disposable<Block> _Block;
-        private Block.Layout _Layout;
+        private Layout _Layout;
         private Point _Size;
     }
 }

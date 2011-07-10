@@ -22,7 +22,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets a layout that displays no content.
         /// </summary>
-        public static new Layout Layout
+        public static Layout Layout
         {
             get
             {

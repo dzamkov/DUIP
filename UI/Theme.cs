@@ -9,45 +9,39 @@ namespace DUIP.UI
     /// </summary>
     public class Theme
     {
-        public Theme()
-        {
-            this._DefaultTypeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Arial"), Font.ASCIICharacters, System.Drawing.FontStyle.Regular, 8, 45.0f, 512);
-        }
+        /// <summary>
+        /// A general purpose typeface to use when no more specialized font is suitable.
+        /// </summary>
+        public Disposable<BitmapTypeface> GeneralTypeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Arial"), 
+            Font.ASCIICharacters, System.Drawing.FontStyle.Regular, 8, 45.0f, 512);
 
         /// <summary>
-        /// Gets a font suited for the given purpose.
+        /// A monospace typeface for editable text.
         /// </summary>
-        public Font GetFont(FontPurpose Purpose)
-        {
-            return this._DefaultTypeface.GetFont(0.05, Color.RGB(0.0, 0.0, 0.0));
-        }
+        public Disposable<BitmapTypeface> MonospaceTypeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Courier New"),
+            Font.ASCIICharacters, System.Drawing.FontStyle.Regular, 8, 45.0f, 512);
 
         /// <summary>
-        /// Gets the border and background style of a node with the given parameters.
+        /// The border to use for nodes where no more specialized border is suitable.
         /// </summary>
-        public void GetNodeStyle(out Border Border, out Color Background)
-        {
-            Border = new Border(0.04, Color.RGB(0.2, 0.2, 0.2));
-            Background = Color.RGB(1.0, 1.0, 1.0);
-        }
+        public Border NodeBorder = new Border(0.04, Color.RGB(0.2, 0.2, 0.2));
 
         /// <summary>
-        /// Gets the default flowstyle for the theme.
+        /// The background color to use for nodes where no more specialized background is suitable.
         /// </summary>
-        public FlowStyle FlowStyle
+        public Color NodeBackground = Color.RGB(0.95, 0.95, 0.95);
+
+        /// <summary>
+        /// Gets the general-purpose flowstyle to use where no more specialized flow style is suitable.
+        /// </summary>
+        public FlowStyle FlowStyle = new FlowStyle
         {
-            get
-            {
-                return new FlowStyle
-                {
-                    Direction = FlowDirection.RightDown,
-                    Justification = FlowJustification.Justify,
-                    LineAlignment = Alignment.Center,
-                    LineSpacing = 0.00,
-                    LineSize = 0.01
-                };
-            }
-        }
+            Direction = FlowDirection.RightDown,
+            Justification = FlowJustification.Justify,
+            LineAlignment = Alignment.Center,
+            LineSpacing = 0.00,
+            LineSize = 0.01
+        };
 
         /// <summary>
         /// Creates a block that displays general-purpose text.
@@ -58,7 +52,7 @@ namespace DUIP.UI
             {
                 Fit = FlowFit.AspectRatio(2.0),
                 Style = this.FlowStyle,
-                Items = FlowItem.CreateText(Text, this.GetFont(FontPurpose.General), 0.01, true)
+                Items = FlowItem.CreateText(Text, this.GeneralTypeface.Object.GetFont(0.05, Color.Black), 0.01, true)
             }.WithMargin(0.04);
         }
 
@@ -93,17 +87,5 @@ namespace DUIP.UI
             }
             return gb;
         }
-
-        private BitmapTypeface _DefaultTypeface;
-    }
-
-    /// <summary>
-    /// A possible use for a font.
-    /// </summary>
-    public enum FontPurpose
-    {
-        General,
-        Key,
-        Value
     }
 }

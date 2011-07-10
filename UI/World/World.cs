@@ -61,7 +61,7 @@ namespace DUIP.UI
         {
             Point size;
             Block block = Content.Object.CreateBlock(this._Theme);
-            Block.Layout layout = block.CreateLayout(Node.SizeRange, out size);
+            Layout layout = block.CreateLayout(Node.SizeRange, out size);
             Node node = new Node(Content, block, layout, size, Location - size * 0.5, Point.Zero);
             this.Spawn(node);
             return node;

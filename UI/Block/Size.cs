@@ -73,7 +73,7 @@ namespace DUIP.UI
             return this.Inner.CreateLayout(this.GetLimitedSizeRange(SizeRange), out Size);
         }
 
-        public override void UpdateLayout(ref Block.Layout Layout, Rectangle SizeRange, out Point Size)
+        public override void UpdateLayout(ref Layout Layout, Rectangle SizeRange, out Point Size)
         {
             this.Inner.UpdateLayout(ref Layout, this.GetLimitedSizeRange(SizeRange), out Size);
         }

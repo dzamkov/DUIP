@@ -17,9 +17,7 @@ namespace DUIP.UI
 
         public override Disposable<Block> CreateBlock(Theme Theme)
         {
-            Border border; Color background;
-            Theme.GetNodeStyle(out border, out background);
-            return this._Type.CreateBlock(this._Value, Theme).WithBackground(background).WithBorder(border);
+            return this._Type.CreateBlock(this._Value, Theme).WithBackground(Theme.NodeBackground).WithBorder(Theme.NodeBorder);
         }
 
         /// <summary>

@@ -25,8 +25,7 @@ namespace DUIP.UI
         public abstract Layout CreateLayout(Rectangle SizeRange, out Point Size);
 
         /// <summary>
-        /// Destructively updates the given layout (of this block) with the given size. The new layout will be equivalent 
-        /// to the one produced with "CreateLayout".
+        /// Destructively updates the given layout (of this block) with the given size. The layout will retain its event handlers.
         /// </summary>
         public void UpdateLayout(ref Layout Layout, Point Size)
         {
@@ -40,47 +39,6 @@ namespace DUIP.UI
         public virtual void UpdateLayout(ref Layout Layout, Rectangle SizeRange, out Point Size)
         {
             throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// A particular spatial arrangement of elements within a block.
-        /// </summary>
-        public abstract class Layout
-        {
-            /// <summary>
-            /// Updates the state of the block this layout is for by receiving input from probes. Note that this
-            /// should not change the state of the layout itself.
-            /// </summary>
-            /// <param name="Offset">The offset of the block from the probes.</param>
-            /// <param name="Probes">The probes that affect the block.</param>
-            public virtual void Update(Point Offset, IEnumerable<Probe> Probes)
-            {
-
-            }
-
-            /// <summary>
-            /// Renders the block (using the layout) to the given render context.
-            /// </summary>
-            public virtual void Render(RenderContext Context)
-            {
-
-            }
-
-            /// <summary>
-            /// Event fired when the layout is made invalid due to a change in the associated block. When this is
-            /// fired, the layout must be removed, or updated with the UpdateLayout method on the associated block.
-            /// </summary>
-            public virtual event Action Invalidated
-            {
-                add
-                {
-
-                }
-                remove
-                {
-
-                }
-            }
         }
 
         /// <summary>
@@ -158,15 +116,56 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a block that applies a margin to this block.
         /// </summary>
-        public MarginBlock WithMargin(Compass<double> Padding)
+        public MarginBlock WithMargin(Compass<double> Margin)
         {
-            return new MarginBlock(Padding, this);
+            return new MarginBlock(Margin, this);
         }
 
         /// <summary>
         /// The allowable difference between sizes and offsets in order for them to be considered equal.
         /// </summary>
         public const double ErrorThreshold = 0.000001;
+    }
+
+    /// <summary>
+    /// A particular spatial arrangement of elements within a block.
+    /// </summary>
+    public abstract class Layout
+    {
+        /// <summary>
+        /// Updates the state of the block this layout is for by receiving input from probes. Note that this
+        /// should not change the state of the layout itself.
+        /// </summary>
+        /// <param name="Offset">The offset of the block from the probes.</param>
+        /// <param name="Probes">The probes that affect the block.</param>
+        public virtual void Update(Point Offset, IEnumerable<Probe> Probes)
+        {
+
+        }
+
+        /// <summary>
+        /// Renders the block (using the layout) to the given render context.
+        /// </summary>
+        public virtual void Render(RenderContext Context)
+        {
+
+        }
+
+        /// <summary>
+        /// Event fired when the layout is made invalid due to a change in the associated block. When this is
+        /// fired, the layout must be removed, or updated with the UpdateLayout method on the associated block.
+        /// </summary>
+        public virtual event Action Invalidated
+        {
+            add
+            {
+
+            }
+            remove
+            {
+
+            }
+        }
     }
 
     /// <summary>
