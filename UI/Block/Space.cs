@@ -43,7 +43,7 @@ namespace DUIP.UI
             /// </summary>
             public static readonly _Layout Instance = new _Layout();
 
-            public override void Update(Point Offset, IEnumerable<Probe> Probes)
+            public override void Update(Point Offset, IProbePool ProbePool)
             {
                 
             }

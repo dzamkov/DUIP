@@ -130,7 +130,9 @@ namespace DUIP.UI
             Size.Y = Math.Min(Size.Y, SizeRange.Bottom);
             _Layout layout = new _Layout
             {
-                TextPad = this
+                TextBlock = this,
+                Width = width,
+                Height = height
             };
             this._Layouts.Register(layout);
             return layout;
@@ -189,21 +191,55 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IEnumerable<Probe> Probes)
+            public override void Update(Point Offset, IProbePool ProbePool)
             {
-
+                TextStyle style = this.TextBlock._Style;
+                Point cellsize = style.CellSize;
+                Point size = new Point(cellsize.X * this.Width, cellsize.Y * this.Height);
+                foreach (IProbe probe in ProbePool.Probes)
+                {
+                    Point probepos = probe.Position - Offset;
+                    if (new Rectangle(Point.Origin, size).Occupies(probepos))
+                    {
+                        ProbePool.Use(probe);
+                    }
+                }
             }
 
             public override void Render(RenderContext Context)
             {
-                TextStyle style = this.TextPad._Style;
+                TextStyle style = this.TextBlock._Style;
                 Point cellsize = style.CellSize;
 
-                TextItem cur = this.TextPad._First;
+                // Draw back colors
+                TextItem cur = this.TextBlock._First;
                 int offset = 0;
                 double y = 0.0;
 
+                TextBackStyle backstyle = style.DefaultBackStyle;
+                int colstartoffset = 0;
+                using (Context.DrawQuads())
+                {
+                    while ((cur = cur.Next) != null)
+                    {
+                        if (cur is LineStartTextItem)
+                        {
+                            _OutputBackColorStrip(Context, backstyle, cellsize, y, colstartoffset, offset);
+                            colstartoffset = 0;
+                            offset = 0;
+                            y += cellsize.Y;
+                            continue;
+                        }
+
+                        _AppendLine(style, cur, ref offset);
+                    }
+                    _OutputBackColorStrip(Context, backstyle, cellsize, y, colstartoffset, offset);
+                }
+
                 // Draw characters and foreground objects
+                cur = this.TextBlock._First;
+                offset = 0;
+                y = 0.0;
                 TextFontStyle fontstyle = style.DefaultFontStyle;
                 Font.MultiDrawer fontdrawer = new Font.MultiDrawer();
                 fontdrawer.Select(Context, fontstyle.Font);
@@ -214,19 +250,6 @@ namespace DUIP.UI
                         offset = 0;
                         y += cellsize.Y;
                         continue;
-                    }
-
-                    if (cur is IndentTextItem)
-                    {
-                        style.Indent(ref offset);
-                        continue;
-                    }
-
-                    SpaceTextItem sti = cur as SpaceTextItem;
-                    if (sti != null)
-                    {
-                        offset += sti.Width;
-                         continue;
                     }
 
                     CharacterTextItem ci = cur as CharacterTextItem;
@@ -241,9 +264,33 @@ namespace DUIP.UI
 
                         fontdrawer.Draw(Context, name, off);
                         offset++;
+                        continue;
                     }
+
+                    _AppendLine(style, cur, ref offset);
                 }
                 fontdrawer.Flush(Context);
+            }
+
+            /// <summary>
+            /// Outputs a quad for a section of a back color applied on a single line.
+            /// </summary>
+            private static void _OutputBackColorStrip(
+                RenderContext Context, TextBackStyle Style, Point CellSize, 
+                double Y, int StartOffset, int EndOffset)
+            {
+                if (EndOffset > StartOffset)
+                {
+                    Color color = Style.BackColor;
+                    if (color.A > 0.0)
+                    {
+                        Context.SetColor(color);
+                        Context.OutputQuad(
+                            new Rectangle(
+                                CellSize.X * StartOffset, Y, 
+                                CellSize.X * EndOffset, Y + CellSize.Y));
+                    }
+                }
             }
 
             /// <summary>
@@ -259,7 +306,9 @@ namespace DUIP.UI
 
             public override event Action Invalidated;
 
-            public TextBlock TextPad;
+            public TextBlock TextBlock;
+            public int Width;
+            public int Height;
         }
 
         private Registry<_Layout> _Layouts;
@@ -385,7 +434,75 @@ namespace DUIP.UI
             }
         }
 
+        
+
         internal TextItem _Previous;
+    }
+
+    /// <summary>
+    /// A possible selection within a text block that can either be a single region, or a directed region of items.
+    /// </summary>
+    public struct TextSelection
+    {
+        /// <summary>
+        /// Gets the caret for the primary selection point. This is where the cursor should appear.
+        /// </summary>
+        public TextCaret Primary
+        {
+            get
+            {
+                return this._Primary;
+            }
+        }
+
+        /// <summary>
+        /// Gets the caret for the secondary selection point. This shows the extent of the selection. If this is the same as the primary
+        /// selection point, then the selection is only at one point.
+        /// </summary>
+        public TextCaret Secondary
+        {
+            get
+            {
+                return this._Secondary;
+            }
+        }
+
+        /// <summary>
+        /// Gets the start caret of the selected region.
+        /// </summary>
+        public TextCaret Start
+        {
+            get
+            {
+                return this._Order ? this._Secondary : this._Primary;
+            }
+        }
+
+        /// <summary>
+        /// Gets the end caret of the selected region.
+        /// </summary>
+        public TextCaret End
+        {
+            get
+            {
+                return this._Order ? this._Primary : this._Secondary;
+            }
+        }
+
+        /// <summary>
+        /// Gets wether the primary caret is after the secondary caret.
+        /// </summary>
+        public bool Order
+        {
+            get
+            {
+                return this._Order;
+            }
+        }
+
+        internal TextCaret _Primary;
+        internal TextCaret _Secondary;
+        internal bool _Order;
     }
 
     /// <summary>
@@ -493,6 +610,41 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Gets the line start item for the line this item is on.
+        /// </summary>
+        public LineStartTextItem Line
+        {
+            get
+            {
+                return this.SearchBack<LineStartTextItem>(null);
+            }
+        }
+
+        /// <summary>
+        /// Searches for an item of the given type starting with this item and going backwards. If no item is found before reaching the given stop item, null is returned.
+        /// </summary>
+        public T SearchBack<T>(TextItem Stop)
+            where T : TextItem
+        {
+            TextItem cur = this;
+            while (true)
+            {
+                if (cur == Stop)
+                {
+                    return null;
+                }
+
+                T test = cur as T;
+                if (test != null)
+                {
+                    return test;
+                }
+
+                cur = cur._Previous;
+            }
+        }
+
+        /// <summary>
         /// Creates a text item for the given character, using spaces, indents, and line breaks where needed. Returns
         /// null if the character should be ignored.
         /// </summary>
@@ -522,7 +674,35 @@ namespace DUIP.UI
     /// </summary>
     public class LineStartTextItem : TextItem
     {
+        /// <summary>
+        /// Gets the next line start item following this one, or null if there isn't one.
+        /// </summary>
+        public LineStartTextItem NextLine
+        {
+            get
+            {
+                if (this._NextLineStart != null)
+                {
+                    return this._NextLineStart;
+                }
+                else
+                {
+                    TextItem cur = this._Next;
+                    while (cur != null)
+                    {
+                        LineStartTextItem lst = cur as LineStartTextItem;
+                        if (lst != null)
+                        {
+                            return this._NextLineStart = lst;
+                        }
+                        cur = cur._Next;
+                    }
+                    return null;
+                }
+            }
+        }
 
+        internal LineStartTextItem _NextLineStart;
     }
 
     /// <summary>

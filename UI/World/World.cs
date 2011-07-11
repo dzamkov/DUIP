@@ -109,11 +109,11 @@ namespace DUIP.UI
         /// <summary>
         /// Updates the state of the world by the given amount of time.
         /// </summary>
-        public void Update(IEnumerable<Probe> Probes, double Time)
+        public void Update(IProbePool ProbePool, double Time)
         {
             foreach (Node n in this._Nodes)
             {
-                n.Update(this, Probes, Time);
+                n.Update(this, ProbePool, Time);
             }
 
             foreach (Arc a in this._Arcs)

@@ -18,7 +18,7 @@ namespace DUIP.UI
         {
             TextBlock textpad = new TextBlock(new TextStyle
             {
-                CellSize = new Point(0.05, 0.05),
+                CellSize = new Point(0.04, 0.05),
                 HorizontalAlignment = Alignment.Center,
                 VerticalAlignment = Alignment.Center,
                 DefaultFontStyle = new TextFontStyle
@@ -28,7 +28,7 @@ namespace DUIP.UI
                 },
                 DefaultBackStyle = new TextBackStyle
                 {
-                    BackColor = Color.Transparent,
+                    BackColor = Color.RGB(0.8, 0.8, 0.8),
                     SelectedBackColor = Color.RGB(0.0, 0.0, 1.0)
                 },
                 IndentSize = 3

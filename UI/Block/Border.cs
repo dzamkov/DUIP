@@ -88,10 +88,10 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IEnumerable<Probe> Probes)
+            public override void Update(Point Offset, IProbePool ProbePool)
             {
                 double w = this.Block.Border.Weight;
-                this.Inner.Update(Offset + new Point(w, w), Probes);
+                this.Inner.Update(Offset + new Point(w, w), ProbePool);
             }
 
             public override void Render(RenderContext Context)
@@ -140,10 +140,10 @@ namespace DUIP.UI
 
         private class _BorderBackgroundLayout : Layout
         {
-            public override void Update(Point Offset, IEnumerable<Probe> Probes)
+            public override void Update(Point Offset, IProbePool ProbePool)
             {
                 double w = this.BorderBlock.Border.Weight;
-                this.Inner.Update(Offset + new Point(w, w), Probes);
+                this.Inner.Update(Offset + new Point(w, w), ProbePool);
             }
 
             public override void Render(RenderContext Context)

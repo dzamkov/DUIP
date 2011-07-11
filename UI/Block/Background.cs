@@ -73,9 +73,9 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IEnumerable<Probe> Probes)
+            public override void Update(Point Offset, IProbePool ProbePool)
             {
-                this.Inner.Update(Offset, Probes);
+                this.Inner.Update(Offset, ProbePool);
             }
 
             public override void Render(RenderContext Context)

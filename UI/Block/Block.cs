@@ -136,9 +136,8 @@ namespace DUIP.UI
         /// Updates the state of the block this layout is for by receiving input from probes. Note that this
         /// should not change the state of the layout itself.
         /// </summary>
-        /// <param name="Offset">The offset of the block from the probes.</param>
-        /// <param name="Probes">The probes that affect the block.</param>
-        public virtual void Update(Point Offset, IEnumerable<Probe> Probes)
+        /// <param name="Offset">The offset of the block in the world.</param>
+        public virtual void Update(Point Offset, IProbePool ProbePool)
         {
 
         }

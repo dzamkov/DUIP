@@ -175,7 +175,7 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IEnumerable<Probe> Probes)
+            public override void Update(Point Offset, IProbePool ProbePool)
             {
                 for (int c = 0; c < this.ColumnOffsets.Length; c++)
                 {
@@ -183,7 +183,7 @@ namespace DUIP.UI
                     for (int r = 0; r < this.RowOffsets.Length; r++)
                     {
                         double roff = this.RowOffsets[r];
-                        this.Cells[c, r].Update(Offset + new Point(coff, roff), Probes);
+                        this.Cells[c, r].Update(Offset + new Point(coff, roff), ProbePool);
                     }
                 }
             }

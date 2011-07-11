@@ -15,7 +15,7 @@ namespace DUIP.UI
     /// <summary>
     /// A control that allows the user to interact with a world.
     /// </summary>
-    public class WorldDisplay : GLControl
+    public class WorldDisplay : GLControl, IProbePool
     {
         public WorldDisplay()
             : base(GraphicsMode.Default)
@@ -66,17 +66,8 @@ namespace DUIP.UI
             this._MakeView();
             this._WheelDelta = 0;
 
-            Probe[] probes;
-            if(this._HasProbe)
-            {
-                probes = new Probe[] { this._Probe };
-                this._Probe.Prepare();
-            }
-            else
-            {
-                probes = new Probe[0];
-            }
-            this._World.Update(probes, Time);
+            this._ProbeUsed = false;
+            this._World.Update(this, Time);
             this._Background.Update(this._World, Time);  
         }
 
@@ -220,7 +211,7 @@ namespace DUIP.UI
         /// <summary>
         /// The probe used for a world view.
         /// </summary>
-        public class Probe : DUIP.UI.Probe
+        public class Probe : UI.IProbe
         {
             /// <summary>
             /// Sets if this probe is active.
@@ -238,15 +229,7 @@ namespace DUIP.UI
                 this._Position = Position;
             }
 
-            /// <summary>
-            /// Prepares the probe to be used by a world.
-            /// </summary>
-            public void Prepare()
-            {
-                this._User = null;
-            }
-
-            public override bool Active
+            public bool Active
             {
                 get
                 {
@@ -254,32 +237,16 @@ namespace DUIP.UI
                 }
             }
 
-            public override object Lock
+            public void Focus(IFocusListener Listener)
             {
-                get
+                if (this._Focus != null)
                 {
-                    return this._Lock;
+                    this._Focus.Drop();
                 }
-                set
-                {
-                    this._Lock = value;
-                }
+                this._Focus = Listener;
             }
 
-            public override bool Use(object Object)
-            {
-                if (this._User == null)
-                {
-                    if (this._Lock == null || this._Lock == Object)
-                    {
-                        this._User = Object;
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            public override Point Position
+            public Point Position
             {
                 get
                 {
@@ -289,8 +256,33 @@ namespace DUIP.UI
 
             private Point _Position;
             private bool _Active;
-            private object _User;
-            private object _Lock;
+            private IFocusListener _Focus;
+        }
+
+        IEnumerable<IProbe> IProbePool.Probes
+        {
+            get
+            {
+                if (this._HasProbe && !this._ProbeUsed && !this._ProbeLocked)
+                {
+                    return new IProbe[] { this._Probe };
+                }
+                else
+                {
+                    return new IProbe[0];
+                }
+            }
+        }
+
+        void IProbePool.Use(IProbe Probe)
+        {
+            this._ProbeUsed = true;
+        }
+
+        Action IProbePool.Lock(IProbe Probe)
+        {
+            this._ProbeLocked = true;
+            return delegate { this._ProbeLocked = false; };
         }
 
         /// <summary>
@@ -314,10 +306,14 @@ namespace DUIP.UI
         private Disposable<Content> _DragContent;
         private Probe _Probe;
         private bool _HasProbe;
+        private bool _ProbeUsed;
+        private bool _ProbeLocked;
 
         private Ambience _Background;
         private World _World;
         private Camera _Camera;
         private View _View;
+
+        
     }
 }

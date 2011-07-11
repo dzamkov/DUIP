@@ -112,94 +112,44 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets the node being dragged by the given probe, or null if the probe is not dragging a node.
-        /// </summary>
-        public static Node Dragged(Probe Probe)
-        {
-            Node node = Probe.Lock as Node;
-            if (node._DragState != null && node._DragState.Probe == Probe)
-            {
-                return node;
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Sets the probe that is dragging this node, along with the target offset of the probe from the node. The probe will
-        /// need to be active to maintain dragging.
-        /// </summary>
-        public void SetDrag(Probe Probe, Point Offset)
-        {
-            if (this._DragState != null)
-            {
-                this._DragState.Probe.Lock = null;
-            }
-            this._DragState = new DragState
-            {
-                Probe = Probe,
-                Offset = Offset
-            };
-            Probe.Lock = this;
-        }
-
-        /// <summary>
-        /// Insures that the node is not being dragged by any probes.
-        /// </summary>
-        public void CancelDrag()
-        {
-            if (this._DragState != null)
-            {
-                this._DragState.Probe.Lock = null;
-                this._DragState = null;
-            }
-        }
-
-        /// <summary>
         /// Independently updates the state of this node.
         /// </summary>
-        public void Update(World World, IEnumerable<Probe> Probes, double Time)
+        public void Update(World World, IProbePool ProbePool, double Time)
         {
             this._Position += this._Velocity * Time;
             this._Velocity *= Math.Pow(World.Damping, Time);
-            this._Layout.Update(this._Position, Probes);
+            this._Layout.Update(this._Position, ProbePool);
 
             // Handle dragging
             if (this._DragState == null)
             {
-                foreach (Probe probe in Probes)
+                foreach (IProbe probe in ProbePool.Probes)
                 {
                     Point pos = probe.Position;
-                    if (this.Area.Occupies(pos))
+                    if (this.Area.Occupies(pos) && probe.Active)
                     {
-                        if (probe.Use(this) && probe.Active)
+                        this._DragState = new DragState
                         {
-                            this.SetDrag(probe, pos - this._Position);
-                        }
+                            Probe = probe,
+                            ReleaseProbe = ProbePool.Lock(probe),
+                            Offset = pos - this._Position,
+                        };
                     }
                 }
             }
             else
             {
-                bool probefound = false;
-                foreach (Probe probe in Probes)
+
+                DragState dragstate = this._DragState;
+                IProbe dragprobe = dragstate.Probe;
+                if (dragprobe.Active)
                 {
-                    if (probe == this._DragState.Probe)
-                    {
-                        if (probe.Active)
-                        {
-                            this.Pull(this._DragState.Offset, probe.Position, Time);
-                        }
-                        else
-                        {
-                            this.CancelDrag();
-                        }
-                        probefound = true;
-                        break;
-                    }
+                    this.Pull(dragstate.Offset, dragprobe.Position, Time);
                 }
-                if (!probefound)
+                else
                 {
-                    this.CancelDrag();
+                    dragstate.ReleaseProbe();
+                    this._DragState = null;
                 }
             }
         }
@@ -288,12 +238,17 @@ namespace DUIP.UI
         public class DragState
         {
             /// <summary>
-            /// Gets the probe that is dragging the node.
+            /// The probe that is dragging the node.
             /// </summary>
-            public Probe Probe;
+            public IProbe Probe;
 
             /// <summary>
-            /// Gets the offset of the point that is being dragged towards the probe in relation to the node.
+            /// Releases the lock on the probe for this drag state.
+            /// </summary>
+            public Action ReleaseProbe;
+
+            /// <summary>
+            /// The offset of the point that is being dragged towards the probe in relation to the node.
             /// </summary>
             public Point Offset;
         }
