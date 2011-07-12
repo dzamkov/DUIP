@@ -70,7 +70,7 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
         {
             int cols = this.Columns;
             int rows = this.Rows;
@@ -88,7 +88,7 @@ namespace DUIP.UI
                 for (int r = 0; r < rows; r++)
                 {
                     Point size;
-                    cells[c, r] = this._Cells[c, r].CreateLayout(new Rectangle(new Point(widths[c], heights[r]), maxcellsize), out size);
+                    cells[c, r] = this._Cells[c, r].CreateLayout(null, new Rectangle(new Point(widths[c], heights[r]), maxcellsize), out size);
                     widths[c] = Math.Max(widths[c], size.X);
                     heights[r] = Math.Max(heights[r], size.Y);
                 }
@@ -103,7 +103,7 @@ namespace DUIP.UI
                 for (int r = 0; r < rows; r++)
                 {
                     double height = heights[r];
-                    this._Cells[c, r].UpdateLayout(ref cells[c, r], new Point(width, height));
+                    cells[c, r] = this._Cells[c, r].CreateLayout(null, new Point(width, height));
                 }
             }
 
@@ -175,19 +175,6 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IProbePool ProbePool)
-            {
-                for (int c = 0; c < this.ColumnOffsets.Length; c++)
-                {
-                    double coff = this.ColumnOffsets[c];
-                    for (int r = 0; r < this.RowOffsets.Length; r++)
-                    {
-                        double roff = this.RowOffsets[r];
-                        this.Cells[c, r].Update(Offset + new Point(coff, roff), ProbePool);
-                    }
-                }
-            }
-
             public override void Render(RenderContext Context)
             {
                 // Render cells
@@ -227,22 +214,14 @@ namespace DUIP.UI
                 }
             }
 
-            public override event Action Invalidated
+            public override RemoveHandler RegisterInvalidate(Action Callback)
             {
-                add
+                RemoveHandler remove = null;
+                foreach (Layout cell in this.Cells)
                 {
-                    foreach (Layout cell in this.Cells)
-                    {
-                        cell.Invalidated += value;
-                    }
+                    remove += cell.RegisterInvalidate(Callback);
                 }
-                remove
-                {
-                    foreach (Layout cell in this.Cells)
-                    {
-                        cell.Invalidated -= value;
-                    }
-                }
+                return remove;
             }
 
             public GridBlock Block;

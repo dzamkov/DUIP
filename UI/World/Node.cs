@@ -19,7 +19,7 @@ namespace DUIP.UI
             this._Block = Block;
             this._Position = Position;
             this._Velocity = Velocity;
-            this._Layout = this._Block.Object.CreateLayout(SizeRange, out this._Size);
+            this._Layout = this._Block.Object.CreateLayout(null, SizeRange, out this._Size);
         }
 
         public Node(Disposable<Content> Content, Disposable<Block> Block, Layout Layout, Point Size, Point Position, Point Velocity)
@@ -112,37 +112,37 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Handles a probe signal change over the node.
+        /// </summary>
+        /// <param name="Offset">The offset of the probe from the top-left corner of the node.</param>
+        public void ProbeSignalChange(World World, Probe Probe, Point Offset, ProbeSignal Signal, bool Value)
+        {
+            // Start dragging if possible 
+            if (this._DragState == null && Signal == ProbeSignal.Primary && Value == true)
+            {
+                this._DragState = new DragState
+                {
+                    Offset = Offset,
+                    Probe = Probe,
+                    ReleaseProbe = Probe.Lock()
+                };
+            }
+        }
+
+        /// <summary>
         /// Independently updates the state of this node.
         /// </summary>
-        public void Update(World World, IProbePool ProbePool, double Time)
+        public void Update(World World, double Time)
         {
             this._Position += this._Velocity * Time;
             this._Velocity *= Math.Pow(World.Damping, Time);
-            this._Layout.Update(this._Position, ProbePool);
 
             // Handle dragging
-            if (this._DragState == null)
+            DragState dragstate = this._DragState;
+            if (dragstate != null)
             {
-                foreach (IProbe probe in ProbePool.Probes)
-                {
-                    Point pos = probe.Position;
-                    if (this.Area.Occupies(pos) && probe.Active)
-                    {
-                        this._DragState = new DragState
-                        {
-                            Probe = probe,
-                            ReleaseProbe = ProbePool.Lock(probe),
-                            Offset = pos - this._Position,
-                        };
-                    }
-                }
-            }
-            else
-            {
-
-                DragState dragstate = this._DragState;
-                IProbe dragprobe = dragstate.Probe;
-                if (dragprobe.Active)
+                Probe dragprobe = dragstate.Probe;
+                if (dragprobe[ProbeSignal.Primary])
                 {
                     this.Pull(dragstate.Offset, dragprobe.Position, Time);
                 }
@@ -240,7 +240,7 @@ namespace DUIP.UI
             /// <summary>
             /// The probe that is dragging the node.
             /// </summary>
-            public IProbe Probe;
+            public Probe Probe;
 
             /// <summary>
             /// Releases the lock on the probe for this drag state.

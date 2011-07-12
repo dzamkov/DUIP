@@ -14,32 +14,15 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a layout for this block with the given size.
         /// </summary>
-        public Layout CreateLayout(Point Size)
+        public Layout CreateLayout(InputContext Context, Point Size)
         {
-            return this.CreateLayout(new Rectangle(Size, Size), out Size);
+            return this.CreateLayout(Context, new Rectangle(Size, Size), out Size);
         }
 
         /// <summary>
         /// Creates a layout for this block with the preferred size within the given size range.
         /// </summary>
-        public abstract Layout CreateLayout(Rectangle SizeRange, out Point Size);
-
-        /// <summary>
-        /// Destructively updates the given layout (of this block) with the given size. The layout will retain its event handlers.
-        /// </summary>
-        public void UpdateLayout(ref Layout Layout, Point Size)
-        {
-            this.UpdateLayout(ref Layout, new Rectangle(Size, Size), out Size);
-        }
-
-        /// <summary>
-        /// Destructively updates the given layout (of this block) with the given size range (which may new, or the same as the last).
-        /// The layout will retain its event handlers.
-        /// </summary>
-        public virtual void UpdateLayout(ref Layout Layout, Rectangle SizeRange, out Point Size)
-        {
-            throw new NotImplementedException();
-        }
+        public abstract Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size);
 
         /// <summary>
         /// Creates a block that applies a border to this block.
@@ -133,17 +116,7 @@ namespace DUIP.UI
     public abstract class Layout
     {
         /// <summary>
-        /// Updates the state of the block this layout is for by receiving input from probes. Note that this
-        /// should not change the state of the layout itself.
-        /// </summary>
-        /// <param name="Offset">The offset of the block in the world.</param>
-        public virtual void Update(Point Offset, IProbePool ProbePool)
-        {
-
-        }
-
-        /// <summary>
-        /// Renders the block (using the layout) to the given render context.
+        /// Renders the layout to the given render context.
         /// </summary>
         public virtual void Render(RenderContext Context)
         {
@@ -151,19 +124,11 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Event fired when the layout is made invalid due to a change in the associated block. When this is
-        /// fired, the layout must be removed, or updated with the UpdateLayout method on the associated block.
+        /// Registers a callback for when the layout is made invalid due to a change in the associated block.
         /// </summary>
-        public virtual event Action Invalidated
+        public virtual RemoveHandler RegisterInvalidate(Action Callback)
         {
-            add
-            {
-
-            }
-            remove
-            {
-
-            }
+            return null;
         }
     }
 

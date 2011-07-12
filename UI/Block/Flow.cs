@@ -69,7 +69,7 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
         {
             FlowStyle style = this.Style;
             Axis minoraxis = style.MinorAxis;
@@ -144,11 +144,6 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IProbePool ProbePool)
-            {
-
-            }
-
             public override void Render(RenderContext Context)
             {
                 FlowStyle style = this.Block.Style;

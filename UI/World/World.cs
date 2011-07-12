@@ -13,11 +13,14 @@ namespace DUIP.UI
     /// </summary>
     public class World
     {
-        public World(Theme Theme)
+        public World(InputContext Context, Theme Theme)
         {
             this._Arcs = new List<Arc>();
             this._Nodes = new List<Node>();
             this._Theme = Theme;
+
+            Context.ProbeSignalChange = this._ProbeSignalChange;
+            Context.RegisterUpdate(this._Update);
         }
 
         /// <summary>
@@ -61,7 +64,7 @@ namespace DUIP.UI
         {
             Point size;
             Block block = Content.Object.CreateBlock(this._Theme);
-            Layout layout = block.CreateLayout(Node.SizeRange, out size);
+            Layout layout = block.CreateLayout(null, Node.SizeRange, out size);
             Node node = new Node(Content, block, layout, size, Location - size * 0.5, Point.Zero);
             this.Spawn(node);
             return node;
@@ -107,13 +110,28 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Handles a probe signal change event from the input context.
+        /// </summary>
+        private bool _ProbeSignalChange(Probe Probe, ProbeSignal Signal, bool Value)
+        {
+            Point pos = Probe.Position;
+            Node node = this.NodeAtPoint(pos);
+            if (node != null)
+            {
+                node.ProbeSignalChange(this, Probe, pos - node.Position, Signal, Value);
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Updates the state of the world by the given amount of time.
         /// </summary>
-        public void Update(IProbePool ProbePool, double Time)
+        private void _Update(double Time)
         {
             foreach (Node n in this._Nodes)
             {
-                n.Update(this, ProbePool, Time);
+                n.Update(this, Time);
             }
 
             foreach (Arc a in this._Arcs)

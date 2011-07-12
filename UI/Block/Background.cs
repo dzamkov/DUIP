@@ -52,19 +52,19 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
         {
             BorderBlock bc = this.Inner as BorderBlock;
             if (bc != null)
             {
-                return BorderBlock.CreateBorderBackgroundLayout(SizeRange, bc, this, bc.Inner, out Size);
+                return BorderBlock.CreateBorderBackgroundLayout(Context, SizeRange, bc, this, bc.Inner, out Size);
             }
             else
             {
                 return new _Layout
                 {
                     Block = this,
-                    Inner = this.Inner.CreateLayout(SizeRange, out Size),
+                    Inner = this.Inner.CreateLayout(null, SizeRange, out Size),
                     Size = Size
                 };
             }
@@ -73,11 +73,6 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IProbePool ProbePool)
-            {
-                this.Inner.Update(Offset, ProbePool);
-            }
-
             public override void Render(RenderContext Context)
             {
                 Context.ClearTexture();

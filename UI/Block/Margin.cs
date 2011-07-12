@@ -52,11 +52,11 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
         {
             Compass<double> margin = this._Margin;
             Point sizepadding = new Point(margin.Left + margin.Right, margin.Up + margin.Down);
-            Layout inner = this.Inner.CreateLayout(SizeRange.Translate(-sizepadding), out Size);
+            Layout inner = this.Inner.CreateLayout(null, SizeRange.Translate(-sizepadding), out Size);
             Size += sizepadding;
             return new _Layout
             {
@@ -67,11 +67,6 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IProbePool ProbePool)
-            {
-                this.Inner.Update(Offset + this.Offset, ProbePool);
-            }
-
             public override void Render(RenderContext Context)
             {
                 using (Context.Translate(this.Offset))
@@ -80,16 +75,9 @@ namespace DUIP.UI
                 }
             }
 
-            public override event Action Invalidated
+            public override RemoveHandler RegisterInvalidate(Action Callback)
             {
-                add
-                {
-                    this.Inner.Invalidated += value;
-                }
-                remove
-                {
-                    this.Inner.Invalidated -= value;
-                }
+                return this.Inner.RegisterInvalidate(Callback);
             }
 
             public Point Offset;

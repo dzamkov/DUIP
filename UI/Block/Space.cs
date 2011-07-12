@@ -30,7 +30,7 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
         {
             Size = SizeRange.TopLeft;
             return _Layout.Instance;
@@ -42,11 +42,6 @@ namespace DUIP.UI
             /// The only instance of the layout.
             /// </summary>
             public static readonly _Layout Instance = new _Layout();
-
-            public override void Update(Point Offset, IProbePool ProbePool)
-            {
-                
-            }
 
             public override void Render(RenderContext Context)
             {

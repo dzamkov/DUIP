@@ -111,7 +111,7 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
         {
             TextStyle style = this._Style;
             Point cellsize = style.CellSize;
@@ -191,21 +191,6 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IProbePool ProbePool)
-            {
-                TextStyle style = this.TextBlock._Style;
-                Point cellsize = style.CellSize;
-                Point size = new Point(cellsize.X * this.Width, cellsize.Y * this.Height);
-                foreach (IProbe probe in ProbePool.Probes)
-                {
-                    Point probepos = probe.Position - Offset;
-                    if (new Rectangle(Point.Origin, size).Occupies(probepos))
-                    {
-                        ProbePool.Use(probe);
-                    }
-                }
-            }
-
             public override void Render(RenderContext Context)
             {
                 TextStyle style = this.TextBlock._Style;
@@ -298,14 +283,20 @@ namespace DUIP.UI
             /// </summary>
             public void Invalidate()
             {
-                if (this.Invalidated != null)
+                if (this._Invalidate != null)
                 {
-                    this.Invalidated();
+                    this._Invalidate();
                 }
             }
+            private Action _Invalidate;
 
-            public override event Action Invalidated;
+            public override RemoveHandler RegisterInvalidate(Action Callback)
+            {
+                this._Invalidate += Callback;
+                return delegate { this._Invalidate -= Callback; };
+            }
 
+           
             public TextBlock TextBlock;
             public int Width;
             public int Height;

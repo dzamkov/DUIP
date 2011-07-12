@@ -15,7 +15,7 @@ namespace DUIP.UI
     /// <summary>
     /// A control that allows the user to interact with a world.
     /// </summary>
-    public class WorldDisplay : GLControl, IProbePool
+    public class WorldDisplay : GLControl
     {
         public WorldDisplay()
             : base(GraphicsMode.Default)
@@ -30,10 +30,13 @@ namespace DUIP.UI
             this.MakeCurrent();
 
             RenderContext.Initialize();
+
+            this._Probe = new Probe();
+            this._InputContext = new InputContext(this._Probe);
+
             this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
             this._Background = new OceanAmbience(Random.Default);
-            this._World = new World(new Theme());
-            this._Probe = new Probe();
+            this._World = new World(this._InputContext, new Theme());
             this._MakeView();
 
             Content testcontent = new EditorContent();
@@ -66,24 +69,13 @@ namespace DUIP.UI
             this._MakeView();
             this._WheelDelta = 0;
 
-            this._ProbeUsed = false;
-            this._World.Update(this, Time);
+            this._InputContext.Update(Time);
             this._Background.Update(this._World, Time);  
         }
 
         protected override void OnResize(EventArgs e)
         {
             this._MakeView();
-        }
-
-        protected override void OnMouseEnter(EventArgs e)
-        {
-            this._HasProbe = true;
-        }
-
-        protected override void OnMouseLeave(EventArgs e)
-        {
-            this._HasProbe = false;
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
@@ -96,7 +88,7 @@ namespace DUIP.UI
         {
             if (e.Button == MouseButtons.Left)
             {
-                this._Probe.UpdateActive(true);
+                this._Probe.UpdateSignal(ProbeSignal.Primary, true);
             }
         }
 
@@ -104,7 +96,7 @@ namespace DUIP.UI
         {
             if (e.Button == MouseButtons.Left)
             {
-                this._Probe.UpdateActive(false);
+                this._Probe.UpdateSignal(ProbeSignal.Primary, false);
             }
         }
 
@@ -211,42 +203,40 @@ namespace DUIP.UI
         /// <summary>
         /// The probe used for a world view.
         /// </summary>
-        public class Probe : UI.IProbe
+        public class Probe : UI.Probe
         {
             /// <summary>
-            /// Sets if this probe is active.
-            /// </summary>
-            public void UpdateActive(bool Active)
-            {
-                this._Active = Active;
-            }
-
-            /// <summary>
-            /// Sets the position of this probe.
+            /// Updates the position of the probe.
             /// </summary>
             public void UpdatePosition(Point Position)
             {
                 this._Position = Position;
             }
 
-            public bool Active
+            /// <summary>
+            /// Updates the value of a signal for the probe.
+            /// </summary>
+            public void UpdateSignal(ProbeSignal Signal, bool Value)
+            {
+                this._Primary = Value;
+                if (this._SignalChange != null)
+                {
+                    this._SignalChange(Signal, Value);
+                }
+            }
+
+            /// <summary>
+            /// Gets wether the probe is locked.
+            /// </summary>
+            public bool Locked
             {
                 get
                 {
-                    return this._Active;
+                    return this._Locked;
                 }
             }
 
-            public void Focus(IFocusListener Listener)
-            {
-                if (this._Focus != null)
-                {
-                    this._Focus.Drop();
-                }
-                this._Focus = Listener;
-            }
-
-            public Point Position
+            public override Point Position
             {
                 get
                 {
@@ -254,35 +244,124 @@ namespace DUIP.UI
                 }
             }
 
-            private Point _Position;
-            private bool _Active;
-            private IFocusListener _Focus;
-        }
-
-        IEnumerable<IProbe> IProbePool.Probes
-        {
-            get
+            public override bool this[ProbeSignal Signal]
             {
-                if (this._HasProbe && !this._ProbeUsed && !this._ProbeLocked)
+                get
                 {
-                    return new IProbe[] { this._Probe };
-                }
-                else
-                {
-                    return new IProbe[0];
+                    return this._Primary;
                 }
             }
+
+            public override Action Lock()
+            {
+                this._Locked = true;
+                return delegate { this._Locked = false; };
+            }
+
+            public override void Focus(Action Lost)
+            {
+                if (this._Focus != null)
+                {
+                    this._Focus();
+                }
+                this._Focus = Lost;
+            }
+            
+            public override RemoveHandler RegisterSignalChange(Action<ProbeSignal, bool> Callback)
+            {
+                this._SignalChange += Callback;
+                return delegate { this._SignalChange -= Callback; };
+            }
+            private Action<ProbeSignal, bool> _SignalChange;
+
+            private Point _Position;
+            private Action _Focus;
+            private bool _Locked;
+            private bool _Primary;
         }
 
-        void IProbePool.Use(IProbe Probe)
+        /// <summary>
+        /// The input context used for a world view.
+        /// </summary>
+        public class InputContext : UI.InputContext
         {
-            this._ProbeUsed = true;
-        }
+            public InputContext(Probe Probe)
+            {
+                this._Probe = Probe;
+            }
 
-        Action IProbePool.Lock(IProbe Probe)
-        {
-            this._ProbeLocked = true;
-            return delegate { this._ProbeLocked = false; };
+            /// <summary>
+            /// Performs update events.
+            /// </summary>
+            /// <param name="Time">The time in seconds since the last update.</param>
+            public void Update(double Time)
+            {
+                if (this._Update != null)
+                {
+                    this._Update(Time);
+                }
+            }
+
+            public override ProbeSignalChangeHandler ProbeSignalChange
+            {
+                get
+                {
+                    return this._ProbeSignalChange;
+                }
+                set
+                {
+                    this._ProbeSignalChange = value;
+
+                    // Register SignalChange callback on the probe as needed.
+                    if (this._RemoveSignalChange == null)
+                    {
+                        if (value != null)
+                        {
+                            Probe probe = this._Probe;
+                            this._RemoveSignalChange = this._Probe.RegisterSignalChange(delegate(ProbeSignal Signal, bool Value)
+                            {
+                                if (!probe.Locked)
+                                {
+                                    this._ProbeSignalChange(probe, Signal, Value);
+                                }
+                            });
+                        }
+                    }
+                    else
+                    {
+                        if (value == null)
+                        {
+                            this._RemoveSignalChange();
+                        }
+                    }
+                }
+            }
+            private ProbeSignalChangeHandler _ProbeSignalChange;
+            private RemoveHandler _RemoveSignalChange;
+
+            public override IEnumerable<UI.Probe> Probes
+            {
+                get
+                {
+                    if (this._Probe.Locked)
+                    {
+                        return new UI.Probe[0];
+                    }
+                    else
+                    {
+                        return new UI.Probe[] { this._Probe };
+                    }
+                }
+            }
+
+            public override RemoveHandler RegisterUpdate(Action<double> Callback)
+            {
+                this._Update += Callback;
+                return delegate { this._Update -= Callback; };
+            }
+
+            private Action<double> _Update;
+            private Probe _Probe;
         }
 
         /// <summary>
@@ -304,10 +383,9 @@ namespace DUIP.UI
         private int _WheelDelta;
 
         private Disposable<Content> _DragContent;
+
         private Probe _Probe;
-        private bool _HasProbe;
-        private bool _ProbeUsed;
-        private bool _ProbeLocked;
+        private InputContext _InputContext;
 
         private Ambience _Background;
         private World _World;

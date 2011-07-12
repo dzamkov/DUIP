@@ -65,17 +65,17 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
         {
             BackgroundBlock bc = this.Inner as BackgroundBlock;
             if (bc != null)
             {
-                return CreateBorderBackgroundLayout(SizeRange, this, bc, bc.Inner, out Size);
+                return CreateBorderBackgroundLayout(Context, SizeRange, this, bc, bc.Inner, out Size);
             }
             else
             {
                 Point sizepadding = this.SizePadding;
-                Layout inner = this.Inner.CreateLayout(SizeRange.Translate(-sizepadding), out Size);
+                Layout inner = this.Inner.CreateLayout(null, SizeRange.Translate(-sizepadding), out Size);
                 Size += sizepadding;
                 return new _Layout
                 {
@@ -88,12 +88,6 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override void Update(Point Offset, IProbePool ProbePool)
-            {
-                double w = this.Block.Border.Weight;
-                this.Inner.Update(Offset + new Point(w, w), ProbePool);
-            }
-
             public override void Render(RenderContext Context)
             {
                 Border bord = this.Block.Border;
@@ -104,16 +98,9 @@ namespace DUIP.UI
                 bord.Render(Context, this.Size);
             }
 
-            public override event Action Invalidated
+            public override RemoveHandler RegisterInvalidate(Action Callback)
             {
-                add
-                {
-                    this.Inner.Invalidated += value;
-                }
-                remove
-                {
-                    this.Inner.Invalidated -= value;
-                }
+                return this.Inner.RegisterInvalidate(Callback);
             }
 
             public BorderBlock Block;
@@ -124,10 +111,10 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a layout that combines a border with a background for increased performance and less visual artifacts.
         /// </summary>
-        public static Layout CreateBorderBackgroundLayout(Rectangle SizeRange, BorderBlock Border, BackgroundBlock Background, Block Inner, out Point Size)
+        public static Layout CreateBorderBackgroundLayout(InputContext Context, Rectangle SizeRange, BorderBlock Border, BackgroundBlock Background, Block Inner, out Point Size)
         {
             Point sizepadding = Border.SizePadding;
-            Layout inner = Inner.CreateLayout(SizeRange.Translate(-sizepadding), out Size);
+            Layout inner = Inner.CreateLayout(Context, SizeRange.Translate(-sizepadding), out Size);
             Size += sizepadding;
             return new _BorderBackgroundLayout
             {
@@ -140,12 +127,6 @@ namespace DUIP.UI
 
         private class _BorderBackgroundLayout : Layout
         {
-            public override void Update(Point Offset, IProbePool ProbePool)
-            {
-                double w = this.BorderBlock.Border.Weight;
-                this.Inner.Update(Offset + new Point(w, w), ProbePool);
-            }
-
             public override void Render(RenderContext Context)
             {
                 Border bord = this.BorderBlock.Border;
