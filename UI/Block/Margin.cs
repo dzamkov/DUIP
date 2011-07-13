@@ -67,17 +67,17 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
+            public override RemoveHandler Link(InputContext Context)
+            {
+                return this.Inner.Link(Context.Translate(-this.Offset));
+            }
+
             public override void Render(RenderContext Context)
             {
                 using (Context.Translate(this.Offset))
                 {
                     this.Inner.Render(Context);
                 }
-            }
-
-            public override RemoveHandler RegisterInvalidate(Action Callback)
-            {
-                return this.Inner.RegisterInvalidate(Callback);
             }
 
             public Point Offset;

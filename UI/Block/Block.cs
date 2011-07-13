@@ -103,11 +103,6 @@ namespace DUIP.UI
         {
             return new MarginBlock(Margin, this);
         }
-
-        /// <summary>
-        /// The allowable difference between sizes and offsets in order for them to be considered equal.
-        /// </summary>
-        public const double ErrorThreshold = 0.000001;
     }
 
     /// <summary>
@@ -115,6 +110,18 @@ namespace DUIP.UI
     /// </summary>
     public abstract class Layout
     {
+        /// <summary>
+        /// Links this layout to an input context and returns a remove handler to later unlink it. Only one layout for each block may be linked
+        /// at one time.
+        /// </summary>
+        /// <remarks>The input context given is not restricted to the area of the layout, and may reference probes that are outside the layout.
+        /// The input context will give positions relative to the layout with (0.0, 0.0) being the top-left corner with ascending
+        /// positions going towards the bottom-right.</remarks>
+        public virtual RemoveHandler Link(InputContext Context)
+        {
+            return null;
+        }
+
         /// <summary>
         /// Renders the layout to the given render context.
         /// </summary>
@@ -124,12 +131,9 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Registers a callback for when the layout is made invalid due to a change in the associated block.
+        /// The allowable difference between sizes and offsets in order for them to be considered equal.
         /// </summary>
-        public virtual RemoveHandler RegisterInvalidate(Action Callback)
-        {
-            return null;
-        }
+        public const double ErrorThreshold = 0.000001;
     }
 
     /// <summary>

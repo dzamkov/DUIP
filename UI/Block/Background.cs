@@ -73,6 +73,11 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
+            public override RemoveHandler Link(InputContext Context)
+            {
+                return this.Inner.Link(Context);
+            }
+
             public override void Render(RenderContext Context)
             {
                 Context.ClearTexture();

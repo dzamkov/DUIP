@@ -88,6 +88,12 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
+            public override RemoveHandler Link(InputContext Context)
+            {
+                double iw = -this.Block._Border.Weight;
+                return this.Inner.Link(Context.Translate(new Point(iw, iw)));
+            }
+
             public override void Render(RenderContext Context)
             {
                 Border bord = this.Block.Border;
@@ -96,11 +102,6 @@ namespace DUIP.UI
                     this.Inner.Render(Context);
                 }
                 bord.Render(Context, this.Size);
-            }
-
-            public override RemoveHandler RegisterInvalidate(Action Callback)
-            {
-                return this.Inner.RegisterInvalidate(Callback);
             }
 
             public BorderBlock Block;
@@ -127,6 +128,12 @@ namespace DUIP.UI
 
         private class _BorderBackgroundLayout : Layout
         {
+            public override RemoveHandler Link(InputContext Context)
+            {
+                double iw = -this.BorderBlock._Border.Weight;
+                return this.Inner.Link(Context.Translate(new Point(iw, iw)));
+            }
+
             public override void Render(RenderContext Context)
             {
                 Border bord = this.BorderBlock.Border;

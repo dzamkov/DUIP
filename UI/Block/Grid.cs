@@ -175,6 +175,21 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
+            public override RemoveHandler Link(InputContext Context)
+            {
+                RemoveHandler rh = null;
+                for (int c = 0; c < this.ColumnOffsets.Length; c++)
+                {
+                    double coff = this.ColumnOffsets[c];
+                    for (int r = 0; r < this.RowOffsets.Length; r++)
+                    {
+                        double roff = this.RowOffsets[r];
+                        rh += this.Cells[c, r].Link(Context.Translate(new Point(-coff, -roff)));
+                    }
+                }
+                return rh;
+            }
+
             public override void Render(RenderContext Context)
             {
                 // Render cells
@@ -212,16 +227,6 @@ namespace DUIP.UI
                         }
                     }
                 }
-            }
-
-            public override RemoveHandler RegisterInvalidate(Action Callback)
-            {
-                RemoveHandler remove = null;
-                foreach (Layout cell in this.Cells)
-                {
-                    remove += cell.RegisterInvalidate(Callback);
-                }
-                return remove;
             }
 
             public GridBlock Block;

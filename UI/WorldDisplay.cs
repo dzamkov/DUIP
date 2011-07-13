@@ -302,39 +302,27 @@ namespace DUIP.UI
                 }
             }
 
-            public override ProbeSignalChangeHandler ProbeSignalChange
+            public override RemoveHandler RegisterProbeSignalChange(ProbeSignalChangeHandler Callback)
             {
-                get
+                this._ProbeSignalChange += Callback;
+                if (this._ProbeSignalChange != null && this._RemoveSignalChange == null)
                 {
-                    return this._ProbeSignalChange;
+                    Probe probe = this._Probe;
+                    this._RemoveSignalChange = probe.RegisterSignalChange(delegate(ProbeSignal Signal, bool Value)
+                    {
+                        bool handled = false;
+                        this._ProbeSignalChange(probe, Signal, Value, ref handled);
+                    });
                 }
-                set
+                return delegate
                 {
-                    this._ProbeSignalChange = value;
-
-                    // Register SignalChange callback on the probe as needed.
-                    if (this._RemoveSignalChange == null)
+                    this._ProbeSignalChange -= Callback;
+                    if (this._ProbeSignalChange == null && this._RemoveSignalChange != null)
                     {
-                        if (value != null)
-                        {
-                            Probe probe = this._Probe;
-                            this._RemoveSignalChange = this._Probe.RegisterSignalChange(delegate(ProbeSignal Signal, bool Value)
-                            {
-                                if (!probe.Locked)
-                                {
-                                    this._ProbeSignalChange(probe, Signal, Value);
-                                }
-                            });
-                        }
+                        this._RemoveSignalChange();
+                        this._RemoveSignalChange = null;
                     }
-                    else
-                    {
-                        if (value == null)
-                        {
-                            this._RemoveSignalChange();
-                        }
-                    }
-                }
+                };
             }
             private ProbeSignalChangeHandler _ProbeSignalChange;
             private RemoveHandler _RemoveSignalChange;

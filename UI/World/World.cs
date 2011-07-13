@@ -13,14 +13,15 @@ namespace DUIP.UI
     /// </summary>
     public class World
     {
-        public World(InputContext Context, Theme Theme)
+        public World(InputContext InputContext, Theme Theme)
         {
             this._Arcs = new List<Arc>();
             this._Nodes = new List<Node>();
             this._Theme = Theme;
 
-            Context.ProbeSignalChange = this._ProbeSignalChange;
-            Context.RegisterUpdate(this._Update);
+            InputContext.RegisterProbeSignalChange(this._ProbeSignalChange);
+            InputContext.RegisterUpdate(this._Update);
+            this._InputContext = InputContext;
         }
 
         /// <summary>
@@ -65,7 +66,7 @@ namespace DUIP.UI
             Point size;
             Block block = Content.Object.CreateBlock(this._Theme);
             Layout layout = block.CreateLayout(null, Node.SizeRange, out size);
-            Node node = new Node(Content, block, layout, size, Location - size * 0.5, Point.Zero);
+            Node node = new Node(this._InputContext, Content, block, layout, size, Location - size * 0.5, Point.Zero);
             this.Spawn(node);
             return node;
         }
@@ -112,16 +113,15 @@ namespace DUIP.UI
         /// <summary>
         /// Handles a probe signal change event from the input context.
         /// </summary>
-        private bool _ProbeSignalChange(Probe Probe, ProbeSignal Signal, bool Value)
+        private void _ProbeSignalChange(Probe Probe, ProbeSignal Signal, bool Value, ref bool Handled)
         {
             Point pos = Probe.Position;
             Node node = this.NodeAtPoint(pos);
             if (node != null)
             {
+                Handled = true;
                 node.ProbeSignalChange(this, Probe, pos - node.Position, Signal, Value);
             }
-
-            return false;
         }
 
         /// <summary>
@@ -166,6 +166,7 @@ namespace DUIP.UI
             }
         }
 
+        private InputContext _InputContext;
         private List<Arc> _Arcs;
         private List<Node> _Nodes;
         private Theme _Theme;

@@ -11,7 +11,6 @@ namespace DUIP.UI
     {
         public TextBlock()
         {
-            this._Layouts = new Registry<_Layout>();
             LineStartTextItem first = new LineStartTextItem();
             this._First = first;
             this._Last = first;
@@ -104,11 +103,6 @@ namespace DUIP.UI
             {
                 this._Last = Section._Last;
             }
-
-            foreach (_Layout layout in this._Layouts)
-            {
-                layout.Invalidate();
-            }
         }
 
         public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
@@ -134,7 +128,6 @@ namespace DUIP.UI
                 Width = width,
                 Height = height
             };
-            this._Layouts.Register(layout);
             return layout;
         }
 
@@ -191,6 +184,24 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
+            public override RemoveHandler Link(InputContext Context)
+            {
+                TextStyle style = this.TextBlock._Style;
+                Point cellsize = style.CellSize;
+                Point fullsize = new Point(cellsize.X * this.Width, cellsize.Y * this.Height);
+
+                RemoveHandler rh = null;
+                rh += Context.RegisterProbeSignalChange(delegate(Probe Probe, ProbeSignal Signal, bool Value, ref bool Handled)
+                {
+                    Point pos = Probe.Position;
+                    if (new Rectangle(Point.Origin, fullsize).Occupies(pos))
+                    {
+                        Handled = true;
+                    }
+                });
+                return rh;
+            }
+
             public override void Render(RenderContext Context)
             {
                 TextStyle style = this.TextBlock._Style;
@@ -277,32 +288,12 @@ namespace DUIP.UI
                     }
                 }
             }
-
-            /// <summary>
-            /// Marks the layout as invalid.
-            /// </summary>
-            public void Invalidate()
-            {
-                if (this._Invalidate != null)
-                {
-                    this._Invalidate();
-                }
-            }
-            private Action _Invalidate;
-
-            public override RemoveHandler RegisterInvalidate(Action Callback)
-            {
-                this._Invalidate += Callback;
-                return delegate { this._Invalidate -= Callback; };
-            }
-
            
             public TextBlock TextBlock;
             public int Width;
             public int Height;
         }
 
-        private Registry<_Layout> _Layouts;
         private LineStartTextItem _First;
         private TextItem _Last;
         private TextStyle _Style;

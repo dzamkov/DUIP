@@ -13,16 +13,19 @@ namespace DUIP.UI
     /// </summary>
     public class Node : IDisposable
     {
-        public Node(Disposable<Content> Content, Disposable<Block> Block, Point Position, Point Velocity)
+        public Node(InputContext WorldInputContext, Disposable<Content> Content, Disposable<Block> Block, Point Position, Point Velocity)
         {
             this._Content = Content;
             this._Block = Block;
             this._Position = Position;
             this._Velocity = Velocity;
             this._Layout = this._Block.Object.CreateLayout(null, SizeRange, out this._Size);
+
+            this._InputContext = new _NodeInputContext(this, WorldInputContext);
+            this._Layout.Link(this._InputContext);
         }
 
-        public Node(Disposable<Content> Content, Disposable<Block> Block, Layout Layout, Point Size, Point Position, Point Velocity)
+        public Node(InputContext WorldInputContext, Disposable<Content> Content, Disposable<Block> Block, Layout Layout, Point Size, Point Position, Point Velocity)
         {
             this._Content = Content;
             this._Block = Block;
@@ -30,6 +33,9 @@ namespace DUIP.UI
             this._Velocity = Velocity;
             this._Layout = Layout;
             this._Size = Size;
+
+            this._InputContext = new _NodeInputContext(this, WorldInputContext);
+            this._Layout.Link(this._InputContext);
         }
 
         /// <summary>
@@ -112,11 +118,26 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Gets the input context for the interior (contents) of the node.
+        /// </summary>
+        public InputContext InternalInputContext
+        {
+            get
+            {
+                return this._InputContext;
+            }
+        }
+
+        /// <summary>
         /// Handles a probe signal change over the node.
         /// </summary>
         /// <param name="Offset">The offset of the probe from the top-left corner of the node.</param>
         public void ProbeSignalChange(World World, Probe Probe, Point Offset, ProbeSignal Signal, bool Value)
         {
+            // See if the event can be handled by the content of the node
+            if (this._InputContext.ProbeSignalChange(Probe, Signal, Value))
+                return;
+
             // Start dragging if possible 
             if (this._DragState == null && Signal == ProbeSignal.Primary && Value == true)
             {
@@ -253,12 +274,87 @@ namespace DUIP.UI
             public Point Offset;
         }
 
+        /// <summary>
+        /// An input context for the internal contents of a node.
+        /// </summary>
+        private class _NodeInputContext : InputContext
+        {
+            public _NodeInputContext(Node Node, InputContext Parent)
+            {
+                this._Node = Node;
+                this._Parent = Parent;
+            }
+
+            public override IEnumerable<Probe> Probes
+            {
+                get
+                {
+                    return
+                        from probe in this._Parent.Probes
+                        where this._Node.Area.Occupies(probe.Position)
+                        select (Probe)new _NodeProbe(this._Node, probe);
+                }
+            }
+
+            /// <summary>
+            /// Calls the probe signal change handler on the input context and returns wether the event was handled.
+            /// </summary>
+            /// <param name="Probe">The probe in the parent input context whose signal was changed.</param>
+            public bool ProbeSignalChange(Probe Probe, ProbeSignal Signal, bool Value)
+            {
+                bool handled = false;
+                if (this._ProbeSignalChange != null)
+                {
+                    this._ProbeSignalChange(new _NodeProbe(this._Node, Probe), Signal, Value, ref handled);
+                }
+                return handled;
+            }
+
+            public override RemoveHandler RegisterProbeSignalChange(ProbeSignalChangeHandler Callback)
+            {
+                this._ProbeSignalChange += Callback;
+                return delegate { this._ProbeSignalChange -= Callback; };
+            }
+
+            public override RemoveHandler RegisterUpdate(Action<double> Callback)
+            {
+                return this._Parent.RegisterUpdate(Callback);
+            }
+
+            private Node _Node;
+            private InputContext _Parent;
+            private ProbeSignalChangeHandler _ProbeSignalChange;
+        }
+
+        /// <summary>
+        /// A probe relative to a node.
+        /// </summary>
+        private sealed class _NodeProbe : DerivedProbe
+        {
+            public _NodeProbe(Node Node, Probe Source)
+                : base(Source)
+            {
+                this._Node = Node;
+            }
+
+            public override Point Position
+            {
+                get
+                {
+                    return this.Source.Position - this._Node._Position;
+                }
+            }
+
+            private Node _Node;
+        }
+
         public void Dispose()
         {
             this._Content.Dispose();
             this._Block.Dispose();
         }
 
+        private _NodeInputContext _InputContext;
         private Point _Position;
         private Point _Velocity;
         private DragState _DragState;
