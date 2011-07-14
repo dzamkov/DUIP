@@ -124,9 +124,7 @@ namespace DUIP.UI
 
             public override void Draw(RenderContext Context, char Char, Point Offset)
             {
-                Disposable<Figure> glyph = this._Font.GetGlyph(Char);
-                ((Figure)glyph).WithTranslate(Offset).Render(Context);
-                glyph.Dispose();
+                throw new NotImplementedException();
             }
 
             private Font _Font;

@@ -59,6 +59,7 @@
     <Compile Include="UI\Block\Grid.cs" />
     <Compile Include="UI\Block\Text.cs" />
     <Compile Include="UI\Content\Editor.cs" />
+    <Compile Include="UI\Figure\Hint.cs" />
     <Compile Include="UI\InputContext.cs" />
     <Compile Include="UI\Theme.cs" />
     <Compile Include="UI\Content\Content.cs" />
@@ -67,7 +68,7 @@
     <Compile Include="UI\Compass.cs" />
     <Compile Include="UI\Image\CellularImage.cs" />
     <Compile Include="UI\Color.cs" />
-    <Compile Include="UI\Image\Figure.cs" />
+    <Compile Include="UI\Figure\Figure.cs" />
     <Compile Include="UI\Image\Image.cs" />
     <Compile Include="UI\Image\RenderContext.cs" />
     <Compile Include="UI\Transfer\File.cs" />

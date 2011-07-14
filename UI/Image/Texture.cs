@@ -430,26 +430,6 @@ namespace DUIP.UI
             }
         }
 
-        public override void Render(RenderContext Context)
-        {
-            Context.SetTexture(this._Texture);
-            Context.SetColor(this._Color);
-            Context.DrawTexturedQuad(this._Source, this._Destination);
-        }
-
-        public override Figure WithTranslate(Point Offset)
-        {
-            return new TextureFigure(this._Texture, this._Source, this._Destination.Translate(Offset), this._Color);
-        }
-
-        public override Rectangle Bounds
-        {
-            get
-            {
-                return this._Destination;
-            }
-        }
-
         private Rectangle _Source;
         private Rectangle _Destination;
         private Color _Color;
