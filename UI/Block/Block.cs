@@ -123,11 +123,22 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Renders the layout to the given render context.
+        /// Gets a figure to draw this layout in its current state.
         /// </summary>
-        public virtual void Render(RenderContext Context)
+        public virtual Figure Figure
         {
+            get
+            {
+                return null;
+            }
+        }
 
+        /// <summary>
+        /// Registers a callback to be called when the figure for this layout has changed.
+        /// </summary>
+        public virtual RemoveHandler RegisterFigureChange(Action Callback)
+        {
+            return null;
         }
 
         /// <summary>
