@@ -5,6 +5,8 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
+using DUIP.UI.Graphics;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -14,14 +16,6 @@ namespace DUIP.UI
     /// </summary>
     public abstract class Ambience
     {
-        /// <summary>
-        /// Renders the background using the given context.
-        /// </summary>
-        public virtual void Render(World World, RenderContext Context)
-        {
-
-        }
-
         /// <summary>
         /// Updates the state of the background by the given amount of time in seconds.
         /// </summary>
@@ -35,37 +29,6 @@ namespace DUIP.UI
         /// </summary>
         public struct Layer
         {
-            /// <summary>
-            /// Renders this layer to the given context.
-            /// </summary>
-            public void Render(RenderContext Context)
-            {
-                this.Render(Context, Context.View.Zoom);   
-                
-            }
-
-            /// <summary>
-            /// Renders this layer to the given context with an alternate (or precomputed) zoom level.
-            /// </summary>
-            public void Render(RenderContext Context, double Zoom)
-            {
-                double pg = (Zoom - this.MinZoom) / (this.MaxZoom - this.MinZoom);
-                if (pg > 0.0 && pg < 1.0)
-                {
-                    double alpha = pg * (1.0 - pg) * 4.0;
-
-                    View view = Context.View;
-                    Rectangle src = view.Area;
-                    double iscale = (1.0 / this.Scale);
-                    src.TopLeft *= iscale;
-                    src.BottomRight *= iscale;
-
-                    Context.SetTexture(this.Texture);
-                    Context.SetColor(Color.RGBA(1.0, 1.0, 1.0, alpha));
-                    Context.DrawTexturedQuad(src, view.Area);
-                }
-            }
-
             /// <summary>
             /// Gets the texture source for the layer.
             /// </summary>

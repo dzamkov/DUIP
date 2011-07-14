@@ -6,6 +6,8 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
+using DUIP.UI.Graphics;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -243,13 +245,13 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Independently renders this node using the given context.
+        /// Gets a figure for this node in its current state in the coordinate space of the world.
         /// </summary>
-        public void Render(World World, RenderContext Context)
+        public Figure Figure
         {
-            using (Context.Translate(this._Position))
+            get
             {
-                this._Layout.Render(Context);
+                return this._Layout.Figure.Translate(this._Position);
             }
         }
 

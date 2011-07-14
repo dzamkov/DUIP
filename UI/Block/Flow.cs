@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using DUIP.UI.Graphics;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -144,39 +146,39 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override void Render(RenderContext Context)
+            public override Figure Figure
             {
-                FlowStyle style = this.Block.Style;
-                Axis minoraxis = style.MinorAxis;
-                Alignment linealign = style.LineAlignment;
-
-                Font.MultiDrawer fontdrawer = new Font.MultiDrawer();
-                foreach (Line line in this.Lines)
+                get
                 {
-                    double majoff = line.MajorOffset;
-                    double majsize = line.MajorSize;
-                    foreach (Item item in line.Items)
+                    FlowStyle style = this.Block.Style;
+                    Axis minoraxis = style.MinorAxis;
+                    Alignment linealign = style.LineAlignment;
+
+                    Figure fig = null;
+                    foreach (Line line in this.Lines)
                     {
-                        FlowItem source = item.Source;
-                        double minoff = item.MinorOffset;
-
-                        // Character item
-                        CharacterFlowItem cfi = source as CharacterFlowItem;
-                        if (cfi != null)
+                        double majoff = line.MajorOffset;
+                        double majsize = line.MajorSize;
+                        foreach (Item item in line.Items)
                         {
-                            Font font = cfi.Font;
-                            char name = cfi.Name;
+                            FlowItem source = item.Source;
+                            double minoff = item.MinorOffset;
 
-                            Point size = font.GetSize(name).Shift(minoraxis);
-                            Point off = new Point(minoff, majoff + Align.AxisOffset(linealign, majsize, size.Y)).Shift(minoraxis);
+                            // Character item
+                            CharacterFlowItem cfi = source as CharacterFlowItem;
+                            if (cfi != null)
+                            {
+                                Font font = cfi.Font;
+                                char name = cfi.Name;
 
-                            fontdrawer.Select(Context, font);
-                            fontdrawer.Draw(Context, name, off);
+                                Point size = font.GetSize(name).Shift(minoraxis);
+                                Point off = new Point(minoff, majoff + Align.AxisOffset(linealign, majsize, size.Y)).Shift(minoraxis);
+                                fig ^= font.GetGlyph(name).Translate(off);
+                            }
                         }
                     }
+                    return fig;
                 }
-
-                fontdrawer.Flush(Context);
             }
 
             /// <summary>

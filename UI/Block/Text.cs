@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using DUIP.UI.Graphics;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -310,116 +312,108 @@ namespace DUIP.UI
                 return rh;
             }
 
-            public override void Render(RenderContext Context)
+            public override Figure Figure
             {
-                TextStyle style = this.TextBlock._Style;
-                Point cellsize = style.CellSize;
-                _SelectionInfo sel = this.TextBlock._Selection;
-
-                // Draw back colors
-                TextItem cur = this.TextBlock._First;
-                int offset = 0;
-                double y = 0.0;
-
-                TextBackStyle backstyle = style.DefaultBackStyle;
-                int colstartoffset = 0;
-                using (Context.DrawQuads())
+                get
                 {
+                    TextStyle style = this.TextBlock._Style;
+                    Point cellsize = style.CellSize;
+                    _SelectionInfo sel = this.TextBlock._Selection;
+                    Figure fig = null;
+
+                    // Draw back colors
+                    TextItem cur = this.TextBlock._First;
+                    int offset = 0;
+                    double y = 0.0;
+
+                    TextBackStyle backstyle = style.DefaultBackStyle;
+                    SolidFigure colmask = new SolidFigure(backstyle.BackColor);
+                    int colstartoffset = 0;
                     while ((cur = cur.Next) != null)
                     {
                         if (cur is LineStartTextItem)
                         {
-                            _OutputBackColorStrip(Context, backstyle, cellsize, y, colstartoffset, offset);
+                            fig += _BackColorStripFigure(colmask, cellsize, y, colstartoffset, offset);
                             colstartoffset = 0;
                             offset = 0;
                             y += cellsize.Y;
                             continue;
                         }
+                        _AppendLine(style, cur, ref offset);
+                    }
+                    fig += _BackColorStripFigure(colmask, cellsize, y, colstartoffset, offset);
+
+                    // Draw characters and foreground objects
+                    TextItem prev = this.TextBlock._First;
+                    offset = 0;
+                    y = 0.0;
+                    TextFontStyle fontstyle = style.DefaultFontStyle;
+
+                    while (true)
+                    {
+                        if (sel != null && sel.Selection._Primary._Previous == prev)
+                        {
+                            double blink = sel.CaretBlinkTime % style.CaretBlinkRate;
+                            sel.CaretBlinkTime = blink;
+                            if (blink < style.CaretBlinkRate * 0.5)
+                            {
+                                Border caretstyle = style.CaretStyle;
+                                double x = cellsize.X * offset;
+                                fig += new ShapeFigure(
+                                    new PathShape(caretstyle.Weight, new SegmentPath(new Point(x, y), new Point(x, y + cellsize.Y))),
+                                    new SolidFigure(caretstyle.Color));
+                            }
+                        }
+
+                        if ((prev = cur = prev.Next) == null)
+                        {
+                            break;
+                        }
+
+                        if (cur is LineStartTextItem)
+                        {
+                            offset = 0;
+                            y += cellsize.Y;
+                            continue;
+                        }
+
+                        CharacterTextItem ci = cur as CharacterTextItem;
+                        if (ci != null)
+                        {
+                            char name = ci.Name;
+                            Font font = fontstyle.Font;
+                            Point size = font.GetSize(ci.Name);
+                            Point off = new Point(cellsize.X * offset, y);
+                            off.X += Align.AxisOffset(style.HorizontalAlignment, cellsize.X, size.X);
+                            off.Y += Align.AxisOffset(style.VerticalAlignment, cellsize.Y, size.Y);
+                            fig += font.GetGlyph(name).Translate(off);
+                            offset++;
+                            continue;
+                        }
 
                         _AppendLine(style, cur, ref offset);
                     }
-                    _OutputBackColorStrip(Context, backstyle, cellsize, y, colstartoffset, offset);
+
+                    return fig;
                 }
-
-                // Draw characters and foreground objects
-                TextItem prev = this.TextBlock._First;
-                offset = 0;
-                y = 0.0;
-                TextFontStyle fontstyle = style.DefaultFontStyle;
-                Font.MultiDrawer fontdrawer = new Font.MultiDrawer();
-                fontdrawer.Select(Context, fontstyle.Font);
-                while (true)
-                {
-                    if (sel != null && sel.Selection._Primary._Previous == prev)
-                    {
-                        double blink = sel.CaretBlinkTime % style.CaretBlinkRate;
-                        sel.CaretBlinkTime = blink;
-                        if (blink < style.CaretBlinkRate * 0.5)
-                        {
-                            fontdrawer.Flush(Context);
-                            Border caretstyle = style.CaretStyle;
-                            double x = cellsize.X * offset;
-                            double hw = caretstyle.Weight * 0.5;
-                            Context.ClearTexture();
-                            Context.SetColor(caretstyle.Color);
-                            using (Context.DrawLines(caretstyle.Weight))
-                            {
-                                Context.OutputLine(new Point(x, y), new Point(x, y + cellsize.Y));
-                            }
-                        }
-                    }
-
-                    if ((prev = cur = prev.Next) == null)
-                    {
-                        break;
-                    }
-
-                    if (cur is LineStartTextItem)
-                    {
-                        offset = 0;
-                        y += cellsize.Y;
-                        continue;
-                    }
-
-                    CharacterTextItem ci = cur as CharacterTextItem;
-                    if (ci != null)
-                    {
-                        char name = ci.Name;
-                        Font font = fontdrawer.Font;
-                        Point size = font.GetSize(ci.Name);
-                        Point off = new Point(cellsize.X * offset, y);
-                        off.X += Align.AxisOffset(style.HorizontalAlignment, cellsize.X, size.X);
-                        off.Y += Align.AxisOffset(style.VerticalAlignment, cellsize.Y, size.Y);
-
-                        fontdrawer.Draw(Context, name, off);
-                        offset++;
-                        continue;
-                    }
-
-                    _AppendLine(style, cur, ref offset);
-                }
-                fontdrawer.Flush(Context);
             }
 
             /// <summary>
-            /// Outputs a quad for a section of a back color applied on a single line.
+            /// Gets a figure for a stip containing a back color for a single line.
             /// </summary>
-            private static void _OutputBackColorStrip(
-                RenderContext Context, TextBackStyle Style, Point CellSize, 
+            private static Figure _BackColorStripFigure(SolidFigure Mask, Point CellSize, 
                 double Y, int StartOffset, int EndOffset)
             {
-                if (EndOffset > StartOffset)
+                if (EndOffset > StartOffset && Mask.Color.A > 0.0)
                 {
-                    Color color = Style.BackColor;
-                    if (color.A > 0.0)
-                    {
-                        Context.SetColor(color);
-                        Context.OutputQuad(
+                    return new ShapeFigure(
+                        new RectangleShape(
                             new Rectangle(
-                                CellSize.X * StartOffset, Y, 
-                                CellSize.X * EndOffset, Y + CellSize.Y));
-                    }
+                                CellSize.X * StartOffset, Y,
+                                CellSize.X * EndOffset, Y + CellSize.Y)),
+                        Mask);
                 }
+                return null;
             }
 
             /// <summary>

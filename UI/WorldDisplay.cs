@@ -10,6 +10,9 @@ using OpenTK.Graphics.OpenGL;
 
 using WPoint = System.Drawing.Point;
 
+using DUIP.UI.Graphics;
+using DUIP.UI.Render;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -29,7 +32,8 @@ namespace DUIP.UI
 
             this.MakeCurrent();
 
-            RenderContext.Initialize();
+            this._Renderer = new Renderer();
+            this._Renderer.Initialize();
 
             this._Probe = new Probe();
             this._InputContext = new InputContext(this._Probe);
@@ -48,10 +52,10 @@ namespace DUIP.UI
         /// </summary>
         public void Render()
         {
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+
             this.MakeCurrent();
-            RenderContext rc = new RenderContext(this._View, this.Width, this.Height, true);
-            this._Background.Render(this._World, rc);
-            this._World.Render(rc);
+            this._Renderer.Render(this._View, this.Width, this.Height, true, this._World.Figure);
             this.SwapBuffers();
 
             ErrorCode ec = GL.GetError();
@@ -379,7 +383,6 @@ namespace DUIP.UI
         private World _World;
         private Camera _Camera;
         private View _View;
-
-        
+        private Renderer _Renderer;
     }
 }

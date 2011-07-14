@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using DUIP.UI.Graphics;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -72,12 +74,17 @@ namespace DUIP.UI
                 return this.Inner.Link(Context.Translate(-this.Offset));
             }
 
-            public override void Render(RenderContext Context)
+            public override Figure Figure
             {
-                using (Context.Translate(this.Offset))
+                get
                 {
-                    this.Inner.Render(Context);
+                    return this.Inner.Figure.Translate(this.Offset);
                 }
+            }
+
+            public override RemoveHandler RegisterFigureChange(Action Callback)
+            {
+                return this.Inner.RegisterFigureChange(Callback);
             }
 
             public Point Offset;

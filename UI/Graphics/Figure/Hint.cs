@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace DUIP.UI
+namespace DUIP.UI.Graphics
 {
     /// <summary>
     /// A figure that takes the appearance of a source figure, but offers some hint on how to render

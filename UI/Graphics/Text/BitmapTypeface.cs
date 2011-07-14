@@ -8,7 +8,7 @@ using System.Drawing.Imaging;
 
 using OpenTK.Graphics.OpenGL;
 
-namespace DUIP.UI
+namespace DUIP.UI.Graphics
 {
     /// <summary>
     /// A collection of fonts that use a single texture to display glyphs.
@@ -74,7 +74,7 @@ namespace DUIP.UI
                 using (var font = new System.Drawing.Font(Family, FontSize, Style, GraphicsUnit.Pixel))
                 {
                     Dictionary<char, Glyph> glyphmap;
-                    using (var g = Graphics.FromImage(bm))
+                    using (var g = System.Drawing.Graphics.FromImage(bm))
                     {
                         g.Clear(Color.Black);
 
@@ -303,7 +303,7 @@ namespace DUIP.UI
         /// <param name="MeasureGraphics">A graphics context used to take initial measurements of characters.</param>
         /// <param name="Padding">The length of uncolored pixels to add around each side of each character.</param>
         public static IEnumerable<SourceGlyph> CreateSourceGlyphs(
-            Graphics MeasureGraphics, System.Drawing.Font Font, StringFormat Format,
+            System.Drawing.Graphics MeasureGraphics, System.Drawing.Font Font, StringFormat Format,
             Color BackColor, Brush GlyphBrush,
             System.Drawing.Imaging.PixelFormat ImageFormat,
             int Padding, IEnumerable<char> Characters)
@@ -322,7 +322,7 @@ namespace DUIP.UI
 
                 // Draw character
                 Bitmap bmp = new Bitmap((int)fullsize.X, (int)fullsize.Y, ImageFormat);
-                using (Graphics g = Graphics.FromImage(bmp))
+                using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(bmp))
                 {
                     g.Clear(BackColor);
                     g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
@@ -424,7 +424,7 @@ namespace DUIP.UI
         /// </summary>
         /// <param name="Scale">The scaling to apply to get from pixel coordinates to glyphmap coordinates.</param>
         public static bool FitSourceGlyphs(
-            Bitmap Bitmap, Graphics Graphics, IEnumerable<SourceGlyph> Glyphs,
+            Bitmap Bitmap, System.Drawing.Graphics Graphics, IEnumerable<SourceGlyph> Glyphs,
             out Dictionary<char, Glyph> GlyphMap, double Scale)
         {
             // Sort glyphs by ascending height for increased packing efficency.

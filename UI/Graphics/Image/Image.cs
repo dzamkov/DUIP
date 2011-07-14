@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DUIP.UI
+namespace DUIP.UI.Graphics
 {
     /// <summary>
     /// A mapping of points to colors (with alpha channel).

@@ -6,6 +6,8 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
+using DUIP.UI.Graphics;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -152,17 +154,18 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Renders the world using the given context.
+        /// Gets a figure for this world in its current state.
         /// </summary>
-        public void Render(RenderContext Context)
+        public Figure Figure
         {
-            foreach (Node n in this._Nodes)
+            get
             {
-                n.Render(this, Context);
-            }
-            foreach (Arc a in this._Arcs)
-            {
-                a.Render(this, Context);
+                Figure fig = null;
+                foreach (Node n in this._Nodes)
+                {
+                    fig ^= n.Figure;
+                }
+                return fig;
             }
         }
 

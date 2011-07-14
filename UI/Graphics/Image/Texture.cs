@@ -8,7 +8,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
-namespace DUIP.UI
+namespace DUIP.UI.Graphics
 {
     /// <summary>
     /// Represents a two-dimensional image in graphics memory. Contains functions related to textures.
@@ -143,38 +143,12 @@ namespace DUIP.UI
         /// <summary>
         /// Loads a texture from a file on the filesystem.
         /// </summary>
-        public static Texture Load(Path Path)
+        public static Texture Load(DUIP.Path Path)
         {
             using (Bitmap bm = new Bitmap(Path))
             {
                 return Create(bm);
             }
-        }
-
-        /// <summary>
-        /// Creates a texture by rendering a view of the given scene.
-        /// </summary>
-        public static Texture Create(Action<RenderContext> Scene, View View, Format Format, int Width, int Height)
-        {
-            Texture tex = Texture.Create(Format, Width, Height);
-            Texture.SetFilterMode(TextureMinFilter.Linear, TextureMagFilter.Linear);
-            Render(Scene, View, tex._ID, Width, Height);
-            return tex;
-        }
-
-        /// <summary>
-        /// Render a figure to the currently-bound texture (with the given id).
-        /// </summary>
-        public static void Render(Action<RenderContext> Scene, View View, uint ID, int Width, int Height)
-        {
-            int fbo;
-            GL.GenFramebuffers(1, out fbo);
-            GL.BindFramebuffer(FramebufferTarget.FramebufferExt, fbo);
-            GL.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.ColorAttachment0Ext, TextureTarget.Texture2D, ID, 0);
-            RenderContext context = new RenderContext(View, Width, Height, false);
-            Scene(context);
-            GL.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
-            GL.DeleteFramebuffers(1, ref fbo);
         }
 
         /// <summary>
@@ -200,7 +174,7 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a texture by sampling an image while using the given filesystem path for caching.
         /// </summary>
-        public static Texture CacheCreate<TImage>(Path Cache, Func<TImage> Image, Rectangle Area, int Width, int Height)
+        public static Texture CacheCreate<TImage>(DUIP.Path Cache, Func<TImage> Image, Rectangle Area, int Width, int Height)
             where TImage : IImage
         {
             if (Cache.FileExists)

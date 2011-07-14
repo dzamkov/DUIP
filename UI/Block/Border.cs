@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using DUIP.UI.Graphics;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -67,23 +69,15 @@ namespace DUIP.UI
 
         public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
         {
-            BackgroundBlock bc = this.Inner as BackgroundBlock;
-            if (bc != null)
+            Point sizepadding = this.SizePadding;
+            Layout inner = this.Inner.CreateLayout(null, SizeRange.Translate(-sizepadding), out Size);
+            Size += sizepadding;
+            return new _Layout
             {
-                return CreateBorderBackgroundLayout(Context, SizeRange, this, bc, bc.Inner, out Size);
-            }
-            else
-            {
-                Point sizepadding = this.SizePadding;
-                Layout inner = this.Inner.CreateLayout(null, SizeRange.Translate(-sizepadding), out Size);
-                Size += sizepadding;
-                return new _Layout
-                {
-                    Block = this,
-                    Inner = inner,
-                    Size = Size
-                };
-            }
+                Block = this,
+                Inner = inner,
+                Size = Size
+            };
         }
 
         private class _Layout : Layout
@@ -94,64 +88,28 @@ namespace DUIP.UI
                 return this.Inner.Link(Context.Translate(new Point(iw, iw)));
             }
 
-            public override void Render(RenderContext Context)
+            public override Figure Figure
             {
-                Border bord = this.Block.Border;
-                using (Context.Translate(new Point(bord.Weight, bord.Weight)))
+                get
                 {
-                    this.Inner.Render(Context);
+                    Border border = this.Block._Border;
+                    double hw = border.Weight * 0.5;
+                    return
+                        new ShapeFigure(
+                            new PathShape(
+                                border.Weight,
+                                new RectanglePath(new Rectangle(hw, hw, this.Size.X - hw, this.Size.Y - hw))),
+                            new SolidFigure(border.Color))
+                        ^ this.Inner.Figure.Translate(new Point(border.Weight, border.Weight));
                 }
-                bord.Render(Context, this.Size);
+            }
+
+            public override RemoveHandler RegisterFigureChange(Action Callback)
+            {
+                return this.Inner.RegisterFigureChange(Callback);
             }
 
             public BorderBlock Block;
-            public Layout Inner;
-            public Point Size;
-        }
-
-        /// <summary>
-        /// Creates a layout that combines a border with a background for increased performance and less visual artifacts.
-        /// </summary>
-        public static Layout CreateBorderBackgroundLayout(InputContext Context, Rectangle SizeRange, BorderBlock Border, BackgroundBlock Background, Block Inner, out Point Size)
-        {
-            Point sizepadding = Border.SizePadding;
-            Layout inner = Inner.CreateLayout(Context, SizeRange.Translate(-sizepadding), out Size);
-            Size += sizepadding;
-            return new _BorderBackgroundLayout
-            {
-                BorderBlock = Border,
-                BackgroundBlock = Background,
-                Inner = inner,
-                Size = Size
-            };
-        }
-
-        private class _BorderBackgroundLayout : Layout
-        {
-            public override RemoveHandler Link(InputContext Context)
-            {
-                double iw = -this.BorderBlock._Border.Weight;
-                return this.Inner.Link(Context.Translate(new Point(iw, iw)));
-            }
-
-            public override void Render(RenderContext Context)
-            {
-                Border bord = this.BorderBlock.Border;
-                Point size = this.Size;
-                double w = bord.Weight;
-                double hw = w * 0.5;
-                Context.ClearTexture();
-                Context.SetColor(this.BackgroundBlock.Color);
-                Context.DrawQuad(new Rectangle(hw, hw, size.X - hw, size.Y - hw));
-                using (Context.Translate(new Point(bord.Weight, bord.Weight)))
-                {
-                    this.Inner.Render(Context);
-                }
-                bord.Render(Context, size);
-            }
-
-            public BorderBlock BorderBlock;
-            public BackgroundBlock BackgroundBlock;
             public Layout Inner;
             public Point Size;
         }
@@ -184,24 +142,6 @@ namespace DUIP.UI
             Color = Color.Transparent,
             Weight = 0.0
         };
-
-        /// <summary>
-        /// Renders a perimeter to the given render context using this border.
-        /// </summary>
-        /// <param name="Size">The size of the outer boundary of the perimeter.</param>
-        public void Render(RenderContext Context, Point Size)
-        {
-            Context.ClearTexture();
-            Context.SetColor(this.Color);
-            double hw = this.Weight * 0.5;
-            using (Context.DrawLines(this.Weight))
-            {
-                Context.OutputLine(new Point(hw, 0.0), new Point(hw, Size.Y));
-                Context.OutputLine(new Point(0.0, hw), new Point(Size.X, hw));
-                Context.OutputLine(new Point(Size.X - hw, 0.0), new Point(Size.X - hw, Size.Y));
-                Context.OutputLine(new Point(0.0, Size.Y - hw), new Point(Size.X, Size.Y - hw));
-            }
-        }
 
         /// <summary>
         /// The color of the border.

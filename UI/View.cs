@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using OpenTK;
-using OpenTK.Graphics.OpenGL;
-
 namespace DUIP.UI
 {
     /// <summary>
@@ -15,20 +12,6 @@ namespace DUIP.UI
         public View(Rectangle Area)
         {
             this.Area = Area;
-        }
-
-        /// <summary>
-        /// Sets this view as the current one for future rendering use.
-        /// </summary>
-        public void Setup(bool InvertY)
-        {
-            Point size = this.Area.Size;
-            Point center = this.Area.TopLeft + size * 0.5;
-
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadIdentity();
-            GL.Scale(2.0 / size.X, InvertY ? -2.0 / size.Y : 2.0 / size.Y, 1.0);
-            GL.Translate(-center.X, -center.Y, 0.0);
         }
 
         /// <summary>

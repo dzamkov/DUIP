@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using DUIP.UI.Graphics;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -54,20 +56,12 @@ namespace DUIP.UI
 
         public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
         {
-            BorderBlock bc = this.Inner as BorderBlock;
-            if (bc != null)
+            return new _Layout
             {
-                return BorderBlock.CreateBorderBackgroundLayout(Context, SizeRange, bc, this, bc.Inner, out Size);
-            }
-            else
-            {
-                return new _Layout
-                {
-                    Block = this,
-                    Inner = this.Inner.CreateLayout(null, SizeRange, out Size),
-                    Size = Size
-                };
-            }
+                Block = this,
+                Inner = this.Inner.CreateLayout(null, SizeRange, out Size),
+                Size = Size
+            };
         }
 
 
@@ -78,12 +72,21 @@ namespace DUIP.UI
                 return this.Inner.Link(Context);
             }
 
-            public override void Render(RenderContext Context)
+            public override Figure Figure
             {
-                Context.ClearTexture();
-                Context.SetColor(this.Block.Color);
-                Context.DrawQuad(new Rectangle(Point.Origin, this.Size));
-                this.Inner.Render(Context);
+                get
+                {
+                    return
+                        new ShapeFigure(
+                            new RectangleShape(new Rectangle(Point.Origin, this.Size)),
+                            new SolidFigure(this.Block._Color))
+                        + this.Inner.Figure;
+                }
+            }
+
+            public override RemoveHandler RegisterFigureChange(Action Callback)
+            {
+                return this.Inner.RegisterFigureChange(Callback);
             }
 
             public BackgroundBlock Block;

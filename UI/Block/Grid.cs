@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using DUIP.UI.Graphics;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -190,43 +192,62 @@ namespace DUIP.UI
                 return rh;
             }
 
-            public override void Render(RenderContext Context)
+            public override Figure Figure
             {
-                // Render cells
-                for (int c = 0; c < this.ColumnOffsets.Length; c++)
+                get
                 {
-                    double coff = this.ColumnOffsets[c];
-                    for (int r = 0; r < this.RowOffsets.Length; r++)
+                    Figure fig = null;
+
+                    // Cells
+                    for (int c = 0; c < this.ColumnOffsets.Length; c++)
                     {
-                        double roff = this.RowOffsets[r];
-                        using (Context.Translate(new Point(coff, roff)))
+                        double coff = this.ColumnOffsets[c];
+                        for (int r = 0; r < this.RowOffsets.Length; r++)
                         {
-                            this.Cells[c, r].Render(Context);
+                            double roff = this.RowOffsets[r];
+                            fig ^= this.Cells[c, r].Figure.Translate(new Point(coff, roff));
                         }
                     }
-                }
 
-                // Render seperators
-                Border seperator = this.Block.Seperator;
-                if (seperator.Color.A > 0.0 && seperator.Weight > 0.0)
-                {
-                    double hw = seperator.Weight * 0.5;
-                    Context.ClearTexture();
-                    Context.SetColor(seperator.Color);
-                    using (Context.DrawLines(seperator.Weight))
+                    // Seperators
+                    Border seperator = this.Block.Seperator;
+                    if (seperator.Color.A > 0.0 && seperator.Weight > 0.0)
                     {
+                        double w = seperator.Weight;
+                        double hw = seperator.Weight * 0.5;
+                        SolidFigure mask = new SolidFigure(seperator.Color);
                         for (int c = 1; c < this.ColumnOffsets.Length; c++)
                         {
                             double coff = this.ColumnOffsets[c];
-                            Context.OutputLine(new Point(coff - hw, 0.0), new Point(coff - hw, this.Size.Y));
+                            fig += new ShapeFigure(
+                                new PathShape(w, new SegmentPath(
+                                    new Point(coff - hw, 0.0),
+                                    new Point(coff - hw, this.Size.Y))),
+                                mask);
                         }
                         for (int r = 1; r < this.RowOffsets.Length; r++)
                         {
                             double roff = this.RowOffsets[r];
-                            Context.OutputLine(new Point(0.0, roff - hw), new Point(this.Size.X, roff - hw));
+                            fig += new ShapeFigure(
+                                new PathShape(w, new SegmentPath(
+                                    new Point(0.0, roff - hw),
+                                    new Point(this.Size.X, roff - hw))),
+                                mask);
                         }
                     }
+
+                    return fig;
                 }
+            }
+
+            public override RemoveHandler RegisterFigureChange(Action Callback)
+            {
+                RemoveHandler rh = null;
+                foreach (Layout l in this.Cells)
+                {
+                    rh += l.RegisterFigureChange(Callback);
+                }
+                return rh;
             }
 
             public GridBlock Block;

@@ -5,6 +5,8 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
+using DUIP.UI.Graphics;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -43,41 +45,6 @@ namespace DUIP.UI
                 zoom += 1.6;
                 error += 0.05;
             }
-        }
-
-        public override void Render(World World, RenderContext Context)
-        {
-            View view = Context.View;
-            double zoom = view.Zoom;
-
-            // Background gradient
-            double wash = Math.Min(1.0, Math.Max(0.0, (zoom + 2.0) / 10.0));
-            Color topcol = Color.Mix(Color.RGB(0.3, 0.6, 0.7), Color.RGB(0.3, 0.5, 0.8), wash);
-            Color botcol = Color.Mix(Color.RGB(0.1, 0.4, 0.6), Color.RGB(0.1, 0.3, 0.7), wash);
-
-            double l = view.Area.Left;
-            double t = view.Area.Top;
-            double r = view.Area.Right;
-            double b = view.Area.Bottom;
-            Context.ClearTexture();
-            using (Context.Draw(BeginMode.Quads))
-            {
-                Context.OutputVertex(new Point(l, t), topcol);
-                Context.OutputVertex(new Point(r, t), topcol);
-                Context.OutputVertex(new Point(r, b), botcol);
-                Context.OutputVertex(new Point(l, b), botcol);
-            }
-
-            // Layers
-            GL.MatrixMode(MatrixMode.Texture);
-            GL.LoadIdentity();
-            foreach (Layer layer in this._Layers)
-            {
-                layer.Render(Context, zoom);
-                GL.Rotate(70.0, 0.0, 0.0, 1.0); // Rotation makes it harder to spot patterns
-            }
-            GL.LoadIdentity();
-            GL.MatrixMode(MatrixMode.Projection);
         }
 
         public override void Update(World World, double Time)

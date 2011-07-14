@@ -6,6 +6,8 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
+using DUIP.UI.Graphics;
+
 namespace DUIP.UI
 {
     /// <summary>
@@ -100,25 +102,6 @@ namespace DUIP.UI
             /// The offset of the endpoint from the beginning of the edge.
             /// </summary>
             public double Offset;
-        }
-
-        /// <summary>
-        /// Renders this arc to the given context.
-        /// </summary>
-        public void Render(World World, RenderContext Context)
-        {
-            Context.ClearTexture();
-            Context.SetColor(this._Color);
-
-            
-            Point a = this._Start.Position;
-            Point d = this._End.Position;
-
-            double proj = (a - d).Length * 0.3;
-            Point b = a + this._Start.Normal * proj;
-            Point c = d + this._End.Normal * proj;
-
-            Context.DrawBezierCurve(a, b, c, d, this._Thickness);
         }
 
         /// <summary>

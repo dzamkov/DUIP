@@ -42,11 +42,6 @@ namespace DUIP.UI
             /// The only instance of the layout.
             /// </summary>
             public static readonly _Layout Instance = new _Layout();
-
-            public override void Render(RenderContext Context)
-            {
-                
-            }
         }
     }
 }

@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace DUIP.UI
+namespace DUIP.UI.Graphics
 {
     /// <summary>
-    /// A static description of an image on an infinitely large and precise plane.
+    /// A static description of an image on an infinitely large and precise plane. A null figure indicates
+    /// a completely transparent image.
     /// </summary>
     public abstract class Figure
     {
@@ -17,13 +18,21 @@ namespace DUIP.UI
             return new TranslatedFigure(Offset, this);
         }
 
-        public static SuperimposedFigure operator +(Figure Under, Figure Over)
+        public static Figure operator +(Figure Under, Figure Over)
         {
+            if (Under == null)
+                return Over;
+            if (Over == null)
+                return Under;
             return new SuperimposedFigure(Under, Over);
         }
 
-        public static CombinedFigure operator ^(Figure A, Figure B)
+        public static Figure operator ^(Figure A, Figure B)
         {
+            if (A == null)
+                return B;
+            if (B == null)
+                return A;
             return new CombinedFigure(A, B);
         }
     }
@@ -69,7 +78,7 @@ namespace DUIP.UI
     /// A figure created by superimposing one figure on top of another. The visibility of the lower figure
     /// is determined by the transparency of the upper figure.
     /// </summary>
-    public sealed class SuperimposedFigure
+    public sealed class SuperimposedFigure : Figure
     {
         public SuperimposedFigure(Figure Under, Figure Over)
         {
@@ -104,10 +113,7 @@ namespace DUIP.UI
     }
 
     /// <summary>
-    /// A figure created by combining two disjoint figures where every visible part in one figure
-    /// is completely transparent in the other. This is similar to a superimposed figure where
-    /// the order of the component figures does not matter. If the component figures are somehow not disjoint,
-    /// the appearance of resulting figure is undefined.
+    /// A figure created by combining two disjoint figures where the order of rendering does not matter.
     /// </summary>
     public sealed class CombinedFigure : Figure
     {
