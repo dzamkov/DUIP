@@ -104,6 +104,7 @@ namespace DUIP.UI
                 if (this._Drawer != null)
                 {
                     this._Drawer.End(Context);
+                    this._Drawer = null;
                 }
             }
 

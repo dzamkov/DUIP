@@ -31,13 +31,15 @@ namespace DUIP.UI
                     BackColor = Color.RGB(0.8, 0.8, 0.8),
                     SelectedBackColor = Color.RGB(0.0, 0.0, 1.0)
                 },
-                IndentSize = 3
+                IndentSize = 4,
+                CaretBlinkRate = 0.5,
+                CaretStyle = new Border
+                {
+                    Color = Color.Black,
+                    Weight = 0.003
+                }
             });
-            textpad.Insert(textpad.End, TextSection.Create(
-@"Look, it's a list:
-    * With
-    * Three
-    * Items"));
+            textpad.Insert(textpad.End, TextSection.Create("Look, it's a list:\n\t* With\n\t* Three\n\t* Items"));
             return textpad.WithMargin(0.1).WithBackground(Theme.NodeBackground).WithBorder(Theme.NodeBorder);
         }
     }

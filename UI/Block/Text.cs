@@ -67,6 +67,8 @@ namespace DUIP.UI
         {
             TextItem prev = Start._Previous;
             TextItem next = End._Previous._Next;
+
+            // Unlink section
             prev._Next = next;
             if (next != null)
             {
@@ -76,6 +78,9 @@ namespace DUIP.UI
             {
                 this._Last = prev;
             }
+
+            // Fix line references
+            prev.SearchBack<LineStartTextItem>(null)._NextLine = null;
         }
 
         /// <summary>
@@ -94,7 +99,10 @@ namespace DUIP.UI
             TextItem prev = Position._Previous;
             TextItem next = prev._Next;
 
+            // Link section
             prev._Next = Section._First;
+            Section._First._Previous = prev;
+            Section._Last._Next = next;
             if (next != null)
             {
                 next._Previous = Section._Last;
@@ -103,6 +111,9 @@ namespace DUIP.UI
             {
                 this._Last = Section._Last;
             }
+
+            // Fix line references
+            prev.SearchBack<LineStartTextItem>(null)._NextLine = null;
         }
 
         public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
@@ -184,21 +195,118 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override RemoveHandler Link(InputContext Context)
+            /// <summary>
+            /// Gets the full size of this layout.
+            /// </summary>
+            public Point Size
+            {
+                get
+                {
+                    TextStyle style = this.TextBlock._Style;
+                    Point cellsize = style.CellSize;
+                    return new Point(cellsize.X * this.Width, cellsize.Y * this.Height);
+                }
+            }
+
+            /// <summary>
+            /// Gets the caret for a selection at the given offset.
+            /// </summary>
+            public TextCaret Select(Point Offset)
             {
                 TextStyle style = this.TextBlock._Style;
                 Point cellsize = style.CellSize;
-                Point fullsize = new Point(cellsize.X * this.Width, cellsize.Y * this.Height);
+                int y = Math.Min(this.Height - 1, Math.Max(0, (int)(Offset.Y / cellsize.Y)));
+                int offset = Math.Min(this.Width, Math.Max(0, (int)(Offset.X / cellsize.X + 0.5)));
 
+                LineStartTextItem line = this.TextBlock._First;
+                LineStartTextItem nextline;
+                while (y > 0 && (nextline = line.NextLine) != null)
+                {
+                    line = nextline;
+                    y--;
+                }
+
+                int curoffset = 0;
+                TextItem cur = line;
+                while (true)
+                {
+                    if (curoffset >= offset)
+                    {
+                        return new TextCaret(cur);
+                    }
+                    TextItem next = cur._Next;
+                    if (next == null || next is LineStartTextItem)
+                    {
+                        return new TextCaret(cur);
+                    }
+                    else
+                    {
+                        cur = next;
+                        _AppendLine(style, next, ref curoffset);
+                    }
+                }
+            }
+
+            public override RemoveHandler Link(InputContext Context)
+            {
                 RemoveHandler rh = null;
+
+                // If there is already a selection, link the update handler
+                {
+                    _SelectionInfo sel = this.TextBlock._Selection;
+                    if (sel != null)
+                    {
+                        this._RemoveUpdate = Context.RegisterUpdate(this.Update);
+                    }
+                }
+
+                // Probe signal change handler for selection
                 rh += Context.RegisterProbeSignalChange(delegate(Probe Probe, ProbeSignal Signal, bool Value, ref bool Handled)
                 {
-                    Point pos = Probe.Position;
-                    if (new Rectangle(Point.Origin, fullsize).Occupies(pos))
+                    if (Signal == ProbeSignal.Primary && Value)
                     {
-                        Handled = true;
+                        _SelectionInfo sel = this.TextBlock._Selection;
+                        if (sel == null || sel.ReleaseProbe == null)
+                        {
+                            Point pos = Probe.Position;
+                            if (new Rectangle(Point.Origin, this.Size).Occupies(pos))
+                            {
+                                Handled = true;
+
+                                TextCaret caret = this.Select(pos);
+                                this.TextBlock._Selection = new _SelectionInfo
+                                {
+                                    Probe = Probe,
+                                    ReleaseProbe = Probe.Lock(),
+                                    Selection = new TextSelection(caret),
+                                    CaretBlinkTime = 0.0
+                                };
+                                if (this._RemoveUpdate == null)
+                                {
+                                    this._RemoveUpdate = Context.RegisterUpdate(this.Update);
+                                }
+                            }
+                        }
                     }
                 });
+
+                // Remove selection and update events with remove handler
+                rh += delegate
+                {
+                    _SelectionInfo sel = this.TextBlock._Selection;
+                    if (sel != null)
+                    {
+                        if (sel.ReleaseProbe != null)
+                        {
+                            sel.ReleaseProbe();
+                        }
+                    }
+                    if(this._RemoveUpdate != null)
+                    {
+                        this._RemoveUpdate();
+                    }
+                };
+
                 return rh;
             }
 
@@ -206,6 +314,7 @@ namespace DUIP.UI
             {
                 TextStyle style = this.TextBlock._Style;
                 Point cellsize = style.CellSize;
+                _SelectionInfo sel = this.TextBlock._Selection;
 
                 // Draw back colors
                 TextItem cur = this.TextBlock._First;
@@ -233,14 +342,38 @@ namespace DUIP.UI
                 }
 
                 // Draw characters and foreground objects
-                cur = this.TextBlock._First;
+                TextItem prev = this.TextBlock._First;
                 offset = 0;
                 y = 0.0;
                 TextFontStyle fontstyle = style.DefaultFontStyle;
                 Font.MultiDrawer fontdrawer = new Font.MultiDrawer();
                 fontdrawer.Select(Context, fontstyle.Font);
-                while ((cur = cur.Next) != null)
+                while (true)
                 {
+                    if (sel != null && sel.Selection._Primary._Previous == prev)
+                    {
+                        double blink = sel.CaretBlinkTime % style.CaretBlinkRate;
+                        sel.CaretBlinkTime = blink;
+                        if (blink < style.CaretBlinkRate * 0.5)
+                        {
+                            fontdrawer.Flush(Context);
+                            Border caretstyle = style.CaretStyle;
+                            double x = cellsize.X * offset;
+                            double hw = caretstyle.Weight * 0.5;
+                            Context.ClearTexture();
+                            Context.SetColor(caretstyle.Color);
+                            using (Context.DrawLines(caretstyle.Weight))
+                            {
+                                Context.OutputLine(new Point(x, y), new Point(x, y + cellsize.Y));
+                            }
+                        }
+                    }
+
+                    if ((prev = cur = prev.Next) == null)
+                    {
+                        break;
+                    }
+
                     if (cur is LineStartTextItem)
                     {
                         offset = 0;
@@ -288,15 +421,83 @@ namespace DUIP.UI
                     }
                 }
             }
+
+            /// <summary>
+            /// Update handler for a layout. The update handler should only be called when there is
+            /// a selection.
+            /// </summary>
+            public void Update(double Time)
+            {
+                _SelectionInfo sel = this.TextBlock._Selection;
+                if (sel != null)
+                {
+                    // Handle dragging
+                    if (sel.ReleaseProbe != null)
+                    {
+                        Probe probe = sel.Probe;
+                        if (probe[ProbeSignal.Primary])
+                        {
+                            Point pos = probe.Position;
+                            TextCaret nsel = this.Select(pos);
+                            if (sel.Selection._Primary != nsel)
+                            {
+                                sel.Selection._Primary = nsel;
+                                sel.Selection._UpdateOrder();
+                            }
+                        }
+                        else
+                        {
+                            sel.ReleaseProbe();
+                            sel.ReleaseProbe = null;
+                        }
+                    }
+
+                    // Handle caret blinking
+                    sel.CaretBlinkTime += Time;
+                }
+                else
+                {
+                    this._RemoveUpdate();
+                    this._RemoveUpdate = null;
+                }
+            }
            
             public TextBlock TextBlock;
             public int Width;
             public int Height;
+            private RemoveHandler _RemoveUpdate;
+        }
+
+        /// <summary>
+        /// Contains information for a selection of text.4
+        /// </summary>
+        private class _SelectionInfo
+        {
+            /// <summary>
+            /// The probe this selection is for.
+            /// </summary>
+            public Probe Probe;
+
+            /// <summary>
+            /// Releases the lock on the probe for this selection. If this is null, the probe is not locked.
+            /// </summary>
+            public Action ReleaseProbe;
+
+            /// <summary>
+            /// The selected region.
+            /// </summary>
+            public TextSelection Selection;
+
+            /// <summary>
+            /// The current time, in seconds, after the start of the current blink cycle.
+            /// </summary>
+            public double CaretBlinkTime;
         }
 
         private LineStartTextItem _First;
         private TextItem _Last;
         private TextStyle _Style;
+        private _SelectionInfo _Selection;
     }
 
     /// <summary>
@@ -333,6 +534,16 @@ namespace DUIP.UI
         /// The size of an indent span.
         /// </summary>
         public int IndentSize;
+
+        /// <summary>
+        /// The amount of time, in seconds, between blinks for a selection caret.
+        /// </summary>
+        public double CaretBlinkRate;
+
+        /// <summary>
+        /// The style for a selection caret.
+        /// </summary>
+        public Border CaretStyle;
 
         /// <summary>
         /// Updates the given offset from the left edge of a text pad with an indentation.
@@ -416,7 +627,85 @@ namespace DUIP.UI
             }
         }
 
-        
+        /// <summary>
+        /// The caret for the previous distinct position before this one. If there is no such position, the
+        /// same caret will be returned.
+        /// </summary>
+        public TextCaret Before
+        {
+            get
+            {
+                TextItem cur = this._Previous;
+                while (true)
+                {
+                    TextItem prev = cur._Previous;
+                    if (prev == null)
+                    {
+                        return new TextCaret(cur);
+                    }
+                    if (_Visible(cur))
+                    {
+                        return new TextCaret(prev);
+                    }
+                    cur = prev;
+                }
+            }
+        }
+
+        /// <summary>
+        /// The caret for the next distinct position after this one. If there is no such position, the
+        /// same caret will be returned.
+        /// </summary>
+        public TextCaret After
+        {
+            get
+            {
+                TextItem cur = this._Previous;
+                while (true)
+                {
+                    TextItem next = cur._Next;
+                    if (next == null)
+                    {
+                        return new TextCaret(cur);
+                    }
+                    if (_Visible(next))
+                    {
+                        return new TextCaret(next);
+                    }
+                    cur = next;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets if the given item has a width over 0.
+        /// </summary>
+        private static bool _Visible(TextItem Item)
+        {
+            return 
+                Item is LineStartTextItem || Item is SpaceTextItem || 
+                Item is CharacterTextItem || Item is IndentTextItem;
+        }
+
+        public static bool operator ==(TextCaret A, TextCaret B)
+        {
+            return A._Previous == B._Previous;
+        }
+
+        public static bool operator !=(TextCaret A, TextCaret B)
+        {
+            return A._Previous != B._Previous;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return this._Previous == ((TextCaret)obj)._Previous;
+        }
+
+        public override int GetHashCode()
+        {
+            return this._Previous.GetHashCode();
+        }
 
         internal TextItem _Previous;
     }
@@ -426,6 +715,13 @@ namespace DUIP.UI
     /// </summary>
     public struct TextSelection
     {
+        internal TextSelection(TextCaret Caret)
+        {
+            this._Primary = Caret;
+            this._Secondary = Caret;
+            this._Order = false;
+        }
+
         /// <summary>
         /// Gets the caret for the primary selection point. This is where the cursor should appear.
         /// </summary>
@@ -480,6 +776,53 @@ namespace DUIP.UI
             {
                 return this._Order;
             }
+        }
+
+        /// <summary>
+        /// Calculates the order of the selection.
+        /// </summary>
+        internal bool _CalculateOrder()
+        {
+            TextItem cp = this._Primary._Previous;
+            TextItem sp = this._Secondary._Previous;
+            TextItem csp = sp;
+            LineStartTextItem cl;
+            LineStartTextItem sl;
+            
+            while ((sl = csp as LineStartTextItem) == null)
+            {
+                if (csp == cp)
+                {
+                    return false;
+                }
+                csp = csp._Previous;
+            }
+
+            while ((cl = cp as LineStartTextItem) == null)
+            {
+                cp = cp._Previous;
+                if (cp == sp)
+                {
+                    return true;
+                }
+            }
+
+            while ((cl = cl.NextLine) != null)
+            {
+                if (cl == sl)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Updates the order of the selection in response to a change in either of the carets.
+        /// </summary>
+        internal void _UpdateOrder()
+        {
+            this._Order = this._CalculateOrder();
         }
 
         internal TextCaret _Primary;
@@ -663,9 +1006,9 @@ namespace DUIP.UI
         {
             get
             {
-                if (this._NextLineStart != null)
+                if (this._NextLine != null)
                 {
-                    return this._NextLineStart;
+                    return this._NextLine;
                 }
                 else
                 {
@@ -675,7 +1018,7 @@ namespace DUIP.UI
                         LineStartTextItem lst = cur as LineStartTextItem;
                         if (lst != null)
                         {
-                            return this._NextLineStart = lst;
+                            return this._NextLine = lst;
                         }
                         cur = cur._Next;
                     }
@@ -684,7 +1027,7 @@ namespace DUIP.UI
             }
         }
 
-        internal LineStartTextItem _NextLineStart;
+        internal LineStartTextItem _NextLine;
     }
 
     /// <summary>
