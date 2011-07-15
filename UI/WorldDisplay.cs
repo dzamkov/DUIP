@@ -34,12 +34,13 @@ namespace DUIP.UI
 
             this._Renderer = new Renderer();
             this._Renderer.Initialize();
+            SystemTypeface.Create = this._Renderer.CreateSystemTypeface;
 
             this._Probe = new Probe();
             this._InputContext = new InputContext(this._Probe);
 
             this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
-            this._Background = new OceanAmbience(Random.Default);
+            this._Background = new OceanAmbience();
             this._World = new World(this._InputContext, new Theme());
             this._MakeView();
 

@@ -5,21 +5,27 @@ using System.Drawing;
 using System.Drawing.Text;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using SFont = System.Drawing.Font;
+using SGraphics = System.Drawing.Graphics;
+using SColor = System.Drawing.Color;
 
 using OpenTK.Graphics.OpenGL;
 
-namespace DUIP.UI.Graphics
+using DUIP.UI.Graphics;
+
+namespace DUIP.UI.Render
 {
     /// <summary>
     /// A collection of fonts that use a single texture to display glyphs.
     /// </summary>
-    public class BitmapTypeface : IDisposable
+    public class BitmapTypeface : SystemTypeface
     {
-        public BitmapTypeface(Texture Texture, Dictionary<char, Glyph> GlyphMap, double Scale)
+        public BitmapTypeface(string Name, bool Bold, bool Italic)
+            : base(Name, Bold, Italic)
         {
-            this._Texture = Texture;
-            this._GlyphMap = GlyphMap;
-            this._Scale = Scale;
+            this._GlyphMap = new Dictionary<char, Glyph>();
+            this._FontFamily = GetFamily(Name);
+            this._CreateSheet(ASCIICharacters);
         }
 
         /// <summary>
@@ -34,127 +40,147 @@ namespace DUIP.UI.Graphics
         }
 
         /// <summary>
-        /// Gets the texture for the typeset. All fonts of this typeface use this texture.
+        /// Gets all ASCII characters.
         /// </summary>
-        public Texture Texture
+        public static IEnumerable<char> ASCIICharacters
         {
             get
             {
-                return this._Texture;
-            }
-        }
-
-        /// <summary>
-        /// Gets the amount glyphs in the texture need to be scaled by to have a relative font size of 1.0. This
-        /// is related to the size of the texture and the size of the characters within it.
-        /// </summary>
-        public double Scale
-        {
-            get
-            {
-                return this._Scale;
-            }
-        }
-
-        /// <summary>
-        /// Creates a bitmap typeface for a certain arrangement of the given font family. Returns null if a typeface with the requested parameters can not be created.
-        /// </summary>
-        /// <param name="Characters">The characters to include in the bitmap font.</param>
-        /// <param name="FontSize">The size in pixels to use for the font in the bitmap. This affects the quality of the displayed characters and the
-        /// amount of bitmap space needed. This has no relation to the size of displayed glyphs.</param>
-        /// <param name="Size">The edge-length in pixels, of the created bitmap. This should be a power of two.</param>
-        /// <param name="CharacterPadding">The amount of padding, in pixels, to put around characters in the texture.</param>
-        public static Disposable<BitmapTypeface> Create(
-            FontFamily Family, IEnumerable<char> Characters, FontStyle Style, int CharacterPadding,
-            float FontSize, int Size)
-        {
-            var bitmapformat = System.Drawing.Imaging.PixelFormat.Format24bppRgb;
-            using (Bitmap bm = new Bitmap(Size, Size, bitmapformat))
-            {
-                using (var font = new System.Drawing.Font(Family, FontSize, Style, GraphicsUnit.Pixel))
+                for (short t = 32; t <= 126; t++)
                 {
-                    Dictionary<char, Glyph> glyphmap;
-                    using (var g = System.Drawing.Graphics.FromImage(bm))
+                    yield return (char)t;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the format to used when drawing glyphs.
+        /// </summary>
+        private StringFormat _FontFormat
+        {
+            get
+            {
+                StringFormat sf = new StringFormat();
+                sf.Trimming = StringTrimming.None;
+                sf.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
+                sf.FormatFlags |= StringFormatFlags.FitBlackBox;
+                return sf;
+            }
+        }
+
+        /// <summary>
+        /// Gets the font style to use when drawing glyphs.
+        /// </summary>
+        private FontStyle _FontStyle
+        {
+            get
+            {
+                FontStyle fs = FontStyle.Regular;
+                if (this.Bold) fs |= FontStyle.Bold;
+                if (this.Italic) fs |= FontStyle.Italic;
+                return fs;
+            }
+        }
+
+        /// <summary>
+        /// Gets the font size to use when drawing glyphs to a sheet.
+        /// </summary>
+        private float _FontSize
+        {
+            get
+            {
+                return 45.0f;
+            }
+        }
+
+        /// <summary>
+        /// Gets the amount of padding (in pixels) to apply to glyphs.
+        /// </summary>
+        private int _GlyphPadding
+        {
+            get
+            {
+                return 8;
+            }
+        }
+
+        /// <summary>
+        /// Gets the filter usd for creating mipmaps for the typeface.
+        /// </summary>
+        private double[] _Filter
+        {
+            get
+            {
+                return _CreateLanczosFilter(6, 6.0);
+            }
+        }
+
+        /// <summary>
+        /// Gets the size in pixels of a sheet for the typeface.
+        /// </summary>
+        private int _SheetSize
+        {
+            get
+            {
+                return 512;
+            }
+        }
+
+        /// <summary>
+        /// The format used for drawing glyphs into bitmaps before converting them to textures.
+        /// </summary>
+        private const System.Drawing.Imaging.PixelFormat _BitmapFormat = System.Drawing.Imaging.PixelFormat.Format24bppRgb;
+
+        /// <summary>
+        /// Creates a sheet containing the given characters and adds them to the glyphmap.
+        /// </summary>
+        private Sheet _CreateSheet(IEnumerable<char> Characters)
+        {
+            int size = this._SheetSize;
+            using (Bitmap bm = new Bitmap(size, size, _BitmapFormat))
+            {
+                float fontsize = this._FontSize;
+                using (SFont font = new SFont(this._FontFamily, fontsize, this._FontStyle, GraphicsUnit.Pixel))
+                {
+                    // Create sheet to be referenced by glyphs
+                    Sheet sheet = new Sheet();
+
+                    // Draw glyphs to bitmap
+                    using (SGraphics g = SGraphics.FromImage(bm))
                     {
-                        g.Clear(Color.Black);
+                        g.Clear(SColor.Black);
+                        IEnumerable<SourceGlyph> srcglyphs = CreateSourceGlyphs(g, font, this._FontFormat, SColor.Black, Brushes.White, this._GlyphPadding, Characters);
+                        FitSourceGlyphs(bm, g, srcglyphs, sheet, 1.0 / size, 1.0 / fontsize, this._GlyphMap);
 
-                        StringFormat sf = new StringFormat();
-                        sf.Trimming = StringTrimming.None;
-                        sf.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
-                        sf.FormatFlags |= StringFormatFlags.FitBlackBox;
-
-                        // Create source glyphs
-                        IEnumerable<SourceGlyph> glyphs = CreateSourceGlyphs(
-                            g, font, sf, Color.Black, Brushes.White, bitmapformat, CharacterPadding, Characters);
-
-                        // Fit
-                        double isize = 1.0 / Size;
-                        if (!FitSourceGlyphs(bm, g, glyphs, out glyphmap, isize))
-                        {
-                            return null;
-                        }
-
-                        // Dispose glyphs
-                        foreach (SourceGlyph gly in glyphs)
+                        // Don't forget to dispose source glyphs
+                        foreach (SourceGlyph gly in srcglyphs)
                         {
                             gly.Image.Dispose();
                         }
                     }
 
-                    // Convert bitmap to an alpha-only format
-                    BitmapData bd = bm.LockBits(
-                        new System.Drawing.Rectangle(0, 0, Size, Size),
-                        ImageLockMode.ReadWrite,
-                        System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-                    unsafe
-                    {
-                        byte* r = (byte*)bd.Scan0.ToPointer();
-                        byte* w = r;
-                        int tot = Size * Size;
-                        for (int t = 0; t < tot; t++)
-                        {
-                            *w = *r;
-                            w += 1;
-                            r += 3;
-                        }
-                    }
-
                     // Create texture
-                    Texture tex = Texture.Create(bd, Texture.Format.A8, false);
+                    sheet.Texture = _CreateTexture(bm, size, this._Filter);
+                    sheet.Scale = size / fontsize;
 
-                    // Create mipmaps (using lancsoz filter to give more sharpness than the default box filter).
-                    double[] filter = _CreateLanczosFilter(6, 6.0);
-                    unsafe
-                    {
-                        byte* source = (byte*)bd.Scan0.ToPointer();
-                        byte* temp = source + (Size * Size);
-                        byte* dest = temp + (Size * Size / 2);
-                        int level = 1;
-                        int tsize = Size;
-                        while (tsize > 0)
-                        {
-                            int nsize = tsize / 2;
-                            _Downsample(filter, source, temp, dest, tsize);
-                            Texture.SetImage(Texture.Format.A8, level, nsize, nsize, new IntPtr(dest));
-
-                            // Swap source and destination buffers
-                            byte* t = source;
-                            source = dest;
-                            dest = t;
-
-                            level++;
-                            tsize = nsize;
-                        }
-                    }
-
-
-                    bm.UnlockBits(bd);
-
-                    Texture.SetFilterMode(TextureMinFilter.LinearMipmapLinear, TextureMagFilter.Linear);
-                    Texture.SetWrapMode(TextureWrapMode.Clamp, TextureWrapMode.Clamp);
-                    return new BitmapTypeface(tex, glyphmap, (double)Size / (double)FontSize);
+                    // All done
+                    return sheet;
                 }
             }
+        }
+
+        public override Point GetSize(char Char)
+        {
+            Glyph gly = this._GlyphMap[Char];
+            return gly.LayoutSize;
+        }
+
+        /// <summary>
+        /// Gets the glyph information for a character.
+        /// </summary>
+        public Glyph GetGlyph(char Char)
+        {
+            return this._GlyphMap[Char];
         }
 
         /// <summary>
@@ -182,6 +208,64 @@ namespace DUIP.UI.Graphics
             }
 
             return filter;
+        }
+
+        /// <summary>
+        /// Destructively creates an alpha-only texture for a 24bpp bitmap with a custom mipmap filer.
+        /// </summary>
+        private static unsafe Texture _CreateTexture(Bitmap Source, int Size, double[] Filter)
+        {
+            // Convert bitmap to an alpha-only format
+            BitmapData bd = Source.LockBits(
+                new System.Drawing.Rectangle(0, 0, Size, Size),
+                ImageLockMode.ReadWrite,
+                System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            unsafe
+            {
+                byte* r = (byte*)bd.Scan0.ToPointer();
+                byte* w = r;
+                int tot = Size * Size;
+                for (int t = 0; t < tot; t++)
+                {
+                    *w = *r;
+                    w += 1;
+                    r += 3;
+                }
+            }
+
+            // Create texture
+            Texture tex = Texture.Create(bd, Texture.Format.A8, false);
+
+            // Create mipmaps (using lancsoz filter to give more sharpness than the default box filter).
+            unsafe
+            {
+                byte* source = (byte*)bd.Scan0.ToPointer();
+                byte* temp = source + (Size * Size);
+                byte* dest = temp + (Size * Size / 2);
+                int level = 1;
+                int tsize = Size;
+                while (tsize > 0)
+                {
+                    int nsize = tsize / 2;
+                    _Downsample(Filter, source, temp, dest, tsize);
+                    Texture.SetImage(Texture.Format.A8, level, nsize, nsize, new IntPtr(dest));
+
+                    // Swap source and destination buffers
+                    byte* t = source;
+                    source = dest;
+                    dest = t;
+
+                    level++;
+                    tsize = nsize;
+                }
+            }
+
+
+            Source.UnlockBits(bd);
+
+            Texture.SetFilterMode(TextureMinFilter.LinearMipmapLinear, TextureMagFilter.Linear);
+            Texture.SetWrapMode(TextureWrapMode.Clamp, TextureWrapMode.Clamp);
+            return tex;
         }
 
         /// <summary>
@@ -303,9 +387,8 @@ namespace DUIP.UI.Graphics
         /// <param name="MeasureGraphics">A graphics context used to take initial measurements of characters.</param>
         /// <param name="Padding">The length of uncolored pixels to add around each side of each character.</param>
         public static IEnumerable<SourceGlyph> CreateSourceGlyphs(
-            System.Drawing.Graphics MeasureGraphics, System.Drawing.Font Font, StringFormat Format,
-            Color BackColor, Brush GlyphBrush,
-            System.Drawing.Imaging.PixelFormat ImageFormat,
+            SGraphics MeasureGraphics, SFont Font, StringFormat Format,
+            SColor BackColor, Brush GlyphBrush,
             int Padding, IEnumerable<char> Characters)
         {
             Format.SetMeasurableCharacterRanges(new CharacterRange[] { new CharacterRange(0, 1) });
@@ -321,8 +404,8 @@ namespace DUIP.UI.Graphics
                 Point layoutoffset = crg.Location;
 
                 // Draw character
-                Bitmap bmp = new Bitmap((int)fullsize.X, (int)fullsize.Y, ImageFormat);
-                using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(bmp))
+                Bitmap bmp = new Bitmap((int)fullsize.X, (int)fullsize.Y, _BitmapFormat);
+                using (SGraphics g = SGraphics.FromImage(bmp))
                 {
                     g.Clear(BackColor);
                     g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
@@ -422,10 +505,13 @@ namespace DUIP.UI.Graphics
         /// <summary>
         /// Tries fitting a collection of source glyphs into a bitmap. Produces a glyphmap if successful.
         /// </summary>
-        /// <param name="Scale">The scaling to apply to get from pixel coordinates to glyphmap coordinates.</param>
+        /// <param name="Sheet">The sheet reference to be used for glyphs.</param>
+        /// <param name="TextureScale">The size of a pixel in relation to the size of the texture.</param>
+        /// <param name="FontScale">The size of a pixel in relation to the size of the font.</param>
+        /// <returns>True if all source glyphs fit, false otherwise.</returns>
         public static bool FitSourceGlyphs(
-            Bitmap Bitmap, System.Drawing.Graphics Graphics, IEnumerable<SourceGlyph> Glyphs,
-            out Dictionary<char, Glyph> GlyphMap, double Scale)
+            Bitmap Bitmap, SGraphics Graphics, IEnumerable<SourceGlyph> Glyphs,
+            Sheet Sheet, double TextureScale, double FontScale, Dictionary<char, Glyph> GlyphMap)
         {
             // Sort glyphs by ascending height for increased packing efficency.
             Glyphs = from gly in Glyphs
@@ -433,7 +519,6 @@ namespace DUIP.UI.Graphics
                      select gly;
 
             // Begin placing glyphs in rows on the bitmap
-            GlyphMap = new Dictionary<char, Glyph>();
             int cury = 0;
             int nexty = 0;
             int nextx = 0;
@@ -461,11 +546,12 @@ namespace DUIP.UI.Graphics
                 Graphics.DrawImageUnscaled(gly.Image, glyx - gly.X, glyy - gly.Y);
                 GlyphMap.Add(gly.Name, new Glyph
                 {
+                    Sheet = Sheet,
                     Source = Rectangle.FromOffsetSize(
-                        new Point(glyx, glyy) * Scale, 
-                        new Point(gly.Width, gly.Height) * Scale),
-                    LayoutOffset = gly.LayoutOffset * Scale,
-                    LayoutSize = gly.LayoutSize * Scale
+                        new Point(glyx, glyy) * TextureScale, 
+                        new Point(gly.Width, gly.Height) * TextureScale),
+                    LayoutOffset = gly.LayoutOffset * FontScale,
+                    LayoutSize = gly.LayoutSize * FontScale
                 });
             }
             return true;
@@ -488,11 +574,19 @@ namespace DUIP.UI.Graphics
         }
 
         /// <summary>
-        /// Gets an instance of this typeface for the given size and color.
+        /// References a texture that contains glyphs.
         /// </summary>
-        public BitmapFont GetFont(double Size, Color Color)
+        public class Sheet
         {
-            return new BitmapFont(this, this._Scale * Size, Color);
+            /// <summary>
+            /// The texture for this sheet.
+            /// </summary>
+            public Texture Texture;
+
+            /// <summary>
+            /// The size of the texture in relation to the size of the font.
+            /// </summary>
+            public double Scale;
         }
 
         /// <summary>
@@ -501,28 +595,42 @@ namespace DUIP.UI.Graphics
         public class Glyph
         {
             /// <summary>
+            /// The sheet this glyph is in.
+            /// </summary>
+            public Sheet Sheet;
+
+            /// <summary>
             /// The location of the glyph within the texture for the font.
             /// </summary>
             public Rectangle Source;
 
             /// <summary>
-            /// The offset of the layout rectangle of the glyph from the topleft corner of the source rectangle.
+            /// The offset of the layout rectangle of the glyph from the topleft corner of the glyph's textured quad
+            /// when using a font with a size of 1.0.
             /// </summary>
             public Point LayoutOffset;
 
             /// <summary>
-            /// The size of the layout rectangle of the glyph before scaling.
+            /// The size of the layout rectangle of the glyph when using a font with a size of 1.0.
             /// </summary>
             public Point LayoutSize;
+
+            /// <summary>
+            /// Gets information needed to render an instance of this glyph using the origin as the top-left corner of the layout
+            /// rectangle.
+            /// </summary>
+            public void GetRenderInfo(double Size, out Texture Texture, out Rectangle Source, out Rectangle Destination)
+            {
+                Sheet sheet = this.Sheet;
+                Texture = sheet.Texture;
+                Source = this.Source;
+                Destination = Rectangle.FromOffsetSize(
+                    -this.LayoutOffset * Size,
+                    this.Source.Size * sheet.Scale * Size);
+            }
         }
 
-        public void Dispose()
-        {
-            this._Texture.Dispose();
-        }
-
-        private Texture _Texture;
+        private FontFamily _FontFamily;
         private Dictionary<char, Glyph> _GlyphMap;
-        private double _Scale;
     }
 }

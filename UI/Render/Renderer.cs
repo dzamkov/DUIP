@@ -34,10 +34,19 @@ namespace DUIP.UI.Render
         }
 
         /// <summary>
+        /// Creates a system typeface optimized (but not exclusive, or required) for this renderer.
+        /// </summary>
+        public SystemTypeface CreateSystemTypeface(string Name, bool Bold, bool Italic)
+        {
+            return new BitmapTypeface(Name, Bold, Italic);
+        }
+
+        /// <summary>
         /// Sets up the view on the current graphics context and renders a figure.
         /// </summary>
         public void Render(View View, int Width, int Height, bool InvertY, Figure Figure)
         {
+            GL.Viewport(0, 0, Width, Height);
             Point size = View.Area.Size;
             Point center = View.Area.TopLeft + size * 0.5;
 
@@ -107,28 +116,36 @@ namespace DUIP.UI.Render
                 return;
             }
 
-            TextureFigure texture = Figure as TextureFigure;
-            if (texture != null)
+            SystemFontGlyph sfg = Figure as SystemFontGlyph;
+            if (sfg != null)
             {
-                Rectangle src = texture.Source;
-                Rectangle dst = texture.Destination;
-                texture.Texture.Bind();
-                GL.Begin(BeginMode.Quads);
-                double sl = src.Left;
-                double st = src.Top;
-                double sr = src.Right;
-                double sb = src.Bottom;
-                double dl = dst.Left;
-                double dt = dst.Top;
-                double dr = dst.Right;
-                double db = dst.Bottom;
-                GL.Color4(texture.Color);
-                GL.TexCoord2(sl, st); GL.Vertex2(dl, dt);
-                GL.TexCoord2(sr, st); GL.Vertex2(dr, dt);
-                GL.TexCoord2(sr, sb); GL.Vertex2(dr, db);
-                GL.TexCoord2(sl, sb); GL.Vertex2(dl, db);
-                GL.End();
-                return;
+                SystemFont font = sfg.Font;
+                BitmapTypeface typeface = font.Typeface as BitmapTypeface;
+                if (typeface != null)
+                {
+                    Texture tex;
+                    Rectangle src;
+                    Rectangle dst;
+                    typeface.GetGlyph(sfg.Character).GetRenderInfo(font.Size, out tex, out src, out dst);
+
+                    tex.Bind();
+                    double sl = src.Left;
+                    double st = src.Top;
+                    double sr = src.Right;
+                    double sb = src.Bottom;
+                    double dl = dst.Left;
+                    double dt = dst.Top;
+                    double dr = dst.Right;
+                    double db = dst.Bottom;
+                    GL.Begin(BeginMode.Quads);
+                    GL.Color4(font.Color);
+                    GL.TexCoord2(sl, st); GL.Vertex2(dl, dt);
+                    GL.TexCoord2(sr, st); GL.Vertex2(dr, dt);
+                    GL.TexCoord2(sr, sb); GL.Vertex2(dr, db);
+                    GL.TexCoord2(sl, sb); GL.Vertex2(dl, db);
+                    GL.End();
+                    return;
+                }
             }
 
             throw new NotImplementedException();

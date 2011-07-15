@@ -14,7 +14,7 @@ namespace DUIP.UI
     /// </summary>
     public class OceanAmbience : Ambience
     {
-        public OceanAmbience(Random Random)
+        /*public OceanAmbience(Random Random)
         {
             this._Layers = new List<Layer>();
 
@@ -45,13 +45,11 @@ namespace DUIP.UI
                 zoom += 1.6;
                 error += 0.05;
             }
-        }
+        }*/
 
         public override void Update(World World, double Time)
         {
 
         }
-
-        private List<Layer> _Layers;
     }
 }

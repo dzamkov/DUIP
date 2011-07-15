@@ -18,6 +18,7 @@ namespace DUIP.UI
 
         public override Disposable<Block> CreateBlock(Theme Theme)
         {
+            SystemTypeface typeface = SystemTypeface.Create("Courier New", false, false);
             TextBlock textpad = new TextBlock(new TextStyle
             {
                 CellSize = new Point(0.04, 0.05),
@@ -25,8 +26,8 @@ namespace DUIP.UI
                 VerticalAlignment = Alignment.Center,
                 DefaultFontStyle = new TextFontStyle
                 {
-                    Font = Theme.MonospaceTypeface.Object.GetFont(0.05, Color.Black),
-                    SelectedFont = Theme.MonospaceTypeface.Object.GetFont(0.05, Color.White)
+                    Font = typeface.GetFont(0.05, Color.Black),
+                    SelectedFont = typeface.GetFont(0.05, Color.White)
                 },
                 DefaultBackStyle = new TextBackStyle
                 {

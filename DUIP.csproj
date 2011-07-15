@@ -64,12 +64,12 @@
     <Compile Include="UI\Graphics\Figure\Solid.cs" />
     <Compile Include="UI\Graphics\Path.cs" />
     <Compile Include="UI\Graphics\Shape.cs" />
+    <Compile Include="UI\Graphics\Text\SystemFont.cs" />
     <Compile Include="UI\InputContext.cs" />
     <Compile Include="UI\Render\Renderer.cs" />
     <Compile Include="UI\Theme.cs" />
     <Compile Include="UI\Content\Content.cs" />
     <Compile Include="UI\Content\Static.cs" />
-    <Compile Include="UI\Curve.cs" />
     <Compile Include="UI\Compass.cs" />
     <Compile Include="UI\Graphics\Image\CellularImage.cs" />
     <Compile Include="UI\Graphics\Color.cs" />
@@ -87,14 +87,13 @@
     <Compile Include="UI\Block\Margin.cs" />
     <Compile Include="UI\Block\Size.cs" />
     <Compile Include="UI\Block\Space.cs" />
-    <Compile Include="UI\Graphics\Text\BitmapFont.cs" />
-    <Compile Include="UI\Graphics\Text\BitmapTypeface.cs" />
+    <Compile Include="UI\Render\BitmapFont.cs" />
     <Compile Include="UI\Graphics\Text\Font.cs" />
     <Compile Include="UI\World\Node.cs" />
     <Compile Include="UI\Ambience\OceanAmbience.cs" />
     <Compile Include="UI\Point.cs" />
     <Compile Include="UI\Rectangle.cs" />
-    <Compile Include="UI\Graphics\Image\Texture.cs" />
+    <Compile Include="UI\Render\Texture.cs" />
     <Compile Include="UI\View.cs" />
     <Compile Include="UI\MainForm.cs">
       <SubType>Form</SubType>

@@ -12,18 +12,6 @@ namespace DUIP.UI
     public class Theme
     {
         /// <summary>
-        /// A general purpose typeface to use when no more specialized font is suitable.
-        /// </summary>
-        public Disposable<BitmapTypeface> GeneralTypeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Arial"), 
-            Font.ASCIICharacters, System.Drawing.FontStyle.Regular, 8, 45.0f, 512);
-
-        /// <summary>
-        /// A monospace typeface for editable text.
-        /// </summary>
-        public Disposable<BitmapTypeface> MonospaceTypeface = BitmapTypeface.Create(BitmapTypeface.GetFamily("Courier New"),
-            Font.ASCIICharacters, System.Drawing.FontStyle.Regular, 8, 45.0f, 512);
-
-        /// <summary>
         /// The border to use for nodes where no more specialized border is suitable.
         /// </summary>
         public Border NodeBorder = new Border(0.04, Color.RGB(0.2, 0.2, 0.2));
@@ -46,6 +34,11 @@ namespace DUIP.UI
         };
 
         /// <summary>
+        /// A general purpose font.
+        /// </summary>
+        public Font GeneralFont = new SystemFont("Arial", 0.05, Color.Black);
+
+        /// <summary>
         /// Creates a block that displays general-purpose text.
         /// </summary>
         public Block TextBlock(string Text)
@@ -54,7 +47,7 @@ namespace DUIP.UI
             {
                 Fit = FlowFit.AspectRatio(2.0),
                 Style = this.FlowStyle,
-                Items = FlowItem.CreateText(Text, this.GeneralTypeface.Object.GetFont(0.05, Color.Black), 0.01, true)
+                Items = FlowItem.CreateText(Text, this.GeneralFont, 0.01, true)
             }.WithMargin(0.04);
         }
 

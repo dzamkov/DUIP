@@ -23,31 +23,5 @@ namespace DUIP.UI
         {
 
         }
-
-        /// <summary>
-        /// A tiled, parallaxed level of a background.
-        /// </summary>
-        public struct Layer
-        {
-            /// <summary>
-            /// Gets the texture source for the layer.
-            /// </summary>
-            public Texture Texture;
-
-            /// <summary>
-            /// The size of a tile of the texture when displayed.
-            /// </summary>
-            public double Scale;
-
-            /// <summary>
-            /// The minimum zoom level at which this layer is visible.
-            /// </summary>
-            public double MinZoom;
-
-            /// <summary>
-            /// The maximum zoom level at which this layer is visible.
-            /// </summary>
-            public double MaxZoom;
-        }
     }
 }
