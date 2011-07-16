@@ -59,7 +59,10 @@
     <Compile Include="UI\Block\Grid.cs" />
     <Compile Include="UI\Block\Text.cs" />
     <Compile Include="UI\Content\Editor.cs" />
+    <Compile Include="UI\Graphics\Figure\Cellular.cs" />
     <Compile Include="UI\Graphics\Figure\Hint.cs" />
+    <Compile Include="UI\Graphics\Figure\Image.cs" />
+    <Compile Include="UI\Graphics\Figure\Sampled.cs" />
     <Compile Include="UI\Graphics\Figure\Shape.cs" />
     <Compile Include="UI\Graphics\Figure\Solid.cs" />
     <Compile Include="UI\Graphics\Path.cs" />
@@ -71,10 +74,9 @@
     <Compile Include="UI\Content\Content.cs" />
     <Compile Include="UI\Content\Static.cs" />
     <Compile Include="UI\Compass.cs" />
-    <Compile Include="UI\Graphics\Image\CellularImage.cs" />
     <Compile Include="UI\Graphics\Color.cs" />
     <Compile Include="UI\Graphics\Figure\Figure.cs" />
-    <Compile Include="UI\Graphics\Image\Image.cs" />
+    <Compile Include="UI\Graphics\Image.cs" />
     <Compile Include="UI\Transfer\File.cs" />
     <Compile Include="UI\Transfer\Item.cs" />
     <Compile Include="UI\Transfer\String.cs" />

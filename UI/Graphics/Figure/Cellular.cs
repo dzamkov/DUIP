@@ -5,11 +5,12 @@ using System.Linq;
 namespace DUIP.UI.Graphics
 {
     /// <summary>
-    /// An image for a tileable randomly-generated cellular pattern.
+    /// A sampled figure that displays a tiled cellular pattern. The pattern can be made to resemble water,
+    /// ripples, leaves and some other nature-looking-thingies.
     /// </summary>
-    public class CellularImage : IImage
+    public class CellularFigure : SampledFigure
     {
-        public CellularImage(Color Cell, Color Edge, double Exponent, double Multiplier, IEnumerable<Point> CellCenters)
+        public CellularFigure(Color Cell, Color Edge, double Exponent, double Multiplier, IEnumerable<Point> CellCenters)
         {
             this._Centers = new List<Point>();
             this._Cell = Cell;
@@ -107,11 +108,11 @@ namespace DUIP.UI.Graphics
             }
         }
 
-        public Color GetColor(Point Point)
+        public override Color  GetColor(Point Point)
         {
             Point.X = ((Point.X % 1.0) + 1.0) % 1.0;
             Point.Y = ((Point.Y % 1.0) + 1.0) % 1.0;
-            
+
             double mdis = double.PositiveInfinity;
             foreach (Point cen in this._Centers)
             {
@@ -133,6 +134,14 @@ namespace DUIP.UI.Graphics
             mdis = Math.Pow(mdis, this._Exponent);
             mdis = Math.Min(mdis, 1.0);
             return Color.Mix(this._Cell, this._Edge, mdis);
+        }
+
+        public override bool Tiled
+        {
+            get
+            {
+                return true;    
+            }
         }
 
         private double _Exponent;

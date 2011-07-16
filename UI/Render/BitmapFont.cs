@@ -8,6 +8,7 @@ using System.Drawing.Imaging;
 using SFont = System.Drawing.Font;
 using SGraphics = System.Drawing.Graphics;
 using SColor = System.Drawing.Color;
+using SImage = System.Drawing.Image;
 
 using OpenTK.Graphics.OpenGL;
 
@@ -347,7 +348,7 @@ namespace DUIP.UI.Render
             /// <summary>
             /// The image this glyph is from.
             /// </summary>
-            public Image Image;
+            public SImage Image;
 
             /// <summary>
             /// The x-offset of the glyph in the image.
