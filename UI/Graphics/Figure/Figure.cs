@@ -33,7 +33,7 @@ namespace DUIP.UI.Graphics
                 return B;
             if (B == null)
                 return A;
-            return new CombinedFigure(A, B);
+            return new CompoundFigure(new Figure[] { A, B });
         }
     }
 
@@ -113,39 +113,26 @@ namespace DUIP.UI.Graphics
     }
 
     /// <summary>
-    /// A figure created by combining two disjoint figures where the order of rendering does not matter.
+    /// A figure created by combining multiple component figures where the order of rendering does not matter.
     /// </summary>
-    public sealed class CombinedFigure : Figure
+    public sealed class CompoundFigure : Figure
     {
-        public CombinedFigure(Figure A, Figure B)
+        public CompoundFigure(IEnumerable<Figure> Components)
         {
-            this._A = A;
-            this._B = B;
+            this._Components = Components;
         }
 
         /// <summary>
-        /// Gets the first component of the combined figure.
+        /// Gets the components of this compound figure.
         /// </summary>
-        public Figure A
+        public IEnumerable<Figure> Components
         {
             get
             {
-                return this._A;
+                return this._Components;
             }
         }
 
-        /// <summary>
-        /// Gets the second component of the combined figure.
-        /// </summary>
-        public Figure B
-        {
-            get
-            {
-                return this._B;
-            }
-        }
-
-        private Figure _A;
-        private Figure _B;
+        private IEnumerable<Figure> _Components;
     }
 }

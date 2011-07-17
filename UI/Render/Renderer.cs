@@ -10,7 +10,8 @@ using DUIP.UI.Graphics;
 namespace DUIP.UI.Render
 {
     /// <summary>
-    /// Maintains graphics information needed to render figures using OpenGL.
+    /// Maintains graphics information needed to render figures using OpenGL. A single renderer may only be used
+    /// for one GL context.
     /// </summary>
     public class Renderer
     {
@@ -63,22 +64,23 @@ namespace DUIP.UI.Render
             bool prop = Math.Abs(wres - res) < propthreshold && Math.Abs(hres - res) < propthreshold;
 
 
-            this.Render(new RenderInfo
+            this.Render(new Context
             {
                 Resolution = res,
-                Proportional = prop
+                Proportional = prop,
+                Renderer = this
             }, Figure);
         }
 
         /// <summary>
         /// Renders the given figure using the current graphics context.
         /// </summary>
-        public void Render(RenderInfo Info, Figure Figure)
+        public void Render(Context Context, Figure Figure)
         {
             HintFigure hint = Figure as HintFigure;
             if (hint != null)
             {
-                this.Render(Info, hint.Source);
+                this.Render(Context, hint.Source);
                 return;
             }
 
@@ -87,7 +89,7 @@ namespace DUIP.UI.Render
             {
                 Point offset = translated.Offset;
                 GL.Translate(offset.X, offset.Y, 0.0);
-                this.Render(Info, translated.Source);
+                this.Render(Context, translated.Source);
                 GL.Translate(-offset.X, -offset.Y, 0.0);
                 return;
             }
@@ -95,23 +97,25 @@ namespace DUIP.UI.Render
             SuperimposedFigure superimposed = Figure as SuperimposedFigure;
             if (superimposed != null)
             {
-                this.Render(Info, superimposed.Under);
-                this.Render(Info, superimposed.Over);
+                this.Render(Context, superimposed.Under);
+                this.Render(Context, superimposed.Over);
                 return;
             }
 
-            CombinedFigure combined = Figure as CombinedFigure;
-            if (combined != null)
+            CompoundFigure compound = Figure as CompoundFigure;
+            if (compound != null)
             {
-                this.Render(Info, combined.A);
-                this.Render(Info, combined.B);
+                foreach (Figure component in compound.Components)
+                {
+                    this.Render(Context, component);
+                }
                 return;
             }
 
             ShapeFigure shape = Figure as ShapeFigure;
             if (shape != null)
             {
-                this.RenderShape(Info, shape.Shape, shape.Source);
+                this.RenderShape(Context, shape.Shape, shape.Source);
                 return;
             }
 
@@ -153,7 +157,7 @@ namespace DUIP.UI.Render
         /// <summary>
         /// Renders a figure confined to a certain shape.
         /// </summary>
-        public void RenderShape(RenderInfo Info, Shape Shape, Figure Source)
+        public void RenderShape(Context Context, Shape Shape, Figure Source)
         {
             SolidFigure solidsource = Source as SolidFigure;
             if (solidsource != null)
@@ -182,7 +186,7 @@ namespace DUIP.UI.Render
                 PathShape pathshape = Shape as PathShape;
                 if (pathshape != null)
                 {
-                    this.RenderPath(Info, fillcol, pathshape.Thickness, pathshape.Path);
+                    this.RenderPath(Context, fillcol, pathshape.Thickness, pathshape.Path);
                     return;
                 }
             }
@@ -193,28 +197,12 @@ namespace DUIP.UI.Render
         /// <summary>
         /// Renders a solid color path with a certain thickness.
         /// </summary>
-        public void RenderPath(RenderInfo Info, Color Color, double Thickness, Graphics.Path Path)
+        public void RenderPath(Context Context, Color Color, double Thickness, Graphics.Path Path)
         {
             // Not gonna bother with this for now
         }
 
         private double _MinLineWidth;
         private double _MaxLineWidth;
-    }
-
-    /// <summary>
-    /// Contains information for a rendering.
-    /// </summary>
-    public class RenderInfo
-    {
-        /// <summary>
-        /// The resolution for the rendering in pixels per unit.
-        /// </summary>
-        public double Resolution;
-
-        /// <summary>
-        /// Indicates wether both axies of the viewport are proportional with the view.
-        /// </summary>
-        public bool Proportional;
     }
 }

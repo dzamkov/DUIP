@@ -154,7 +154,7 @@ namespace DUIP.UI
                     Axis minoraxis = style.MinorAxis;
                     Alignment linealign = style.LineAlignment;
 
-                    Figure fig = null;
+                    List<Figure> components = new List<Figure>();
                     foreach (Line line in this.Lines)
                     {
                         double majoff = line.MajorOffset;
@@ -173,11 +173,11 @@ namespace DUIP.UI
 
                                 Point size = font.GetSize(name).Shift(minoraxis);
                                 Point off = new Point(minoff, majoff + Align.AxisOffset(linealign, majsize, size.Y)).Shift(minoraxis);
-                                fig ^= font.GetGlyph(name).Translate(off);
+                                components.Add(font.GetGlyph(name).Translate(off));
                             }
                         }
                     }
-                    return fig;
+                    return new CompoundFigure(components);
                 }
             }
 

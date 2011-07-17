@@ -321,7 +321,7 @@ namespace DUIP.UI
                     _SelectionInfo sel = this.TextBlock._Selection;
                     Figure fig = null;
 
-                    // Draw back colors
+                    // Back colors
                     TextItem cur = this.TextBlock._First;
                     int offset = 0;
                     double y = 0.0;

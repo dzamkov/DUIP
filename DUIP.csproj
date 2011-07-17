@@ -69,6 +69,8 @@
     <Compile Include="UI\Graphics\Shape.cs" />
     <Compile Include="UI\Graphics\Text\SystemFont.cs" />
     <Compile Include="UI\InputContext.cs" />
+    <Compile Include="UI\Render\Context.cs" />
+    <Compile Include="UI\Render\Procedure.cs" />
     <Compile Include="UI\Render\Renderer.cs" />
     <Compile Include="UI\Theme.cs" />
     <Compile Include="UI\Content\Content.cs" />
@@ -112,7 +114,6 @@
     <Compile Include="Util\Ref.cs" />
     <Compile Include="Util\Reflection.cs" />
     <Compile Include="Util\Registry.cs" />
-    <Compile Include="Util\Relation.cs" />
     <Compile Include="Util\Temporary.cs" />
     <Compile Include="Util\Void.cs" />
     <Compile Include="Util\ID.cs" />

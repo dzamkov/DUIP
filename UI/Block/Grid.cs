@@ -196,18 +196,18 @@ namespace DUIP.UI
             {
                 get
                 {
-                    Figure fig = null;
-
                     // Cells
+                    List<Figure> cellfigures = new List<Figure>();
                     for (int c = 0; c < this.ColumnOffsets.Length; c++)
                     {
                         double coff = this.ColumnOffsets[c];
                         for (int r = 0; r < this.RowOffsets.Length; r++)
                         {
                             double roff = this.RowOffsets[r];
-                            fig ^= this.Cells[c, r].Figure.Translate(new Point(coff, roff));
+                            cellfigures.Add(this.Cells[c, r].Figure.Translate(new Point(coff, roff)));
                         }
                     }
+                    Figure fig = new CompoundFigure(cellfigures);
 
                     // Seperators
                     Border seperator = this.Block.Seperator;
