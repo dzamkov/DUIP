@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using OpenTK;
 using OpenTK.Graphics;
@@ -64,59 +65,53 @@ namespace DUIP.UI.Render
             bool prop = Math.Abs(wres - res) < propthreshold && Math.Abs(hres - res) < propthreshold;
 
 
-            this.Render(new Context
+            this._GetProcedure(Figure).Execute(new Context
             {
                 Resolution = res,
                 Proportional = prop,
                 Renderer = this
-            }, Figure);
+            });
         }
 
         /// <summary>
-        /// Renders the given figure using the current graphics context.
+        /// Gets an unoptimized procedure that renders the given figure.
         /// </summary>
-        public void Render(Context Context, Figure Figure)
+        private Procedure _GetProcedure(Figure Figure)
         {
             HintFigure hint = Figure as HintFigure;
             if (hint != null)
             {
-                this.Render(Context, hint.Source);
-                return;
+                return this._GetProcedure(hint.Source);
             }
 
             TranslatedFigure translated = Figure as TranslatedFigure;
             if (translated != null)
             {
-                Point offset = translated.Offset;
-                GL.Translate(offset.X, offset.Y, 0.0);
-                this.Render(Context, translated.Source);
-                GL.Translate(-offset.X, -offset.Y, 0.0);
-                return;
+                return new TranslationProcedure(translated.Offset, this._GetProcedure(translated.Source));
             }
 
             SuperimposedFigure superimposed = Figure as SuperimposedFigure;
             if (superimposed != null)
             {
-                this.Render(Context, superimposed.Under);
-                this.Render(Context, superimposed.Over);
-                return;
+                return this._GetProcedure(superimposed.Under) + this._GetProcedure(superimposed.Over);
             }
 
             CompoundFigure compound = Figure as CompoundFigure;
             if (compound != null)
             {
+                Procedure[] components = new Procedure[compound.Components.Count()];
+                int i = 0;
                 foreach (Figure component in compound.Components)
                 {
-                    this.Render(Context, component);
+                    components[i++] = this._GetProcedure(component);
                 }
-                return;
+                return new CompoundProcedure(components);
             }
 
             ShapeFigure shape = Figure as ShapeFigure;
             if (shape != null)
             {
-                this.RenderShape(Context, shape.Shape, shape.Source);
-                return;
+                return this._GetShapeProcedure(shape.Shape, shape.Source);
             }
 
             SystemFontGlyph sfg = Figure as SystemFontGlyph;
@@ -130,24 +125,13 @@ namespace DUIP.UI.Render
                     Rectangle src;
                     Rectangle dst;
                     typeface.GetGlyph(sfg.Character).GetRenderInfo(font.Size, out tex, out src, out dst);
-
-                    tex.Bind();
-                    double sl = src.Left;
-                    double st = src.Top;
-                    double sr = src.Right;
-                    double sb = src.Bottom;
-                    double dl = dst.Left;
-                    double dt = dst.Top;
-                    double dr = dst.Right;
-                    double db = dst.Bottom;
-                    GL.Begin(BeginMode.Quads);
-                    GL.Color4(font.Color);
-                    GL.TexCoord2(sl, st); GL.Vertex2(dl, dt);
-                    GL.TexCoord2(sr, st); GL.Vertex2(dr, dt);
-                    GL.TexCoord2(sr, sb); GL.Vertex2(dr, db);
-                    GL.TexCoord2(sl, sb); GL.Vertex2(dl, db);
-                    GL.End();
-                    return;
+                    return
+                        new BindTextureProcedure(tex) +
+                        new SetColorProcedure(font.Color) +
+                        new RenderGeometryProcedure(BeginMode.Quads, new BufferGeometry(
+                            new Point[] { dst.TopLeft, dst.TopRight, dst.BottomRight, dst.BottomLeft },
+                            null,
+                            new Point[] { src.TopLeft, src.TopRight, src.BottomRight, src.BottomLeft }));
                 }
             }
 
@@ -155,9 +139,9 @@ namespace DUIP.UI.Render
         }
 
         /// <summary>
-        /// Renders a figure confined to a certain shape.
+        /// Gets a procedure that renders a figure confined to a certain shape.
         /// </summary>
-        public void RenderShape(Context Context, Shape Shape, Figure Source)
+        private Procedure _GetShapeProcedure(Shape Shape, Figure Source)
         {
             SolidFigure solidsource = Source as SolidFigure;
             if (solidsource != null)
@@ -168,26 +152,20 @@ namespace DUIP.UI.Render
                 if (rectangle != null)
                 {
                     Rectangle rect = rectangle.Rectangle;
-                    GL.BindTexture(TextureTarget.Texture2D, 0);
-                    GL.Begin(BeginMode.Quads);
-                    double l = rect.Left;
-                    double t = rect.Top;
-                    double r = rect.Right;
-                    double b = rect.Bottom;
-                    GL.Color4(fillcol);
-                    GL.Vertex2(l, t);
-                    GL.Vertex2(r, t);
-                    GL.Vertex2(r, b);
-                    GL.Vertex2(l, b);
-                    GL.End();
-                    return;
+                    return
+                        BindTextureProcedure.Null +
+                        new SetColorProcedure(fillcol) +
+                        new RenderGeometryProcedure(BeginMode.Quads,
+                            new BufferGeometry(new Point[] { rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft }, null, null));
                 }
 
                 PathShape pathshape = Shape as PathShape;
                 if (pathshape != null)
                 {
-                    this.RenderPath(Context, fillcol, pathshape.Thickness, pathshape.Path);
-                    return;
+                    return
+                        BindTextureProcedure.Null +
+                        new SetColorProcedure(fillcol) +
+                        this._GetPathProcedure(pathshape.Thickness, pathshape.Path);
                 }
             }
 
@@ -195,11 +173,12 @@ namespace DUIP.UI.Render
         }
 
         /// <summary>
-        /// Renders a solid color path with a certain thickness.
+        /// Gets a procedure that renders the given path with the given thickness.
         /// </summary>
-        public void RenderPath(Context Context, Color Color, double Thickness, Graphics.Path Path)
+        private Procedure _GetPathProcedure(double Thickness, Graphics.Path Path)
         {
-            // Not gonna bother with this for now
+            // Not yet
+            return null;
         }
 
         private double _MinLineWidth;

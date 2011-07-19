@@ -6,8 +6,7 @@ using OpenTK.Graphics;
 namespace DUIP.UI.Graphics
 {
     /// <summary>
-    /// A color, as stolen from many of my previous projects. Represents a color including alpha.
-    /// Contains methods for color manipulation.
+    /// Represents a color including alpha information. Contains methods for color manipulation.
     /// </summary>
     public struct Color
     {

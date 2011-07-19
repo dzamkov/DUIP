@@ -129,6 +129,38 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Gets or sets the position of the top-right corner of the rectangle.
+        /// </summary>
+        public Point TopRight
+        {
+            get
+            {
+                return new Point(this.BottomRight.X, this.TopLeft.Y);
+            }
+            set
+            {
+                this.BottomRight.X = value.X;
+                this.TopLeft.Y = value.Y;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the position of the bottom-left corner of the rectangle.
+        /// </summary>
+        public Point BottomLeft
+        {
+            get
+            {
+                return new Point(this.TopLeft.X, this.BottomRight.Y);
+            }
+            set
+            {
+                this.TopLeft.X = value.X;
+                this.BottomRight.Y = value.Y;
+            }
+        }
+
+        /// <summary>
         /// Gets a rectangle which occupies every point on the coordinate plane.
         /// </summary>
         public static Rectangle Unbound
