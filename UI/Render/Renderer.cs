@@ -26,12 +26,6 @@ namespace DUIP.UI.Render
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-
-            // Get line width range
-            Vector2 range;
-            GL.GetFloat(GetPName.LineWidthRange, out range);
-            this._MinLineWidth = range.X;
-            this._MaxLineWidth = range.Y;
         }
 
         /// <summary>
@@ -48,27 +42,28 @@ namespace DUIP.UI.Render
         public void Render(View View, int Width, int Height, bool InvertY, Figure Figure)
         {
             GL.Viewport(0, 0, Width, Height);
-            Point size = View.Area.Size;
-            Point center = View.Area.TopLeft + size * 0.5;
+
+            double x = View.Offset.X;
+            double y = View.Offset.Y;
+            double a = View.Right.X;
+            double b = View.Right.Y;
+            double c = View.Down.X;
+            double d = View.Down.Y;
+            double i = InvertY ? -1.0 : 1.0;
+            Matrix4d mat = new Matrix4d(
+                0.5 * a, 0.5 * b, 0.0, 0.0,
+                0.5 * c * i, 0.5 * d * i, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                x + 0.5 * (a + c), y + 0.5 * (b + d), 0.0, 1.0);
+            mat.Invert();
 
             GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadIdentity();
-            GL.Scale(2.0 / size.X, InvertY ? -2.0 / size.Y : 2.0 / size.Y, 1.0);
-            GL.Translate(-center.X, -center.Y, 0.0);
+            GL.LoadMatrix(ref mat);
             GL.CullFace(InvertY ? CullFaceMode.Front : CullFaceMode.Back);
-
-            double wres = Width / size.X;
-            double hres = Height / size.Y;
-            double res = Math.Sqrt(wres * hres);
-
-            const double propthreshold = 0.0001;
-            bool prop = Math.Abs(wres - res) < propthreshold && Math.Abs(hres - res) < propthreshold;
-
 
             this._GetProcedure(Figure).Execute(new Context
             {
-                Resolution = res,
-                Proportional = prop,
+                Resolution = Width / View.Area * Height,
                 Renderer = this
             });
         }
@@ -180,8 +175,5 @@ namespace DUIP.UI.Render
             // Not yet
             return null;
         }
-
-        private double _MinLineWidth;
-        private double _MaxLineWidth;
     }
 }

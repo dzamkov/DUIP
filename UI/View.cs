@@ -9,36 +9,55 @@ namespace DUIP.UI
     /// </summary>
     public struct View
     {
-        public View(Rectangle Area)
+        public View(Point Offset, Point Right, Point Down)
         {
-            this.Area = Area;
+            this.Offset = Offset;
+            this.Right = Right;
+            this.Down = Down;
+        }
+
+        public View(Rectangle ViewRectangle)
+        {
+            this.Offset = ViewRectangle.TopLeft;
+            this.Right = new Point(ViewRectangle.Right - ViewRectangle.Left, 0.0);
+            this.Down = new Point(0.0, ViewRectangle.Bottom - ViewRectangle.Top);
         }
 
         /// <summary>
-        /// Projections a point from view-space to world-space.
+        /// Gets the amount of area in world space this view covers.
         /// </summary>
-        public Point Project(Point View)
-        {
-            return this.Area.TopLeft + this.Area.Size.Scale(View);
-        }
-
-        /// <summary>
-        /// Estimates the zoom level of the view.
-        /// </summary>
-        public double Zoom
+        public double Area
         {
             get
             {
-                Point size = this.Area.Size;
-                double el = Math.Sqrt(size.X * size.Y);
-                return Math.Log(el, 2.0) - 1.0;
+                return this.Right.X * this.Down.Y - this.Right.Y * this.Down.X;
             }
         }
 
         /// <summary>
-        /// The area visible by the view.
+        /// Projections a point from view space to world space.
         /// </summary>
-        public Rectangle Area;
+        public Point Project(Point View)
+        {
+            return this.Offset + this.Right * View.X + this.Down * View.Y;
+        }
+
+        /// <summary>
+        /// The location of the top-left corner of the view in world space.
+        /// </summary>
+        public Point Offset;
+
+        /// <summary>
+        /// The vector from the left edge of the the view to the corresponding point on the right edge of
+        /// the view in world space.
+        /// </summary>
+        public Point Right;
+
+        /// <summary>
+        /// The vector from the top edge of the the view to the corresponding point on the bottom edge of
+        /// the view in world space.
+        /// </summary>
+        public Point Down;
     }
 
     /// <summary>
@@ -55,13 +74,12 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets the view for this camera using a viewport of the given size.
+        /// Gets the view for this camera using a viewport with the given aspect ratio.
         /// </summary>
-        public View GetView(int Width, int Height)
+        public View GetView(double AspectRatio)
         {
-            double ar = (double)Width / Height; // Aspect ratio
             double size = this.Scale;
-            Point off = ar > 1.0 ? new Point(size * ar, size) : new Point(size, size / ar);
+            Point off = AspectRatio > 1.0 ? new Point(size * AspectRatio, size) : new Point(size, size / AspectRatio);
             Rectangle rect = new Rectangle(this.Center - off, this.Center + off);
             return new View(rect);
         }

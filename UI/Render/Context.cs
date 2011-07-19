@@ -15,12 +15,6 @@ namespace DUIP.UI.Render
     public class Context
     {
         /// <summary>
-        /// Indicates wether the current output buffer is proportional (the resolution
-        /// on both axies is the same).
-        /// </summary>
-        public bool Proportional;
-
-        /// <summary>
         /// The resolution of the current output buffer in pixels per unit.
         /// </summary>
         public double Resolution;

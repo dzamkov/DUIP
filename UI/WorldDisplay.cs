@@ -362,7 +362,7 @@ namespace DUIP.UI
         /// </summary>
         private void _MakeView()
         {
-            this._View = this._Camera.GetView(this.Width, this.Height);
+            this._View = this._Camera.GetView(this.AspectRatio);
         }
 
         /// <summary>
