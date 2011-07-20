@@ -112,11 +112,28 @@ namespace DUIP.UI.Graphics
         }
 
         /// <summary>
+        /// Composes two view such that a projection with the resulting view will be equivalent to a projection
+        /// by A followed by a projection by B.
+        /// </summary>
+        public static View Compose(View A, View B)
+        {
+            return new View(
+                B.Project(A.Offset),
+                B.Right * A.Right.X + B.Down * A.Right.Y,
+                B.Right * A.Down.X + B.Down * A.Down.Y);
+        }
+
+        /// <summary>
         /// Projections a point from view space to world space.
         /// </summary>
         public Point Project(Point View)
         {
             return this.Offset + this.Right * View.X + this.Down * View.Y;
+        }
+
+        public static View operator *(View A, View B)
+        {
+            return View.Compose(A, B);
         }
 
         /// <summary>
