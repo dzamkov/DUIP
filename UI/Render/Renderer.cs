@@ -16,6 +16,11 @@ namespace DUIP.UI.Render
     /// </summary>
     public class Renderer
     {
+        public Renderer()
+        {
+            this._Procedures = new Dictionary<Figure, Procedure>();
+        }
+
         /// <summary>
         /// Sets up this renderer with the current graphics context.
         /// </summary>
@@ -63,34 +68,46 @@ namespace DUIP.UI.Render
 
             this._GetProcedure(Figure).Execute(new Context
             {
+                View = View,
                 Resolution = Width / View.Area * Height,
                 Renderer = this
             });
         }
 
         /// <summary>
-        /// Gets an unoptimized procedure that renders the given figure.
+        /// Gets a procedure that renders the given figure.
         /// </summary>
         private Procedure _GetProcedure(Figure Figure)
         {
+            // See if there is a stored procedure for it
+            Procedure res;
+            if(this._Procedures.TryGetValue(Figure, out res))
+            {
+                return res;
+            }
+
+            // Hint figure
             HintFigure hint = Figure as HintFigure;
             if (hint != null)
             {
                 return this._GetProcedure(hint.Source);
             }
 
+            // Translated figure
             TranslatedFigure translated = Figure as TranslatedFigure;
             if (translated != null)
             {
                 return new TranslationProcedure(translated.Offset, this._GetProcedure(translated.Source));
             }
 
+            // Superimposed figure
             SuperimposedFigure superimposed = Figure as SuperimposedFigure;
             if (superimposed != null)
             {
                 return this._GetProcedure(superimposed.Under) + this._GetProcedure(superimposed.Over);
             }
 
+            // Compound figure
             CompoundFigure compound = Figure as CompoundFigure;
             if (compound != null)
             {
@@ -103,12 +120,14 @@ namespace DUIP.UI.Render
                 return new CompoundProcedure(components);
             }
 
+            // Shape figure
             ShapeFigure shape = Figure as ShapeFigure;
             if (shape != null)
             {
                 return this._GetShapeProcedure(shape.Shape, shape.Source);
             }
 
+            // System font glyph
             SystemFontGlyph sfg = Figure as SystemFontGlyph;
             if (sfg != null)
             {
@@ -130,6 +149,23 @@ namespace DUIP.UI.Render
                 }
             }
 
+            // Sampled figure
+            SampledFigure sampled = Figure as SampledFigure;
+            if(sampled != null)
+            {
+                if(sampled.Tiled)
+                {
+                    Texture tex = Texture.Create(sampled, new View(Rectangle.UnitSquare), Texture.Format.BGRA32, 256, 256); 
+                    Procedure proc = 
+                        new BindTextureProcedure(tex) +
+                        SetColorProcedure.White +
+                        RenderViewProcedure.Singleton;
+                    this._Procedures[sampled] = proc;
+                    return proc;
+                }
+            }
+
+            // No rendering method available
             throw new NotImplementedException();
         }
 
@@ -175,5 +211,7 @@ namespace DUIP.UI.Render
             // Not yet
             return null;
         }
+
+        private Dictionary<Figure, Procedure> _Procedures;
     }
 }

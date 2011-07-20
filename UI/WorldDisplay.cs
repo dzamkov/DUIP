@@ -40,7 +40,7 @@ namespace DUIP.UI
             this._InputContext = new InputContext(this._Probe);
 
             this._Camera = new Camera(new Point(0.0, 0.0), 1.0);
-            this._Background = new OceanAmbience();
+            this._Ambience = new OceanAmbience(Random.Default);
             this._World = new World(this._InputContext, new Theme());
             this._MakeView();
 
@@ -56,10 +56,9 @@ namespace DUIP.UI
             GL.Clear(ClearBufferMask.ColorBufferBit);
 
             this.MakeCurrent();
-            this._Renderer.Render(this._View, this.Width, this.Height, true, this._World.Figure);
+            Figure scene = this._Ambience.GetScene(this._World.Figure, this._Camera, this._View);
+            this._Renderer.Render(this._View, this.Width, this.Height, true, scene);
             this.SwapBuffers();
-
-            ErrorCode ec = GL.GetError();
         }
 
         /// <summary>
@@ -75,7 +74,6 @@ namespace DUIP.UI
             this._WheelDelta = 0;
 
             this._InputContext.Update(Time);
-            this._Background.Update(this._World, Time);  
         }
 
         protected override void OnResize(EventArgs e)
@@ -380,10 +378,10 @@ namespace DUIP.UI
         private Probe _Probe;
         private InputContext _InputContext;
 
-        private Ambience _Background;
+        private Ambience _Ambience;
         private World _World;
         private Camera _Camera;
-        private View _View;
+        private Graphics.View _View;
         private Renderer _Renderer;
     }
 }

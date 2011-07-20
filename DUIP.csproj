@@ -58,6 +58,7 @@
     <Compile Include="UI\Ambience\Ambience.cs" />
     <Compile Include="UI\Block\Grid.cs" />
     <Compile Include="UI\Block\Text.cs" />
+    <Compile Include="UI\Camera.cs" />
     <Compile Include="UI\Content\Editor.cs" />
     <Compile Include="UI\Graphics\Figure\Cellular.cs" />
     <Compile Include="UI\Graphics\Figure\Hint.cs" />
@@ -95,11 +96,11 @@
     <Compile Include="UI\Render\BitmapFont.cs" />
     <Compile Include="UI\Graphics\Text\Font.cs" />
     <Compile Include="UI\World\Node.cs" />
-    <Compile Include="UI\Ambience\OceanAmbience.cs" />
+    <Compile Include="UI\Ambience\Ocean.cs" />
     <Compile Include="UI\Point.cs" />
     <Compile Include="UI\Rectangle.cs" />
     <Compile Include="UI\Render\Texture.cs" />
-    <Compile Include="UI\View.cs" />
+    <Compile Include="UI\Graphics\View.cs" />
     <Compile Include="UI\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

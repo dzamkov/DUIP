@@ -17,11 +17,8 @@ namespace DUIP.UI
     public abstract class Ambience
     {
         /// <summary>
-        /// Updates the state of the background by the given amount of time in seconds.
+        /// Gets the final scene to display when given the foreground scene, camera parameters and the view.
         /// </summary>
-        public virtual void Update(World World, double Time)
-        {
-
-        }
+        public abstract Figure GetScene(Figure Foreground, Camera Camera, View View);
     }
 }

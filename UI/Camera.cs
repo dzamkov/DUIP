@@ -2,64 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using DUIP.UI.Graphics;
+
 namespace DUIP.UI
 {
-    /// <summary>
-    /// Represents a view of a two-dimensional area.
-    /// </summary>
-    public struct View
-    {
-        public View(Point Offset, Point Right, Point Down)
-        {
-            this.Offset = Offset;
-            this.Right = Right;
-            this.Down = Down;
-        }
-
-        public View(Rectangle ViewRectangle)
-        {
-            this.Offset = ViewRectangle.TopLeft;
-            this.Right = new Point(ViewRectangle.Right - ViewRectangle.Left, 0.0);
-            this.Down = new Point(0.0, ViewRectangle.Bottom - ViewRectangle.Top);
-        }
-
-        /// <summary>
-        /// Gets the amount of area in world space this view covers.
-        /// </summary>
-        public double Area
-        {
-            get
-            {
-                return this.Right.X * this.Down.Y - this.Right.Y * this.Down.X;
-            }
-        }
-
-        /// <summary>
-        /// Projections a point from view space to world space.
-        /// </summary>
-        public Point Project(Point View)
-        {
-            return this.Offset + this.Right * View.X + this.Down * View.Y;
-        }
-
-        /// <summary>
-        /// The location of the top-left corner of the view in world space.
-        /// </summary>
-        public Point Offset;
-
-        /// <summary>
-        /// The vector from the left edge of the the view to the corresponding point on the right edge of
-        /// the view in world space.
-        /// </summary>
-        public Point Right;
-
-        /// <summary>
-        /// The vector from the top edge of the the view to the corresponding point on the bottom edge of
-        /// the view in world space.
-        /// </summary>
-        public Point Down;
-    }
-
     /// <summary>
     /// Stores the location, velocity and zoom level of a viewer of a two-dimensional area.
     /// </summary>
@@ -90,7 +36,7 @@ namespace DUIP.UI
         /// <param name="Damping">The relative amount of velocity that persists after a time unit.</param>
         public void Update(double Time, double Damping, double MinZoom, double MaxZoom)
         {
-            
+
             this.Center += this.Velocity * this.Scale * Time;
             this.Zoom += this.ZoomVelocity * Time;
 

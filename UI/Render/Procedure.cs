@@ -192,9 +192,15 @@ namespace DUIP.UI.Render
         public override void Execute(Context Context)
         {
             Point offset = this._Offset;
+
+            Point oldviewoffset = Context.View.Offset;
+            Context.View.Offset -= offset;
+
             GL.Translate(offset.X, offset.Y, 0.0);
             this._Inner.Execute(Context);
             GL.Translate(-offset.X, -offset.Y, 0.0);
+
+            Context.View.Offset = oldviewoffset;
         }
 
         private Procedure _Inner;
@@ -246,6 +252,37 @@ namespace DUIP.UI.Render
     }
 
     /// <summary>
+    /// Renders a texture quad over the entire viewport, with texture coordinates corresponding to those at world space.
+    /// </summary>
+    public sealed class RenderViewProcedure : Procedure
+    {
+        private RenderViewProcedure()
+        {
+
+        }
+
+        /// <summary>
+        /// The only instance of this class.
+        /// </summary>
+        public static RenderViewProcedure Singleton = new RenderViewProcedure();
+
+        public override void Execute(Context Context)
+        {
+            View view = Context.View;
+            Point tl = view.TopLeft;
+            Point tr = view.TopRight;
+            Point bl = view.BottomLeft;
+            Point br = view.BottomRight;
+            GL.Begin(BeginMode.Quads);
+            GL.TexCoord2((Vector2)tl); GL.Vertex2((Vector2)tl);
+            GL.TexCoord2((Vector2)tr); GL.Vertex2((Vector2)tr);
+            GL.TexCoord2((Vector2)br); GL.Vertex2((Vector2)br);
+            GL.TexCoord2((Vector2)bl); GL.Vertex2((Vector2)bl);
+            GL.End();
+        }
+    }
+
+    /// <summary>
     /// A procedure that sets the color to be used for future rendering operations.
     /// </summary>
     public sealed class SetColorProcedure : Procedure
@@ -254,6 +291,11 @@ namespace DUIP.UI.Render
         {
             this._Color = Color;
         }
+
+        /// <summary>
+        /// A set color procedure that sets the current color to white.
+        /// </summary>
+        public static readonly SetColorProcedure White = new SetColorProcedure(Color.White);
 
         /// <summary>
         /// Gets the color set by this procedure.

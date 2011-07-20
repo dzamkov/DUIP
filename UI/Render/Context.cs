@@ -15,6 +15,11 @@ namespace DUIP.UI.Render
     public class Context
     {
         /// <summary>
+        /// The current view of the world space that is being rendered.
+        /// </summary>
+        public View View;
+
+        /// <summary>
         /// The resolution of the current output buffer in pixels per unit.
         /// </summary>
         public double Resolution;

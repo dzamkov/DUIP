@@ -8,6 +8,9 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
+using DUIP.UI.Graphics;
+using Color = DUIP.UI.Graphics.Color;
+
 namespace DUIP.UI.Render
 {
     /// <summary>
@@ -101,6 +104,42 @@ namespace DUIP.UI.Render
             {
                 return Create(bm);
             }
+        }
+
+        /// <summary>
+        /// Creates a texture that contains the data from the given sampled figure using the given view.
+        /// </summary>
+        public static unsafe Texture Create(SampledFigure Figure, View View, Format Format, int Width, int Height)
+        {
+            Texture tex;
+            const System.Drawing.Imaging.PixelFormat bmpformat = System.Drawing.Imaging.PixelFormat.Format32bppArgb;
+            using (Bitmap bmp = new Bitmap(Width, Height, bmpformat))
+            {
+                BitmapData bd = bmp.LockBits(new System.Drawing.Rectangle(0, 0, Width, Height), ImageLockMode.ReadWrite, bmpformat);
+                byte* data = (byte*)bd.Scan0.ToPointer();
+
+                Point xdelta = View.Right / Width;
+                Point ydelta = View.Down / Height;
+                Point offset = View.Offset + xdelta * 0.5 + ydelta * 0.5;
+                for (int x = 0; x < Width; x++)
+                {
+                    Point tpos = offset + xdelta * x;
+                    for (int y = 0; y < Height; y++)
+                    {
+                        Point pos = tpos + ydelta * y;
+                        Color col = Figure.GetColor(pos);
+                        data[3] = (byte)(col.A * 255.0);
+                        data[2] = (byte)(col.R * 255.0);
+                        data[1] = (byte)(col.G * 255.0);
+                        data[0] = (byte)(col.B * 255.0);
+                        data += 4;
+                    }
+                }
+
+                tex = Create(bd, Format, true);
+            }
+
+            return tex;
         }
 
         /// <summary>
