@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DUIP
+namespace DUIP.Memory
 {
     /// <summary>
     /// A data source that can be read or modified with streams.

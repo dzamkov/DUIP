@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DUIP
+namespace DUIP.Memory
 {
     /// <summary>
     /// An implementation of a hashed map contained within mutable data.

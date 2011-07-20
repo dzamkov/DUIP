@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Reflection;
 using System.Windows.Forms;
 
+using DUIP.Memory;
 using DUIP.Net;
 using DUIP.UI;
 

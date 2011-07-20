@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DUIP
+namespace DUIP.Memory
 {
     /// <summary>
     /// A representation of storage space that allows the allocation and deallocation of fixed-size mutable memory.

@@ -94,6 +94,24 @@ namespace DUIP.UI.Graphics
         }
 
         /// <summary>
+        /// Gets the inverse view of this view. The resulting view will have world space
+        /// and view space.
+        /// </summary>
+        public View Inverse
+        {
+            get
+            {
+                double det = 1.0 / (this.Right.X * this.Down.Y - this.Right.Y * this.Down.X);
+                return new View(
+                    new Point(
+                        (this.Right.Y * this.Offset.Y - this.Down.Y * this.Offset.X) * det,
+                        (this.Down.X * this.Offset.X - this.Right.X * this.Offset.Y) * det),
+                    new Point(this.Down.Y * det, this.Right.Y * -det),
+                    new Point(this.Down.X * -det, this.Right.X * det));
+            }
+        }
+
+        /// <summary>
         /// Projections a point from view space to world space.
         /// </summary>
         public Point Project(Point View)

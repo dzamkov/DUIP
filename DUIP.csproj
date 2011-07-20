@@ -127,7 +127,7 @@
     <Compile Include="Util\Math\BigInt.cs" />
     <Compile Include="Util\Ordering.cs" />
     <Compile Include="Util\Serialization.cs" />
-    <Compile Include="Memory\Stream.cs" />
+    <Compile Include="Util\Stream.cs" />
     <Compile Include="Net\Network.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Util\Query.cs" />

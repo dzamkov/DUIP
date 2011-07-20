@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DUIP
+namespace DUIP.Memory
 {
     /// <summary>
     /// An interface to a mutable mapping structure.

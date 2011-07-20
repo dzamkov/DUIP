@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DUIP
+namespace DUIP.Memory
 {
     /// <summary>
     /// A high-level interface to memory.

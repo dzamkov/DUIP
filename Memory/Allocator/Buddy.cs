@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DUIP
+namespace DUIP.Memory
 {
     /// <summary>
     /// An implementation of a buddy allocator that fully contains its state, and allocated memory(s), in a single memory object.

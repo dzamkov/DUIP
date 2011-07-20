@@ -8,8 +8,10 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
+using DUIP.Memory;
 using DUIP.UI.Graphics;
-using Color = DUIP.UI.Graphics.Color;
+using MPath = DUIP.Memory.Path;
+using GColor = DUIP.UI.Graphics.Color;
 
 namespace DUIP.UI.Render
 {
@@ -98,7 +100,7 @@ namespace DUIP.UI.Render
         /// <summary>
         /// Loads a texture from a file on the filesystem.
         /// </summary>
-        public static Texture Load(Path Path)
+        public static Texture Load(MPath Path)
         {
             using (Bitmap bm = new Bitmap(Path))
             {
@@ -127,7 +129,7 @@ namespace DUIP.UI.Render
                     for (int y = 0; y < Height; y++)
                     {
                         Point pos = tpos + ydelta * y;
-                        Color col = Figure.GetColor(pos);
+                        GColor col = Figure.GetColor(pos);
                         data[3] = (byte)(col.A * 255.0);
                         data[2] = (byte)(col.R * 255.0);
                         data[1] = (byte)(col.G * 255.0);
