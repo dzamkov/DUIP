@@ -15,9 +15,14 @@ namespace DUIP.UI.Render
     public class Context
     {
         /// <summary>
-        /// The current view of the world space that is being rendered.
+        /// Indicates wether the Y axis is inverted while rendering.
         /// </summary>
-        public View View;
+        public bool InvertY;
+
+        /// <summary>
+        /// The inverse of the current view of the world space that is being rendered.
+        /// </summary>
+        public View InverseView;
 
         /// <summary>
         /// The resolution of the current output buffer in pixels per unit.

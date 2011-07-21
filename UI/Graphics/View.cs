@@ -94,8 +94,8 @@ namespace DUIP.UI.Graphics
         }
 
         /// <summary>
-        /// Gets the inverse view of this view. The resulting view will have world space
-        /// and view space.
+        /// Gets the inverse view of this view. The resulting view will have the world space
+        /// and view space of this view swapped.
         /// </summary>
         public View Inverse
         {
@@ -104,8 +104,8 @@ namespace DUIP.UI.Graphics
                 double det = 1.0 / (this.Right.X * this.Down.Y - this.Right.Y * this.Down.X);
                 return new View(
                     new Point(
-                        (this.Right.Y * this.Offset.Y - this.Down.Y * this.Offset.X) * det,
-                        (this.Down.X * this.Offset.X - this.Right.X * this.Offset.Y) * det),
+                        (this.Down.X * this.Offset.Y - this.Down.Y * this.Offset.X) * det,
+                        (this.Right.Y * this.Offset.X - this.Right.X * this.Offset.Y) * det),
                     new Point(this.Down.Y * det, this.Right.Y * -det),
                     new Point(this.Down.X * -det, this.Right.X * det));
             }
@@ -121,6 +121,25 @@ namespace DUIP.UI.Graphics
                 B.Project(A.Offset),
                 B.Right * A.Right.X + B.Down * A.Right.Y,
                 B.Right * A.Down.X + B.Down * A.Down.Y);
+        }
+
+        /// <summary>
+        /// Creates a view that translates projected points by a certain offset.
+        /// </summary>
+        public static View Translation(Point Offset)
+        {
+            return new View(Offset, new Point(1.0, 0.0), new Point(0.0, 1.0));
+        }
+
+        /// <summary>
+        /// Creates a view that rotates projected points counter-clockwise about the origin by
+        /// a certain angle in radians.
+        /// </summary>
+        public static View Rotation(double Angle)
+        {
+            double cos = Math.Cos(Angle);
+            double sin = Math.Sin(Angle);
+            return new View(Point.Origin, new Point(cos, -sin), new Point(sin, cos));
         }
 
         /// <summary>

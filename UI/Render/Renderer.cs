@@ -48,30 +48,39 @@ namespace DUIP.UI.Render
         {
             GL.Viewport(0, 0, Width, Height);
 
-            double x = View.Offset.X;
-            double y = View.Offset.Y;
-            double a = View.Right.X;
-            double b = View.Right.Y;
-            double c = View.Down.X;
-            double d = View.Down.Y;
-            double i = InvertY ? -1.0 : 1.0;
-            Matrix4d mat = new Matrix4d(
-                0.5 * a, 0.5 * b, 0.0, 0.0,
-                0.5 * c * i, 0.5 * d * i, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                x + 0.5 * (a + c), y + 0.5 * (b + d), 0.0, 1.0);
-            mat.Invert();
-
+            View iview = View.Inverse;
             GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref mat);
+            UpdateProjection(InvertY, iview);
             GL.CullFace(InvertY ? CullFaceMode.Front : CullFaceMode.Back);
 
             this._GetProcedure(Figure).Execute(new Context
             {
-                View = View,
+                InvertY = InvertY,
+                InverseView = iview,
                 Resolution = Width / View.Area * Height,
                 Renderer = this
             });
+        }
+
+        /// <summary>
+        /// Updates the projection on the current graphics context.
+        /// </summary>
+        public static void UpdateProjection(bool InvertY, View InverseView)
+        {
+            View v = InverseView;
+            double x = v.Offset.X;
+            double y = v.Offset.Y;
+            double a = v.Right.X;
+            double b = v.Right.Y;
+            double c = v.Down.X;
+            double d = v.Down.Y;
+            double i = InvertY ? -1.0 : 1.0;
+            Matrix4d mat = new Matrix4d(
+                2.0 * a, 2.0 * b * i, 0.0, 0.0,
+                2.0 * c, 2.0 * d * i, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                2.0 * x - 1.0, 2.0 * y * i - i, 0.0, 1.0);
+            GL.LoadMatrix(ref mat);
         }
 
         /// <summary>
@@ -97,7 +106,14 @@ namespace DUIP.UI.Render
             TranslatedFigure translated = Figure as TranslatedFigure;
             if (translated != null)
             {
-                return new TranslationProcedure(translated.Offset, this._GetProcedure(translated.Source));
+                return new ProjectionProcedure(View.Translation(translated.Offset), this._GetProcedure(translated.Source));
+            }
+
+            // Projected figure
+            ProjectedFigure projected = Figure as ProjectedFigure;
+            if (projected != null)
+            {
+                return new ProjectionProcedure(projected.Projection, this._GetProcedure(projected.Source));
             }
 
             // Superimposed figure

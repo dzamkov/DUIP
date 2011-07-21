@@ -157,14 +157,14 @@ namespace DUIP.UI.Render
     }
 
     /// <summary>
-    /// A procedures that executes an inner procedure with a certain translation applied.
+    /// A procedure that executes an inner procedure with a certain projection applied.
     /// </summary>
-    public sealed class TranslationProcedure : Procedure
+    public sealed class ProjectionProcedure : Procedure
     {
-        public TranslationProcedure(Point Offset, Procedure Inner)
+        public ProjectionProcedure(View Projection, Procedure Inner)
         {
-            this._Offset = Offset;
             this._Inner = Inner;
+            this._Projection = Projection;
         }
 
         /// <summary>
@@ -179,32 +179,31 @@ namespace DUIP.UI.Render
         }
 
         /// <summary>
-        /// Gets the translation this procedure applies.
+        /// Gets the projection this procedure applies.
         /// </summary>
-        public Point Offset
+        public View Projection
         {
             get
             {
-                return this._Offset;
+                return this._Projection;
             }
         }
 
         public override void Execute(Context Context)
         {
-            Point offset = this._Offset;
+            View iview = Context.InverseView;
+            View inneriview = View.Compose(this._Projection, iview);
 
-            Point oldviewoffset = Context.View.Offset;
-            Context.View.Offset -= offset;
-
-            GL.Translate(offset.X, offset.Y, 0.0);
+            Renderer.UpdateProjection(Context.InvertY, inneriview);
+            Context.InverseView = inneriview;
             this._Inner.Execute(Context);
-            GL.Translate(-offset.X, -offset.Y, 0.0);
 
-            Context.View.Offset = oldviewoffset;
+            Context.InverseView = iview;
+            Renderer.UpdateProjection(Context.InvertY, iview);
         }
 
         private Procedure _Inner;
-        private Point _Offset;
+        private View _Projection;
     }
 
     /// <summary>
@@ -268,7 +267,7 @@ namespace DUIP.UI.Render
 
         public override void Execute(Context Context)
         {
-            View view = Context.View;
+            View view = Context.InverseView.Inverse;
             Point tl = view.TopLeft;
             Point tr = view.TopRight;
             Point bl = view.BottomLeft;

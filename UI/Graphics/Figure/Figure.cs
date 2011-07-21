@@ -18,6 +18,14 @@ namespace DUIP.UI.Graphics
             return new TranslatedFigure(Offset, this);
         }
 
+        /// <summary>
+        /// Creates a projected form of this figure.
+        /// </summary>
+        public ProjectedFigure Project(View Projection)
+        {
+            return new ProjectedFigure(Projection, this);
+        }
+
         public static Figure operator +(Figure Under, Figure Over)
         {
             if (Under == null)
@@ -72,6 +80,44 @@ namespace DUIP.UI.Graphics
 
         private Figure _Source;
         private Point _Offset;
+    }
+
+    /// <summary>
+    /// A transformed form of a figure using a projection defined by a view.
+    /// </summary>
+    public sealed class ProjectedFigure : Figure
+    {
+        public ProjectedFigure(View Projection, Figure Source)
+        {
+            this._Source = Source;
+            this._Projection = Projection;
+        }
+
+        /// <summary>
+        /// Gets the source figure that is projected.
+        /// </summary>
+        public Figure Source
+        {
+            get
+            {
+                return this._Source;
+            }
+        }
+
+        /// <summary>
+        /// Gets the projection applied to the source figure. The final position of any feature on the source
+        /// figure is given by projecting (from view space to world space) the initial position using this view.
+        /// </summary>
+        public View Projection
+        {
+            get
+            {
+                return this._Projection;
+            }
+        }
+
+        private Figure _Source;
+        private View _Projection;
     }
 
     /// <summary>
