@@ -132,6 +132,14 @@ namespace DUIP.UI.Graphics
         }
 
         /// <summary>
+        /// Creates a view that multiplies projected points by the given factor.
+        /// </summary>
+        public static View Scale(double Factor)
+        {
+            return new View(Point.Origin, new Point(Factor, 0.0), new Point(0.0, Factor));
+        }
+
+        /// <summary>
         /// Creates a view that rotates projected points counter-clockwise about the origin by
         /// a certain angle in radians.
         /// </summary>

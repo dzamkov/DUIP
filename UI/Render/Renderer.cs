@@ -109,6 +109,20 @@ namespace DUIP.UI.Render
                 return new ProjectionProcedure(View.Translation(translated.Offset), this._GetProcedure(translated.Source));
             }
 
+            // Scaled figure
+            ScaledFigure scaled = Figure as ScaledFigure;
+            if (scaled != null)
+            {
+                return new ProjectionProcedure(View.Scale(scaled.Factor), this._GetProcedure(scaled.Source));
+            }
+
+            // Rotated figure
+            RotatedFigure rotated = Figure as RotatedFigure;
+            if (rotated != null)
+            {
+                return new ProjectionProcedure(View.Rotation(rotated.Angle), this._GetProcedure(rotated.Source));
+            }
+
             // Projected figure
             ProjectedFigure projected = Figure as ProjectedFigure;
             if (projected != null)

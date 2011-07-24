@@ -19,7 +19,7 @@ namespace DUIP.UI
             this._CellularFigure = new CellularFigure(
                 Color.Transparent, Color.RGB(0.5, 0.7, 0.9),
                 1.0, 40.0,
-                CellularFigure.GridDistribution(Random, 12, 0.7, 1.0));
+                CellularFigure.GridDistribution(Random, 12, 0.7, 1.0)).Scale(4.0);
         }
 
         public override Figure GetScene(Figure Foreground, Camera Camera, View View)
@@ -27,6 +27,6 @@ namespace DUIP.UI
             return this._CellularFigure + Foreground;
         }
 
-        private CellularFigure _CellularFigure;
+        private Figure _CellularFigure;
     }
 }

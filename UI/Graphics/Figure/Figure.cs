@@ -19,6 +19,22 @@ namespace DUIP.UI.Graphics
         }
 
         /// <summary>
+        /// Creates a scaled form of this figure.
+        /// </summary>
+        public ScaledFigure Scale(double Factor)
+        {
+            return new ScaledFigure(Factor, this);
+        }
+
+        /// <summary>
+        /// Creates a rotated form of this figure.
+        /// </summary>
+        public RotatedFigure Rotate(double Angle)
+        {
+            return new RotatedFigure(Angle, this);
+        }
+
+        /// <summary>
         /// Creates a projected form of this figure.
         /// </summary>
         public ProjectedFigure Project(View Projection)
@@ -80,6 +96,80 @@ namespace DUIP.UI.Graphics
 
         private Figure _Source;
         private Point _Offset;
+    }
+
+    /// <summary>
+    /// A (uniformly) scaled form of a figure.
+    /// </summary>
+    public sealed class ScaledFigure : Figure
+    {
+        public ScaledFigure(double Factor, Figure Source)
+        {
+            this._Factor = Factor;
+            this._Source = Source;
+        }
+
+        /// <summary>
+        /// Gets the source figure that is scaled.
+        /// </summary>
+        public Figure Source
+        {
+            get
+            {
+                return this._Source;
+            }
+        }
+
+        /// <summary>
+        /// Gets the amount the source figure is scaled by.
+        /// </summary>
+        public double Factor
+        {
+            get
+            {
+                return this._Factor;
+            }
+        }
+
+        private Figure _Source;
+        private double _Factor;
+    }
+
+    /// <summary>
+    /// A rotated form of a figure.
+    /// </summary>
+    public sealed class RotatedFigure : Figure
+    {
+        public RotatedFigure(double Angle, Figure Source)
+        {
+            this._Angle = Angle;
+            this._Source = Source;
+        }
+
+        /// <summary>
+        /// Gets the source figure that is rotated.
+        /// </summary>
+        public Figure Source
+        {
+            get
+            {
+                return this._Source;
+            }
+        }
+
+        /// <summary>
+        /// Gets the angle, in radians, that the source figure is rotated by (going counter-clockwise).
+        /// </summary>
+        public double Angle
+        {
+            get
+            {
+                return this._Angle;
+            }
+        }
+
+        private Figure _Source;
+        private double _Angle;
     }
 
     /// <summary>
