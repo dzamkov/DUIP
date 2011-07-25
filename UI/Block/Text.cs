@@ -348,7 +348,7 @@ namespace DUIP.UI
                     offset = 0;
                     y = 0.0;
                     TextFontStyle fontstyle = style.DefaultFontStyle;
-
+                    Figure caret = null;
                     while (true)
                     {
                         if (sel != null && sel.Selection._Primary._Previous == prev)
@@ -359,7 +359,7 @@ namespace DUIP.UI
                             {
                                 Border caretstyle = style.CaretStyle;
                                 double x = cellsize.X * offset;
-                                fig += new ShapeFigure(
+                                caret = new ShapeFigure(
                                     new PathShape(caretstyle.Weight, new SegmentPath(new Point(x, y), new Point(x, y + cellsize.Y))),
                                     new SolidFigure(caretstyle.Color));
                             }
@@ -394,6 +394,7 @@ namespace DUIP.UI
                         _AppendLine(style, cur, ref offset);
                     }
 
+                    fig += caret;
                     return fig;
                 }
             }

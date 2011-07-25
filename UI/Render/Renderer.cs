@@ -53,7 +53,10 @@ namespace DUIP.UI.Render
             UpdateProjection(InvertY, iview);
             GL.CullFace(InvertY ? CullFaceMode.Front : CullFaceMode.Back);
 
-            this._GetProcedure(Figure).Execute(new Context
+            this.GetProcedure(Figure, new Environment
+            {
+
+            }).Execute(new Context
             {
                 InvertY = InvertY,
                 InverseView = iview,
@@ -84,9 +87,9 @@ namespace DUIP.UI.Render
         }
 
         /// <summary>
-        /// Gets a procedure that renders the given figure.
+        /// Gets a procedure that renders the given figure with the given color modulation.
         /// </summary>
-        private Procedure _GetProcedure(Figure Figure)
+        public Procedure GetProcedure(Figure Figure, Environment Environment)
         {
             // See if there is a stored procedure for it
             Procedure res;
@@ -99,42 +102,49 @@ namespace DUIP.UI.Render
             HintFigure hint = Figure as HintFigure;
             if (hint != null)
             {
-                return this._GetProcedure(hint.Source);
+                return this.GetProcedure(hint.Source, Environment);
             }
 
             // Translated figure
             TranslatedFigure translated = Figure as TranslatedFigure;
             if (translated != null)
             {
-                return new ProjectionProcedure(View.Translation(translated.Offset), this._GetProcedure(translated.Source));
+                return new ProjectionProcedure(View.Translation(translated.Offset), this.GetProcedure(translated.Source, Environment));
             }
 
             // Scaled figure
             ScaledFigure scaled = Figure as ScaledFigure;
             if (scaled != null)
             {
-                return new ProjectionProcedure(View.Scale(scaled.Factor), this._GetProcedure(scaled.Source));
+                return new ProjectionProcedure(View.Scale(scaled.Factor), this.GetProcedure(scaled.Source, Environment));
             }
 
             // Rotated figure
             RotatedFigure rotated = Figure as RotatedFigure;
             if (rotated != null)
             {
-                return new ProjectionProcedure(View.Rotation(rotated.Angle), this._GetProcedure(rotated.Source));
+                return new ProjectionProcedure(View.Rotation(rotated.Angle), this.GetProcedure(rotated.Source, Environment));
             }
 
             // Projected figure
             ProjectedFigure projected = Figure as ProjectedFigure;
             if (projected != null)
             {
-                return new ProjectionProcedure(projected.Projection, this._GetProcedure(projected.Source));
+                return new ProjectionProcedure(projected.Projection, this.GetProcedure(projected.Source, Environment));
+            }
+            
+            // Modulated figure
+            ModulatedFigure modulated = Figure as ModulatedFigure;
+            if (modulated != null)
+            {
+                return this.GetProcedure(modulated.Source, Environment);
             }
 
             // Superimposed figure
             SuperimposedFigure superimposed = Figure as SuperimposedFigure;
             if (superimposed != null)
             {
-                return this._GetProcedure(superimposed.Under) + this._GetProcedure(superimposed.Over);
+                return this.GetProcedure(superimposed.Under, Environment) + this.GetProcedure(superimposed.Over, Environment);
             }
 
             // Compound figure
@@ -145,7 +155,7 @@ namespace DUIP.UI.Render
                 int i = 0;
                 foreach (Figure component in compound.Components)
                 {
-                    components[i++] = this._GetProcedure(component);
+                    components[i++] = this.GetProcedure(component, Environment);
                 }
                 return new CompoundProcedure(components);
             }
@@ -154,7 +164,7 @@ namespace DUIP.UI.Render
             ShapeFigure shape = Figure as ShapeFigure;
             if (shape != null)
             {
-                return this._GetShapeProcedure(shape.Shape, shape.Source);
+                return this.GetShapeProcedure(shape.Shape, shape.Source, Environment);
             }
 
             // System font glyph
@@ -202,7 +212,7 @@ namespace DUIP.UI.Render
         /// <summary>
         /// Gets a procedure that renders a figure confined to a certain shape.
         /// </summary>
-        private Procedure _GetShapeProcedure(Shape Shape, Figure Source)
+        public Procedure GetShapeProcedure(Shape Shape, Figure Source, Environment Environment)
         {
             SolidFigure solidsource = Source as SolidFigure;
             if (solidsource != null)
@@ -226,7 +236,7 @@ namespace DUIP.UI.Render
                     return
                         BindTextureProcedure.Null +
                         new SetColorProcedure(fillcol) +
-                        this._GetPathProcedure(pathshape.Thickness, pathshape.Path);
+                        this.GetPathProcedure(pathshape.Thickness, pathshape.Path, Environment);
                 }
             }
 
@@ -236,12 +246,68 @@ namespace DUIP.UI.Render
         /// <summary>
         /// Gets a procedure that renders the given path with the given thickness.
         /// </summary>
-        private Procedure _GetPathProcedure(double Thickness, Graphics.Path Path)
+        public Procedure GetPathProcedure(double Thickness, Graphics.Path Path, Environment Environment)
         {
+            // Rectangle path
+            RectanglePath rectangle = Path as RectanglePath;
+            if (rectangle != null)
+            {
+                double ht = Thickness * 0.5;
+                Rectangle rect = rectangle.Rectangle;
+                return
+                    new RenderGeometryProcedure(BeginMode.QuadStrip,
+                        new BufferIndexedGeometry(
+                            new BufferGeometry(new Point[] 
+                            {
+                                rect.TopLeft + new Point(ht, ht),
+                                rect.TopLeft + new Point(-ht, -ht),
+                                rect.TopRight + new Point(-ht, ht),
+                                rect.TopRight + new Point(ht, -ht),
+                                rect.BottomRight + new Point(-ht, -ht),
+                                rect.BottomRight + new Point(ht, ht),
+                                rect.BottomLeft + new Point(ht, -ht),
+                                rect.BottomLeft + new Point(-ht, ht) 
+                            }, null, null), new int[]
+                            {
+                                0, 1,
+                                2, 3,
+                                4, 5,
+                                6, 7,
+                                0, 1
+                            }));
+            }
+
+            // Segment path
+            SegmentPath segment = Path as SegmentPath;
+            if (segment != null)
+            {
+                Point a = segment.A;
+                Point b = segment.B;
+                Point outward = (b - a).Perpendicular; outward *= Thickness * 0.5 / outward.Length;
+                return
+                    new RenderGeometryProcedure(BeginMode.Quads,
+                        new BufferGeometry(new Point[]
+                        {
+                            a + outward,
+                            a - outward,
+                            b - outward,
+                            b + outward
+                        }, null, null));
+            }
+
+
             // Not yet
             return null;
         }
 
         private Dictionary<Figure, Procedure> _Procedures;
+    }
+
+    /// <summary>
+    /// Contains  information needed to create a procedure that renders a figure.
+    /// </summary>
+    public class Environment
+    {
+
     }
 }

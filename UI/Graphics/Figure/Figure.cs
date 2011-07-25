@@ -35,6 +35,14 @@ namespace DUIP.UI.Graphics
         }
 
         /// <summary>
+        /// Creates a modulated form of this figure.
+        /// </summary>
+        public ModulatedFigure Modulate(Color Modulation)
+        {
+            return new ModulatedFigure(Modulation, this);
+        }
+
+        /// <summary>
         /// Creates a projected form of this figure.
         /// </summary>
         public ProjectedFigure Project(View Projection)
@@ -208,6 +216,43 @@ namespace DUIP.UI.Graphics
 
         private Figure _Source;
         private View _Projection;
+    }
+
+    /// <summary>
+    /// A figure where all colors are multiplied by a certain modulation color.
+    /// </summary>
+    public sealed class ModulatedFigure : Figure
+    {
+        public ModulatedFigure(Color Modulation, Figure Source)
+        {
+            this._Modulation = Modulation;
+            this._Source = Source;
+        }
+
+        /// <summary>
+        /// Gets the source figure that is modulated.
+        /// </summary>
+        public Figure Source
+        {
+            get
+            {
+                return this._Source;
+            }
+        }
+
+        /// <summary>
+        /// Gets the color that defines the modulation to apply.
+        /// </summary>
+        public Color Modulation
+        {
+            get
+            {
+                return this._Modulation;
+            }
+        }
+
+        private Figure _Source;
+        private Color _Modulation;
     }
 
     /// <summary>

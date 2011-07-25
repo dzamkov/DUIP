@@ -43,6 +43,38 @@ namespace DUIP.UI.Render
     }
 
     /// <summary>
+    /// Geometry that takes vertices from some source geometry set and arranges them in an order defined by
+    /// indices.
+    /// </summary>
+    public abstract class IndexedGeometry : Geometry
+    {
+        /// <summary>
+        /// Gets the source geometry for this geometry. All indices in this geometry are references to vertices
+        /// in the source geometry.
+        /// </summary>
+        public abstract Geometry Source { get; }
+
+        /// <summary>
+        /// Gets the index of the vertex in the source geometry to use for the vertex at the given index in
+        /// this geometry.
+        /// </summary>
+        public abstract int GetSourceIndex(int Index);
+
+        public override VertexFormatFlags VertexFormat
+        {
+            get
+            {
+                return this.Source.VertexFormat;
+            }
+        }
+
+        public override void Send(int Index)
+        {
+            this.Source.Send(this.GetSourceIndex(Index));
+        }
+    }
+
+    /// <summary>
     /// Identifies the contents of vertices within a geometry set.
     /// </summary>
     [Flags]
@@ -143,5 +175,52 @@ namespace DUIP.UI.Render
         private Point[] _Positions;
         private Color[] _Colors;
         private Point[] _UVs;
+    }
+
+    /// <summary>
+    /// Indexed geometry with indices stored in an array.
+    /// </summary>
+    public sealed class BufferIndexedGeometry : IndexedGeometry
+    {
+        public BufferIndexedGeometry(Geometry Source, int[] Indices)
+        {
+            this._Source = Source;
+            this._Indices = Indices;
+        }
+
+        /// <summary>
+        /// Gets the indices for this geometry.
+        /// </summary>
+        public int[] Indices
+        {
+            get
+            {
+                return this._Indices;
+            }
+        }
+
+        public override int Size
+        {
+            get
+            {
+                return this._Indices.Length;
+            }
+        }
+
+        public override Geometry Source
+        {
+            get
+            {
+                return this._Source;
+            }
+        }
+
+        public override int GetSourceIndex(int Index)
+        {
+            return this._Indices[Index];
+        }
+
+        private Geometry _Source;
+        private int[] _Indices;
     }
 }
