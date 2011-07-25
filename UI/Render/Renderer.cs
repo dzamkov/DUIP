@@ -61,7 +61,8 @@ namespace DUIP.UI.Render
                 InvertY = InvertY,
                 InverseView = iview,
                 Resolution = Width / View.Area * Height,
-                Renderer = this
+                Renderer = this,
+                Modulation = Color.White
             });
         }
 
@@ -137,7 +138,7 @@ namespace DUIP.UI.Render
             ModulatedFigure modulated = Figure as ModulatedFigure;
             if (modulated != null)
             {
-                return this.GetProcedure(modulated.Source, Environment);
+                return new ModulateProcedure(modulated.Modulation, this.GetProcedure(modulated.Source, Environment));
             }
 
             // Superimposed figure

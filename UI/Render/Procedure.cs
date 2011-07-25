@@ -207,6 +207,51 @@ namespace DUIP.UI.Render
     }
 
     /// <summary>
+    /// A procedure that multiplies the colors of the inner procedure by a certain modulation color.
+    /// </summary>
+    public sealed class ModulateProcedure : Procedure
+    {
+        public ModulateProcedure(Color Modulation, Procedure Inner)
+        {
+            this._Modulation = Modulation;
+            this._Inner = Inner;
+        }
+
+        /// <summary>
+        /// Gets the inner procedure for this procedure.
+        /// </summary>
+        public Procedure Inner
+        {
+            get
+            {
+                return this._Inner;
+            }
+        }
+
+        /// <summary>
+        /// Gets the color of the modulation to apply.
+        /// </summary>
+        public Color Modulation
+        {
+            get
+            {
+                return this._Modulation;
+            }
+        }
+
+        public override void Execute(Context Context)
+        {
+            Color omod = Context.Modulation;
+            Context.Modulation = omod * this._Modulation;
+            this._Inner.Execute(Context);
+            Context.Modulation = omod;
+        }
+
+        private Procedure _Inner;
+        private Color _Modulation;
+    }
+
+    /// <summary>
     /// A procedure that renders some geometry using immediate mode.
     /// </summary>
     public sealed class RenderGeometryProcedure : Procedure
@@ -282,7 +327,8 @@ namespace DUIP.UI.Render
     }
 
     /// <summary>
-    /// A procedure that sets the color to be used for future rendering operations.
+    /// A procedure that sets the color to be used for future rendering operations. This takes into account the current
+    /// color modulation set by the context.
     /// </summary>
     public sealed class SetColorProcedure : Procedure
     {
@@ -309,7 +355,7 @@ namespace DUIP.UI.Render
 
         public override void Execute(Context Context)
         {
-            GL.Color4(this._Color);
+            GL.Color4(this._Color * Context.Modulation);
         }
 
         private Color _Color;

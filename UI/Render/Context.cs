@@ -33,5 +33,10 @@ namespace DUIP.UI.Render
         /// The renderer that is performing the rendering operation.
         /// </summary>
         public Renderer Renderer;
+
+        /// <summary>
+        /// The amount to multiply all colors by when rendering.
+        /// </summary>
+        public Color Modulation;
     }
 }
