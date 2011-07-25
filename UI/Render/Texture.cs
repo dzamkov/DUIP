@@ -109,38 +109,44 @@ namespace DUIP.UI.Render
         }
 
         /// <summary>
+        /// Writes a 32bpp ARGB image for the given view of a sampled figure.
+        /// </summary>
+        public static unsafe void WriteImageARGB(SampledFigure Figure, View View, int Width, int Height, byte* Data)
+        {
+            Point xdelta = View.Right / Width;
+            Point ydelta = View.Down / Height;
+            Point offset = View.Offset + xdelta * 0.5 + ydelta * 0.5;
+            for (int x = 0; x < Width; x++)
+            {
+                Point tpos = offset + xdelta * x;
+                for (int y = 0; y < Height; y++)
+                {
+                    Point pos = tpos + ydelta * y;
+                    GColor col = Figure.GetColor(pos);
+                    Data[3] = (byte)(col.A * 255.0);
+                    Data[2] = (byte)(col.R * 255.0);
+                    Data[1] = (byte)(col.G * 255.0);
+                    Data[0] = (byte)(col.B * 255.0);
+                    Data += 4;
+                }
+            }
+        }
+
+        /// <summary>
         /// Creates a texture that contains the data from the given sampled figure using the given view.
         /// </summary>
         public static unsafe Texture Create(SampledFigure Figure, View View, Format Format, int Width, int Height)
         {
             Texture tex;
-            const System.Drawing.Imaging.PixelFormat bmpformat = System.Drawing.Imaging.PixelFormat.Format32bppArgb;
-            using (Bitmap bmp = new Bitmap(Width, Height, bmpformat))
+            byte[] data = new byte[Width * Height * 4];
+            fixed (byte* ptr = data)
             {
-                BitmapData bd = bmp.LockBits(new System.Drawing.Rectangle(0, 0, Width, Height), ImageLockMode.ReadWrite, bmpformat);
-                byte* data = (byte*)bd.Scan0.ToPointer();
-
-                Point xdelta = View.Right / Width;
-                Point ydelta = View.Down / Height;
-                Point offset = View.Offset + xdelta * 0.5 + ydelta * 0.5;
-                for (int x = 0; x < Width; x++)
-                {
-                    Point tpos = offset + xdelta * x;
-                    for (int y = 0; y < Height; y++)
-                    {
-                        Point pos = tpos + ydelta * y;
-                        GColor col = Figure.GetColor(pos);
-                        data[3] = (byte)(col.A * 255.0);
-                        data[2] = (byte)(col.R * 255.0);
-                        data[1] = (byte)(col.G * 255.0);
-                        data[0] = (byte)(col.B * 255.0);
-                        data += 4;
-                    }
-                }
-
-                tex = Create(bd, Format, true);
+                WriteImageARGB(Figure, View, Width, Height, ptr);
+                tex = Create();
+                SetImage(Format, 0, Width, Height, ptr);
+                GenerateMipmap();
+                SetFilterMode(TextureMinFilter.LinearMipmapLinear, TextureMagFilter.Linear);
             }
-
             return tex;
         }
 
@@ -152,26 +158,59 @@ namespace DUIP.UI.Render
             BitmapData bd = Source.LockBits(
                 new System.Drawing.Rectangle(0, 0, Source.Width, Source.Height),
                 ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            Texture t = Create(bd, Format.BGRA32, true);
+            Texture t = Create();
+
+            SetImage(Format.BGRA32, 0, bd.Width, bd.Height, bd.Scan0);
+            GenerateMipmap();
+            SetFilterMode(TextureMinFilter.LinearMipmapLinear, TextureMagFilter.Linear);
+
             Source.UnlockBits(bd);
             return t;
         }
 
+
         /// <summary>
-        /// Creates a blank texture.
+        /// Creates and binds a texture with no associated image data.
         /// </summary>
-        public static Texture Create(Format Format, int Width, int Height)
+        public static Texture Create()
         {
             int id = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, id);
             GL.TexEnv(TextureEnvTarget.TextureEnv,
                 TextureEnvParameter.TextureEnvMode,
                 (float)TextureEnvMode.Modulate);
+            return new Texture(id);
+        }
+
+        /// <summary>
+        /// Creates a texture with undefined image data.
+        /// </summary>
+        public static Texture CreateBlank(Format Format, int Width, int Height)
+        {
+            Texture tex = Create();
             GL.TexImage2D(TextureTarget.Texture2D,
                 0, Format.PixelInternalFormat,
                 Width, Height, 0,
                 Format.PixelFormat, Format.PixelType, IntPtr.Zero);
-            return new Texture(id);
+            return tex;
+        }
+
+        /// <summary>
+        /// Sets the image of a certain mipmap level of the current texture from a pointer to image data.
+        /// </summary>
+        public static void SetImage(Format Format, int Level, int Width, int Height, IntPtr Data)
+        {
+            GL.TexImage2D(TextureTarget.Texture2D,
+                Level, Format.PixelInternalFormat, Width, Height, 0,
+                Format.PixelFormat, Format.PixelType, Data);
+        }
+
+        /// <summary>
+        /// Sets the image of a certain mipmap level of the current texture from a pointer to image data.
+        /// </summary>
+        public static unsafe void SetImage(Format Format, int Level, int Width, int Height, void* Data)
+        {
+            SetImage(Format, Level, Width, Height, (IntPtr)Data);
         }
 
         /// <summary>
@@ -196,42 +235,6 @@ namespace DUIP.UI.Render
                 PixelInternalFormat = PixelInternalFormat.Alpha,
                 PixelType = PixelType.UnsignedByte
             };
-        }
-
-        /// <summary>
-        /// Creates a texture using the given bitmap data. The texture can optionally be mipmapped.
-        /// </summary>
-        public static Texture Create(BitmapData Data, Format Format, bool Mipmap)
-        {
-            int id = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, id);
-            GL.TexEnv(TextureEnvTarget.TextureEnv,
-                TextureEnvParameter.TextureEnvMode,
-                (float)TextureEnvMode.Modulate);
-
-            SetImage(Format, 0, Data.Width, Data.Height, Data.Scan0);
-
-            Texture tex = new Texture(id);
-            if (Mipmap)
-            {
-                GenerateMipmap();
-                SetFilterMode(TextureMinFilter.LinearMipmapLinear, TextureMagFilter.Linear);
-            }
-            else
-            {
-                SetFilterMode(TextureMinFilter.Linear, TextureMagFilter.Linear);
-            }
-            return new Texture(id);
-        }
-
-        /// <summary>
-        /// Sets the image of a certain mipmap level of the current texture from a pointer to image data.
-        /// </summary>
-        public static void SetImage(Format Format, int Level, int Width, int Height, IntPtr Data)
-        {
-            GL.TexImage2D(TextureTarget.Texture2D,
-                Level, Format.PixelInternalFormat, Width, Height, 0,
-                Format.PixelFormat, Format.PixelType, Data);
         }
 
         public void Dispose()

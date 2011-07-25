@@ -235,7 +235,9 @@ namespace DUIP.UI.Render
             }
 
             // Create texture
-            Texture tex = Texture.Create(bd, Texture.Format.A8, false);
+            Texture tex = Texture.Create();
+            Texture.SetImage(Texture.Format.A8, 0, Size, Size, bd.Scan0);
+            Texture.SetFilterMode(TextureMinFilter.LinearMipmapLinear, TextureMagFilter.Linear);
 
             // Create mipmaps (using lancsoz filter to give more sharpness than the default box filter).
             unsafe
