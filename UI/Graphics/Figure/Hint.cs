@@ -54,4 +54,30 @@ namespace DUIP.UI.Graphics
 
         private int _NumberRenders;
     }
+
+    /// <summary>
+    /// A hint figure that indicates that the information needed to render the source figure should be cached between program runs. The
+    /// figure is identified with a name and is expected to be the same every time this hint is used with that name.
+    /// </summary>
+    public sealed class CacheHintFigure : HintFigure
+    {
+        public CacheHintFigure(string Name, Figure Source)
+            : base(Source)
+        {
+            this._Name = Name;
+        }
+
+        /// <summary>
+        /// Gets the name used to identify the source figure.
+        /// </summary>
+        public string Name
+        {
+            get
+            {
+                return this._Name;
+            }
+        }
+
+        private string _Name;
+    }
 }

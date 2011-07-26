@@ -26,9 +26,11 @@ namespace DUIP.UI
             {
                 this._Layers.Add(new Layer
                 {
-                    Figure = new CellularFigure(
-                        Color.Transparent, Color.RGB(0.5, 0.7, 0.9),
-                        1.0, 40.0, CellularFigure.GridDistribution(Random, 12, error, 1.0)).Rotate(rot).Scale(scale),
+                    Figure = new CacheHintFigure("ocean" + t.ToString(), 
+                        new CellularFigure(
+                            Color.Transparent, Color.RGB(0.5, 0.7, 0.9),
+                            1.0, 40.0, CellularFigure.GridDistribution(Random, 12, error, 1.0)
+                        ).Rotate(rot).Scale(scale)),
                     MinZoom = zoom - 4.0,
                     MaxZoom = zoom + 8.0
                 });

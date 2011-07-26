@@ -22,6 +22,21 @@ namespace DUIP.UI.Render
         }
 
         /// <summary>
+        /// Gets or sets the render cache for this renderer.
+        /// </summary>
+        public IRenderCache Cache
+        {
+            get
+            {
+                return this._Cache;
+            }
+            set
+            {
+                this._Cache = value;
+            }
+        }
+
+        /// <summary>
         /// Sets up this renderer with the current graphics context.
         /// </summary>
         public void Initialize()
@@ -103,6 +118,33 @@ namespace DUIP.UI.Render
             HintFigure hint = Figure as HintFigure;
             if (hint != null)
             {
+                CacheHintFigure cachehint = hint as CacheHintFigure;
+                if (cachehint != null)
+                {
+                    IRenderCache cache = this._Cache;
+
+                    Disposable<InStream> cacheread = cache.Read(cachehint.Name);
+                    if (!cacheread.IsNull)
+                    {
+                        Environment.CacheRead = cacheread;
+                        Procedure result = this.GetProcedure(hint.Source, Environment);
+                        Environment.CacheRead = null;
+                        cacheread.Dispose();
+                        return result;
+                    }
+
+                    Disposable<OutStream> cachewrite = cache.Update(cachehint.Name);
+                    if (!cachewrite.IsNull)
+                    {
+                        Environment.CacheWrite = cachewrite;
+                        Procedure result = this.GetProcedure(hint.Source, Environment);
+                        Environment.CacheWrite = null;
+                        cachewrite.Dispose();
+                        return result;
+                    }
+                }
+
+
                 return this.GetProcedure(hint.Source, Environment);
             }
 
@@ -196,7 +238,31 @@ namespace DUIP.UI.Render
             {
                 if(sampled.Tiled)
                 {
-                    Texture tex = Texture.Create(sampled, new View(Rectangle.UnitSquare), Texture.Format.BGRA32, 256, 256); 
+                    int size = 256;
+                    byte[] data = new byte[size * size * 4];
+                    Texture tex;
+                    unsafe
+                    {
+                        fixed (byte* ptr = data)
+                        {
+                            if (Environment.CacheRead != null)
+                            {
+                                Environment.CacheRead.Read(data, 0, data.Length);
+                            }
+                            else
+                            {
+                                Texture.WriteImageARGB(sampled, new View(Rectangle.UnitSquare), size, size, ptr);
+                                if (Environment.CacheWrite != null)
+                                {
+                                    Environment.CacheWrite.Write(data, 0, data.Length);
+                                }
+                            }
+                            tex = Texture.Create();
+                            Texture.SetImage(Texture.Format.BGRA32, 0, size, size, ptr);
+                            Texture.GenerateMipmap();
+                            Texture.SetFilterMode(TextureMinFilter.LinearMipmapLinear, TextureMagFilter.Linear);
+                        }
+                    }
                     Procedure proc = 
                         new BindTextureProcedure(tex) +
                         SetColorProcedure.White +
@@ -301,6 +367,7 @@ namespace DUIP.UI.Render
             return null;
         }
 
+        private IRenderCache _Cache;
         private Dictionary<Figure, Procedure> _Procedures;
     }
 
@@ -309,6 +376,14 @@ namespace DUIP.UI.Render
     /// </summary>
     public class Environment
     {
+        /// <summary>
+        /// The stream to use for reading cached procedure data, or null if no cached data is available.
+        /// </summary>
+        public InStream CacheRead;
 
+        /// <summary>
+        /// The stream to use for writing cached procedure data, or null if no cached data is to be written.
+        /// </summary>
+        public OutStream CacheWrite;
     }
 }

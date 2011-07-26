@@ -70,6 +70,7 @@
     <Compile Include="UI\Graphics\Shape.cs" />
     <Compile Include="UI\Graphics\Text\SystemFont.cs" />
     <Compile Include="UI\InputContext.cs" />
+    <Compile Include="UI\Render\Cache.cs" />
     <Compile Include="UI\Render\Context.cs" />
     <Compile Include="UI\Render\Geometry.cs" />
     <Compile Include="UI\Render\Procedure.cs" />

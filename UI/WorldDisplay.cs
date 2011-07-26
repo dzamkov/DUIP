@@ -33,6 +33,7 @@ namespace DUIP.UI
             this.MakeCurrent();
 
             this._Renderer = new Renderer();
+            this._Renderer.Cache = new FileSystemRenderCache(Program.Cache["Render"]);
             this._Renderer.Initialize();
             SystemTypeface.Create = this._Renderer.CreateSystemTypeface;
 
