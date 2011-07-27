@@ -45,7 +45,15 @@ namespace DUIP.UI
         {
             double zoom = Camera.Zoom;
 
-            Figure fig = null;
+            double wash = Math.Min(1.0, Math.Max(0.0, (zoom + 2.0) / 10.0));
+            Color topcol = Color.Mix(Color.RGB(0.3, 0.6, 0.7), Color.RGB(0.3, 0.5, 0.8), wash);
+            Color botcol = Color.Mix(Color.RGB(0.1, 0.4, 0.6), Color.RGB(0.1, 0.3, 0.7), wash);
+            Figure fig = MeshFigure.CreateQuad(
+                new MeshVertex(View.TopLeft, topcol),
+                new MeshVertex(View.TopRight, topcol),
+                new MeshVertex(View.BottomLeft, botcol),
+                new MeshVertex(View.BottomRight, botcol));
+
             foreach (Layer l in this._Layers)
             {
                 double pg = (zoom - l.MinZoom) / (l.MaxZoom - l.MinZoom);

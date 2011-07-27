@@ -210,6 +210,16 @@ namespace DUIP.UI.Render
                 return this.GetShapeProcedure(shape.Shape, shape.Source, Environment);
             }
 
+            // Mesh figure
+            MeshFigure mesh = Figure as MeshFigure;
+            if (mesh != null)
+            {
+                return
+                    BindTextureProcedure.Null +
+                    SetColorProcedure.White +
+                    new RenderGeometryProcedure(BeginMode.Triangles, new MeshGeometry(mesh));
+            }
+
             // System font glyph
             SystemFontGlyph sfg = Figure as SystemFontGlyph;
             if (sfg != null)

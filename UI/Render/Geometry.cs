@@ -223,4 +223,114 @@ namespace DUIP.UI.Render
         private Geometry _Source;
         private int[] _Indices;
     }
+
+    /// <summary>
+    /// Geometry for the triangles defined in a mesh figure.
+    /// </summary>
+    public class MeshGeometry : IndexedGeometry
+    {
+        public MeshGeometry(MeshFigure Mesh)
+        {
+            this._Mesh = Mesh;
+        }
+
+        /// <summary>
+        /// Gets the mesh this geometry is for.
+        /// </summary>
+        public MeshFigure Mesh
+        {
+            get
+            {
+                return this._Mesh;
+            }
+        }
+
+        public override int Size
+        {
+            get
+            {
+                return this._Mesh.Triangles.Length * 3;
+            }
+        }
+
+        public override VertexFormatFlags VertexFormat
+        {
+            get
+            {
+                return VertexFormatFlags.Color;
+            }
+        }
+
+        public override Geometry Source
+        {
+            get
+            {
+                return new MeshVertexGeometry(this._Mesh);
+            }
+        }
+
+        public override int GetSourceIndex(int Index)
+        {
+            int triind = Index / 3;
+            int cmpind = Index % 3;
+            switch (cmpind)
+            {
+                case 0:
+                    return this._Mesh.Triangles[triind].A;
+                case 1:
+                    return this._Mesh.Triangles[triind].B;
+                default:
+                    return this._Mesh.Triangles[triind].C;
+            }
+        }
+
+        private MeshFigure _Mesh;
+    }
+
+    /// <summary>
+    /// Geometry for the vertices defined in a mesh figure.
+    /// </summary>
+    public class MeshVertexGeometry : Geometry
+    {
+        public MeshVertexGeometry(MeshFigure Mesh)
+        {
+            this._Mesh = Mesh;
+        }
+
+        /// <summary>
+        /// Gets the mesh this geometry is for.
+        /// </summary>
+        public MeshFigure Mesh
+        {
+            get
+            {
+                return this._Mesh;
+            }
+        }
+
+        public override int Size
+        {
+            get
+            {
+                return this._Mesh.Vertices.Length;
+            }
+        }
+
+        public override VertexFormatFlags VertexFormat
+        {
+            get
+            {
+                return VertexFormatFlags.Color;
+            }
+        }
+
+        public override void Send(int Index)
+        {
+            MeshVertex vert = this._Mesh.Vertices[Index];
+            GL.Color4(vert.Color);
+            GL.Vertex2((Vector2d)vert.Position);
+        }
+
+        private MeshFigure _Mesh;
+    }
 }

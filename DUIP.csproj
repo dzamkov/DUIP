@@ -63,6 +63,7 @@
     <Compile Include="UI\Graphics\Figure\Cellular.cs" />
     <Compile Include="UI\Graphics\Figure\Hint.cs" />
     <Compile Include="UI\Graphics\Figure\Image.cs" />
+    <Compile Include="UI\Graphics\Figure\Mesh.cs" />
     <Compile Include="UI\Graphics\Figure\Sampled.cs" />
     <Compile Include="UI\Graphics\Figure\Shape.cs" />
     <Compile Include="UI\Graphics\Figure\Solid.cs" />
