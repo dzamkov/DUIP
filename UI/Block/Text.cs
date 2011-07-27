@@ -438,6 +438,7 @@ namespace DUIP.UI
                             {
                                 sel.Selection._Primary = nsel;
                                 sel.Selection._UpdateOrder();
+                                sel.CaretBlinkTime = 0.0;
                             }
                         }
                         else
