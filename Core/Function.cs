@@ -33,9 +33,9 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Constructs the type for a function whose result type may vary based on the argument.
+        /// Constructs the type for a function whose result type may vary based on the argument (given as a symbol which may be used in the result type).
         /// </summary>
-        public static Expression Type(LambdaArgument Argument, Expression ResultType)
+        public static Expression Type(Symbol Argument, Expression ResultType)
         {
             return TypeConstructor + Argument.Type + (Argument - ResultType);
         }
@@ -44,11 +44,12 @@ namespace DUIP
         {
             Expression reflexivetype = Expression.ReflexiveType;
 
-            SimpleTypeConstructor = new Symbol(0x00010000);
+            SimpleTypeConstructor = new Symbol();
             SimpleTypeConstructor.SetType(Type(reflexivetype, Type(reflexivetype, reflexivetype)));
 
-            TypeConstructor = new Symbol(0x00010001);
-            TypeConstructor.SetType(Type(new LambdaArgument(0, reflexivetype), Type(Type(new VariableExpression(0), reflexivetype), reflexivetype)));
+            Symbol argumenttype = new Symbol(reflexivetype);
+            TypeConstructor = new Symbol();
+            TypeConstructor.SetType(Type(argumenttype, Type(Type(argumenttype, reflexivetype), reflexivetype)));
         }
     }
 
@@ -144,12 +145,12 @@ namespace DUIP
     }
 
     /// <summary>
-    /// An expression that defines a function whose result when called is defined by an expression where one variable
+    /// An expression that defines a function whose result when called is defined by an expression where one symbol
     /// takes the place of the argument.
     /// </summary>
     public class LambdaExpression : Expression
     {
-        public LambdaExpression(LambdaArgument Argument, Expression Inner)
+        public LambdaExpression(Symbol Argument, Expression Inner)
         {
             this._Argument = Argument;
             this._Inner = Inner;
@@ -158,7 +159,7 @@ namespace DUIP
         /// <summary>
         /// Gets the argument for the lambda expression.
         /// </summary>
-        public LambdaArgument Argument
+        public Symbol Argument
         {
             get
             {
@@ -185,30 +186,7 @@ namespace DUIP
             }
         }
 
-        private LambdaArgument _Argument;
+        private Symbol _Argument;
         private Expression _Inner;
-    }
-
-    /// <summary>
-    /// Identifies and describes a variable to be used as the argument in a lambda expression.
-    /// </summary>
-    public struct LambdaArgument
-    {
-        public LambdaArgument(int Index, Expression Type)
-        {
-            this.Index = Index;
-            this.Type = Type;
-        }
-
-        /// <summary>
-        /// The index of the variable to be used as the argument. If this variable is already defined in the scope of the
-        /// lambda expression, it will be replaced when evaluating the inner expression.
-        /// </summary>
-        public int Index;
-
-        /// <summary>
-        /// The type of the variable to be used as the argument.
-        /// </summary>
-        public Expression Type;
     }
 }

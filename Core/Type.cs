@@ -17,7 +17,7 @@ namespace DUIP
 
         static Type()
         {
-            Reflexive = new Symbol(0x00000000);
+            Reflexive = new Symbol();
             Reflexive.SetType(Reflexive);
         }
     }
