@@ -475,34 +475,4 @@ namespace DUIP
         private long[] _Offsets;
         private long _Size;
     }
-
-    /// <summary>
-    /// A type for data.
-    /// </summary>
-    [Kind(4)]
-    public sealed class DataType : Type
-    {
-        private DataType()
-        {
-
-        }
-
-        /// <summary>
-        /// The only instance of this class.
-        /// </summary>
-        public static readonly DataType Instance = new DataType();
-
-        public override ISerialization<object> Serialization
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        public override bool Equal(object A, object B)
-        {
-            return DUIP.Data.Equal(A as Data, B as Data);
-        }
-    }
 }

@@ -19,11 +19,11 @@ namespace DUIP.UI
         /// </summary>
         public static Transfer.Item Export(Content Content)
         {
-            StaticContent sc = Content as StaticContent;
+            /*StaticContent sc = Content as StaticContent;
             if (sc.Type == StringType.Instance)
             {
                 return new Transfer.StringItem(sc.Value as string);
-            }
+            }*/
 
             return null;
         }
@@ -33,7 +33,7 @@ namespace DUIP.UI
         /// </summary>
         public static Disposable<Content> Import(Transfer.Item Item)
         {
-            Transfer.StringItem si = Item as Transfer.StringItem;
+            /*Transfer.StringItem si = Item as Transfer.StringItem;
             if (si != null)
             {
                 return new StaticContent(StringType.Instance, si.String);
@@ -43,7 +43,7 @@ namespace DUIP.UI
             if (fi != null)
             {
                 return new StaticContent(FileType.Instance, fi.GetFile());
-            }
+            }*/
 
             return null;
         }

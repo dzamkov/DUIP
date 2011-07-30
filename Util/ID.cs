@@ -29,46 +29,13 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Gets a serialization method for an ID.
-        /// </summary>
-        public static ISerialization<ID> Serialization
-        {
-            get
-            {
-                return IDType.Singleton;
-            }
-        }
-
-        /// <summary>
-        /// Gets an ordering method for ID's.
-        /// </summary>
-        public static IOrdering<ID> Ordering
-        {
-            get
-            {
-                return IDType.Singleton;
-            }
-        }
-
-        /// <summary>
         /// Gets a hashing method for ID's.
         /// </summary>
         public static IHashing<ID> Hashing
         {
             get
             {
-                return IDType.Singleton;
-            }
-        }
-
-        /// <summary>
-        /// Gets a method for comparing equality for ID's.
-        /// </summary>
-        public static IEquality<ID> Equality
-        {
-            get
-            {
-                return IDType.Singleton;
+                return IDHashing.Singleton;
             }
         }
 
@@ -161,56 +128,19 @@ namespace DUIP
     }
 
     /// <summary>
-    /// A type for an ID. Provides useful interfaces for ID's.
+    /// A hashing method for ID's.
     /// </summary>
-    public sealed class IDType : Type, ISerialization<ID>, IOrdering<ID>, IHashing<ID>, ISerialization<object>
+    public sealed class IDHashing : IHashing<ID>
     {
+        private IDHashing()
+        {
+
+        }
+
         /// <summary>
         /// The only instance of this class.
         /// </summary>
-        public static readonly IDType Singleton = new IDType();
-
-        public override ISerialization<object> Serialization
-        {
-            get
-            {
-                return this;
-            }
-        }
-
-        public void Write(ID Object, OutStream Stream)
-        {
-            ID.Write(Object, Stream);
-        }
-
-        public new ID Read(InStream Stream)
-        {
-            return ID.Read(Stream);
-        }
-
-        void ISerialization<object>.Write(object Object, OutStream Stream)
-        {
-            ID id = (ID)Object;
-            this.Write(id, Stream);
-        }
-
-        object ISerialization<object>.Read(InStream Stream)
-        {
-            return this.Read(Stream);
-        }
-
-        public Maybe<long> Size
-        {
-            get
-            {
-                return 16;
-            }
-        }
-
-        public Relation Compare(ID A, ID B)
-        {
-            return DUIP.ID.Compare(A, B);
-        }
+        public static readonly IDHashing Singleton = new IDHashing();
 
         public BigInt Hash(ID Object)
         {
@@ -226,11 +156,6 @@ namespace DUIP
         public bool Equal(ID A, ID B)
         {
             return DUIP.ID.Equal(A, B);
-        }
-
-        public override bool Equal(object A, object B)
-        {
-            return ID.Equal((ID)A, (ID)B);
         }
     }
 }

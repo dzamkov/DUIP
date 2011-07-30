@@ -42,9 +42,9 @@
   -->
   <ItemGroup>
     <Compile Include="Core\Data.cs" />
+    <Compile Include="Core\Expression.cs" />
     <Compile Include="Core\File.cs" />
     <Compile Include="Core\Function.cs" />
-    <Compile Include="Core\String.cs" />
     <Compile Include="Core\Type.cs" />
     <Compile Include="Memory\Allocator\Buddy.cs" />
     <Compile Include="Memory\Allocator\Directory.cs" />
@@ -78,7 +78,6 @@
     <Compile Include="UI\Render\Renderer.cs" />
     <Compile Include="UI\Theme.cs" />
     <Compile Include="UI\Content\Content.cs" />
-    <Compile Include="UI\Content\Static.cs" />
     <Compile Include="UI\Compass.cs" />
     <Compile Include="UI\Graphics\Color.cs" />
     <Compile Include="UI\Graphics\Figure\Figure.cs" />
