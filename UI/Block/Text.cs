@@ -465,7 +465,7 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Contains information for a selection of text.4
+        /// Contains information for a selection of text.
         /// </summary>
         private class _SelectionInfo
         {
@@ -674,6 +674,45 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Determines wether caret A is after caret B.
+        /// </summary>
+        public static bool Compare(TextCaret A, TextCaret B)
+        {
+            TextItem cp = A._Previous;
+            TextItem sp = B._Previous;
+            TextItem csp = sp;
+            LineStartTextItem cl;
+            LineStartTextItem sl;
+
+            while ((sl = csp as LineStartTextItem) == null)
+            {
+                if (csp == cp)
+                {
+                    return false;
+                }
+                csp = csp._Previous;
+            }
+
+            while ((cl = cp as LineStartTextItem) == null)
+            {
+                cp = cp._Previous;
+                if (cp == sp)
+                {
+                    return true;
+                }
+            }
+
+            while ((cl = cl.NextLine) != null)
+            {
+                if (cl == sl)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
         /// Gets if the given item has a width over 0.
         /// </summary>
         private static bool _Visible(TextItem Item)
@@ -711,11 +750,18 @@ namespace DUIP.UI
     /// </summary>
     public struct TextSelection
     {
-        internal TextSelection(TextCaret Caret)
+        public TextSelection(TextCaret Caret)
         {
             this._Primary = Caret;
             this._Secondary = Caret;
             this._Order = false;
+        }
+
+        public TextSelection(TextCaret Primary, TextCaret Secondary)
+        {
+            this._Primary = Primary;
+            this._Secondary = Secondary;
+            this._Order = TextCaret.Compare(Primary, Secondary);
         }
 
         /// <summary>
@@ -775,50 +821,11 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Calculates the order of the selection.
-        /// </summary>
-        internal bool _CalculateOrder()
-        {
-            TextItem cp = this._Primary._Previous;
-            TextItem sp = this._Secondary._Previous;
-            TextItem csp = sp;
-            LineStartTextItem cl;
-            LineStartTextItem sl;
-            
-            while ((sl = csp as LineStartTextItem) == null)
-            {
-                if (csp == cp)
-                {
-                    return false;
-                }
-                csp = csp._Previous;
-            }
-
-            while ((cl = cp as LineStartTextItem) == null)
-            {
-                cp = cp._Previous;
-                if (cp == sp)
-                {
-                    return true;
-                }
-            }
-
-            while ((cl = cl.NextLine) != null)
-            {
-                if (cl == sl)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        /// <summary>
         /// Updates the order of the selection in response to a change in either of the carets.
         /// </summary>
         internal void _UpdateOrder()
         {
-            this._Order = this._CalculateOrder();
+            this._Order = TextCaret.Compare(this._Primary, this._Secondary);
         }
 
         internal TextCaret _Primary;

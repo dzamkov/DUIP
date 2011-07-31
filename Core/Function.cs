@@ -40,15 +40,24 @@ namespace DUIP
             return TypeConstructor + Argument.Type + (Argument - ResultType);
         }
 
+        /// <summary>
+        /// Defines relations involving functions in the given scope.
+        /// </summary>
+        public static void Define(Scope Scope)
+        {
+            Scope.DefineRule(3, new ResultTypeExpression(SimpleTypeConstructor + Term.Get(0) + Term.Get(1), Term.Get(2)), Term.Get(1));
+            Scope.DefineRule(3, new ResultTypeExpression(TypeConstructor + Term.Get(0) + Term.Get(1), Term.Get(2)), Term.Get(1) + Term.Get(2));
+        }
+
         static Function()
         {
             Expression reflexivetype = Expression.ReflexiveType;
 
-            SimpleTypeConstructor = new Symbol();
+            SimpleTypeConstructor = new Symbol("->");
             SimpleTypeConstructor.SetType(Type(reflexivetype, Type(reflexivetype, reflexivetype)));
 
             Symbol argumenttype = new Symbol(reflexivetype);
-            TypeConstructor = new Symbol();
+            TypeConstructor = new Symbol("=>");
             TypeConstructor.SetType(Type(argumenttype, Type(Type(argumenttype, reflexivetype), reflexivetype)));
         }
     }
@@ -92,6 +101,17 @@ namespace DUIP
             {
                 return new ResultTypeExpression(this._Function.Type, this._Argument);
             }
+        }
+
+        public override Expression Fill(Expression[] Terms)
+        {
+            Expression nfunc = this._Function.Fill(Terms);
+            Expression narg = this._Argument.Fill(Terms);
+            if (this._Function != nfunc || this._Argument != narg)
+            {
+                return new CallExpression(nfunc, narg);
+            }
+            return this;
         }
 
         private Expression _Function;
@@ -140,6 +160,17 @@ namespace DUIP
             }
         }
 
+        public override Expression Fill(Expression[] Terms)
+        {
+            Expression nfunctype = this._FunctionType.Fill(Terms);
+            Expression narg = this._Argument.Fill(Terms);
+            if (this._FunctionType != nfunctype || this._Argument != narg)
+            {
+                return new ResultTypeExpression(nfunctype, narg);
+            }
+            return this;
+        }
+
         private Expression _FunctionType;
         private Expression _Argument;
     }
@@ -184,6 +215,16 @@ namespace DUIP
             {
                 return Function.Type(this._Argument, this._Inner.Type);
             }
+        }
+
+        public override Expression Fill(Expression[] Terms)
+        {
+            Expression ninner = this._Inner.Fill(Terms);
+            if (this._Inner != ninner)
+            {
+                return new LambdaExpression(this._Argument, ninner);
+            }
+            return this;
         }
 
         private Symbol _Argument;

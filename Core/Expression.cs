@@ -16,6 +16,11 @@ namespace DUIP
         public abstract Expression Type { get; }
 
         /// <summary>
+        /// Replaces the terms in the expression with their corresponding values in the given array.
+        /// </summary>
+        public abstract Expression Fill(Expression[] Terms);
+
+        /// <summary>
         /// Gets the reflexive type.
         /// </summary>
         public static Symbol ReflexiveType
@@ -35,71 +40,5 @@ namespace DUIP
         {
             return new LambdaExpression(Argument, Inner);
         }
-    }
-
-    
-
-    /// <summary>
-    /// An expression that takes the value of a variable.
-    /// </summary>
-    public sealed class VariableExpression : Expression
-    {
-        public VariableExpression(int Index)
-        {
-            this._Index = Index;
-        }
-
-        /// <summary>
-        /// Gets the index of the variable this expression refers to.
-        /// </summary>
-        public int Index
-        {
-            get
-            {
-                return this._Index;
-            }
-        }
-
-        public override Expression Type
-        {
-            get
-            {
-                return new VariableTypeExpression(this._Index);
-            }
-        }
-
-        private int _Index;
-    }
-
-    /// <summary>
-    /// An expression that takes the type of a variable.
-    /// </summary>
-    public sealed class VariableTypeExpression : Expression
-    {
-        public VariableTypeExpression(int Index)
-        {
-            this._Index = Index;
-        }
-
-        /// <summary>
-        /// Gets the index of the variable this expression refers to.
-        /// </summary>
-        public int Index
-        {
-            get
-            {
-                return this._Index;
-            }
-        }
-
-        public override Expression Type
-        {
-            get
-            {
-                return ReflexiveType;
-            }
-        }
-
-        private int _Index;
     }
 }

@@ -16,6 +16,13 @@ namespace DUIP
             this._Condition = Condition;
         }
 
+        public Pattern(int Terms, Expression Template)
+        {
+            this._Terms = Terms;
+            this._Template = Template;
+            this._Condition = Bool.True;
+        }
+
         /// <summary>
         /// Gets the amount of unique terms used in this pattern. Terms may represent any more specialized expression, by must
         /// be consistent in an instance of the pattern.
@@ -70,6 +77,20 @@ namespace DUIP
         }
 
         /// <summary>
+        /// Gets a term with the given index, reusing terms when possible.
+        /// </summary>
+        public static Term Get(int Index)
+        {
+            Term res;
+            if (!_Terms.TryGetValue(Index, out res))
+            {
+                _Terms[Index] = res = new Term(Index);
+            }
+            return res;
+        }
+        private static readonly Dictionary<int, Term> _Terms = new Dictionary<int, Term>();
+
+        /// <summary>
         /// Gets the index of this term in the pattern.
         /// </summary>
         public int Index
@@ -86,6 +107,11 @@ namespace DUIP
             {
                 throw new NotImplementedException();
             }
+        }
+
+        public override Expression Fill(Expression[] Terms)
+        {
+            return Terms[this._Index];
         }
 
         private int _Index;

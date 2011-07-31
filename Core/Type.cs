@@ -17,8 +17,16 @@ namespace DUIP
 
         static Type()
         {
-            Reflexive = new Symbol();
+            Reflexive = new Symbol("type");
             Reflexive.SetType(Reflexive);
+        }
+
+        /// <summary>
+        /// Defines relations involving types in the given scope.
+        /// </summary>
+        public static void Define(Scope Scope)
+        {
+
         }
     }
 }

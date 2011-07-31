@@ -55,19 +55,47 @@ namespace DUIP
         {
             Expression reflexivetype = Expression.ReflexiveType;
 
-            Type = new Symbol(reflexivetype);
-            True = new Symbol(Type);
-            False = new Symbol(Type);
+            Type = new Symbol(reflexivetype, "bool");
+            True = new Symbol(Type, "true");
+            False = new Symbol(Type, "false");
 
-            Symbol equaltype = new Symbol(reflexivetype);
+            Symbol equaltype = new Symbol(reflexivetype, "equal");
             Equal = new Symbol(
                 Function.Type(
                     equaltype,
                     Function.Type(equaltype, Function.Type(equaltype, Type))));
 
-            Not = new Symbol(Function.Type(Type, Type));
-            And = new Symbol(Function.Type(Type, Function.Type(Type, Type)));
-            Or = new Symbol(Function.Type(Type, Function.Type(Type, Type)));
+            Not = new Symbol(Function.Type(Type, Type), "not");
+            And = new Symbol(Function.Type(Type, Function.Type(Type, Type)), "and");
+            Or = new Symbol(Function.Type(Type, Function.Type(Type, Type)), "or");
+
+            Literal<bool>.InstanceType = Type;
+            Literal<bool>.Equal = (x, y) => x == y;
+        }
+
+        /// <summary>
+        /// Defines relations involving bools in the given scope.
+        /// </summary>
+        public static void Define(Scope Scope)
+        {
+            Scope.DefineProperty(0, Not + False, True);
+            Scope.DefineProperty(0, Not + True, False);
+            Scope.DefineProperty(1, Not + Not + Term.Get(0), Term.Get(0));
+
+            Scope.DefineCommutativeProperty(0, And);
+            Scope.DefineProperty(0, And + True + True, True);
+            Scope.DefineProperty(1, And + False + Term.Get(0), False);
+
+            Scope.DefineCommutativeProperty(0, Or);
+            Scope.DefineProperty(0, Or + False + False, False);
+            Scope.DefineProperty(1, Or + True + Term.Get(0), True);
+
+            Scope.DefineCommutativeProperty(1, Equal + Term.Get(0));
+            Scope.DefineProperty(2, Equal + Term.Get(0) + Term.Get(1) + Term.Get(1), True);
+            Scope.DefineProperty(0, Equal + Type + True + False, False);
+
+            Scope.DefineProperty(0, True, new Literal<bool>(true));
+            Scope.DefineProperty(0, False, new Literal<bool>(false));
         }
     }
 
