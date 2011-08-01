@@ -123,6 +123,7 @@
     <Compile Include="Util\Ref.cs" />
     <Compile Include="Util\Reflection.cs" />
     <Compile Include="Util\Registry.cs" />
+    <Compile Include="Util\Task.cs" />
     <Compile Include="Util\Temporary.cs" />
     <Compile Include="Util\Void.cs" />
     <Compile Include="Util\ID.cs" />
