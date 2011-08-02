@@ -63,6 +63,56 @@ namespace DUIP.UI
         }
 
         /// <summary>
+        /// Gets or sets the current selected region for this text block.
+        /// </summary>
+        public Maybe<TextSelection> Selection
+        {
+            get
+            {
+                if(this._Selection != null)
+                {
+                    return this._Selection.Selection;
+                }
+                return Maybe<TextSelection>.Nothing;
+            }
+            set
+            {
+                if (value.HasValue)
+                {
+                    _SelectionInfo selection;
+                    if (this._Selection == null)
+                    {
+                        this._Selection = selection = new _SelectionInfo
+                       {
+                           Selection = value.Value
+                       };
+                    }
+                    else
+                    {
+                        selection = this._Selection;
+                        selection.CaretBlinkTime = 0.0;
+                        selection.Selection = value.Value;
+                    }
+                    if (this._Linked != null)
+                    {
+                        this._Linked.UpdateSelection(selection);
+                    }
+                }
+                else
+                {
+                    if (this._Selection != null)
+                    {
+                        this._Selection = null;
+                        if (this._Linked != null)
+                        {
+                            this._Linked.UpdateSelection(null);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Removes all items between the two carets.
         /// </summary>
         public void Remove(TextCaret Start, TextCaret End)
@@ -251,16 +301,15 @@ namespace DUIP.UI
 
             public override RemoveHandler Link(InputContext Context)
             {
-                RemoveHandler rh = null;
-
-                // If there is already a selection, link the update handler
+                // Update context information
+                this._Context = Context;
+                this.TextBlock._Linked = this;
+                this.UpdateSelection(this.TextBlock._Selection);
+                RemoveHandler rh = delegate
                 {
-                    _SelectionInfo sel = this.TextBlock._Selection;
-                    if (sel != null)
-                    {
-                        this._RemoveUpdate = Context.RegisterUpdate(this.Update);
-                    }
-                }
+                    this._Context = null;
+                    this.TextBlock._Linked = null;
+                };
 
                 // Probe signal change handler for selection
                 rh += Context.RegisterProbeSignalChange(delegate(Probe Probe, ProbeSignal Signal, bool Value, ref bool Handled)
@@ -276,17 +325,13 @@ namespace DUIP.UI
                                 Handled = true;
 
                                 TextCaret caret = this.Select(pos);
-                                this.TextBlock._Selection = new _SelectionInfo
+                                this.UpdateSelection(this.TextBlock._Selection = new _SelectionInfo
                                 {
                                     Probe = Probe,
                                     ReleaseProbe = Probe.Lock(),
                                     Selection = new TextSelection(caret),
                                     CaretBlinkTime = 0.0
-                                };
-                                if (this._RemoveUpdate == null)
-                                {
-                                    this._RemoveUpdate = Context.RegisterUpdate(this.Update);
-                                }
+                                });
                             }
                         }
                     }
@@ -310,6 +355,26 @@ namespace DUIP.UI
                 };
 
                 return rh;
+            }
+
+            /// <summary>
+            /// Informs the layout that the selection for it has been changed. This should only be called when the layout
+            /// is linked.
+            /// </summary>
+            public void UpdateSelection(_SelectionInfo Selection)
+            {
+                if (this._RemoveUpdate == null && Selection != null)
+                {
+                    this._RemoveUpdate = this._Context.RegisterUpdate(this.Update);
+                }
+                else
+                {
+                    if (this._RemoveUpdate != null && Selection == null)
+                    {
+                        this._RemoveUpdate();
+                        this._RemoveUpdate = null;
+                    }
+                }
             }
 
             public override Figure Figure
@@ -461,6 +526,7 @@ namespace DUIP.UI
             public TextBlock TextBlock;
             public int Width;
             public int Height;
+            private InputContext _Context;
             private RemoveHandler _RemoveUpdate;
         }
 
@@ -494,6 +560,7 @@ namespace DUIP.UI
         private TextItem _Last;
         private TextStyle _Style;
         private _SelectionInfo _Selection;
+        private _Layout _Linked;
     }
 
     /// <summary>

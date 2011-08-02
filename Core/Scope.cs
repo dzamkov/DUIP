@@ -71,6 +71,40 @@ namespace DUIP
             this.DefineRule(new SimpleRule(Terms, Template, Condition, Result));
         }
 
+        /// <summary>
+        /// Gets a task that tries evaluating the given expression to get a literal of the given type. If this is not possible, null is returned. It is assumed
+        /// that the expression is of the correct type to have a literal of the given type.
+        /// </summary>
+        public Task<Maybe<T>> Evaluate<T>(Expression Expression)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Gets a task tries to convert the value given by an expression to an instance of the given pattern. Since there may be multiple solution to this problem,
+        /// it is possible to continue searching for instances after the first is found.
+        /// </summary>
+        public Task<Maybe<Form>> Transform(Expression Expression, Pattern Pattern)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// A result from an execution of a Transform function.
+        /// </summary>
+        public struct Form
+        {
+            /// <summary>
+            /// The values for the terms in the instance of the pattern.
+            /// </summary>
+            public Expression[] Instance;
+
+            /// <summary>
+            /// The task to continue searching for forms. The form returned by this task will be distinct from this form, or any previous forms returned.
+            /// </summary>
+            public Task<Maybe<Form>> Continue;
+        }
+
         private List<Rule> _Rules;
     }
 }

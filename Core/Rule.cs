@@ -31,7 +31,7 @@ namespace DUIP
         /// <param name="Scope">The scope in which the rule is applied.</param>
         /// <param name="Terms">The values for the terms of the pattern. Terms that are null have not been 
         /// defined in the pattern and may represent any value.</param>
-        public abstract Expression GetResult(Scope Scope, Expression[] Terms);
+        public abstract Task<Expression> GetResult(Scope Scope, Expression[] Terms);
 
         private Pattern _Pattern;
     }
@@ -79,7 +79,7 @@ namespace DUIP
             }
         }
 
-        public override Expression GetResult(Scope Scope, Expression[] Terms)
+        public override Task<Expression> GetResult(Scope Scope, Expression[] Terms)
         {
             return this._Result.Fill(Terms);
         }
