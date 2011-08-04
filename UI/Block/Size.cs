@@ -68,7 +68,7 @@ namespace DUIP.UI
                 Math.Max(csr.Top, Math.Min(csr.Bottom, lsr.Bottom)));
         }
 
-        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size)
         {
             return this.Inner.CreateLayout(Context, this.GetLimitedSizeRange(SizeRange), out Size);
         }

@@ -71,7 +71,7 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size)
         {
             FlowStyle style = this.Style;
             Axis minoraxis = style.MinorAxis;

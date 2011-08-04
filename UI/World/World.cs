@@ -15,7 +15,7 @@ namespace DUIP.UI
     /// </summary>
     public class World
     {
-        public World(InputContext InputContext, Theme Theme)
+        public World(Context InputContext, Theme Theme)
         {
             this._Arcs = new List<Arc>();
             this._Nodes = new List<Node>();
@@ -169,7 +169,7 @@ namespace DUIP.UI
             }
         }
 
-        private InputContext _InputContext;
+        private Context _InputContext;
         private List<Arc> _Arcs;
         private List<Node> _Nodes;
         private Theme _Theme;

@@ -72,7 +72,7 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size)
         {
             int cols = this.Columns;
             int rows = this.Rows;
@@ -177,7 +177,7 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override RemoveHandler Link(InputContext Context)
+            public override RemoveHandler Link(Context Context)
             {
                 RemoveHandler rh = null;
                 for (int c = 0; c < this.ColumnOffsets.Length; c++)

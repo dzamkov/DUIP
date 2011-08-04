@@ -67,7 +67,7 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size)
         {
             Point sizepadding = this.SizePadding;
             Layout inner = this.Inner.CreateLayout(null, SizeRange.Translate(-sizepadding), out Size);
@@ -82,7 +82,7 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override RemoveHandler Link(InputContext Context)
+            public override RemoveHandler Link(Context Context)
             {
                 double iw = -this.Block._Border.Weight;
                 return this.Inner.Link(Context.Translate(new Point(iw, iw)));

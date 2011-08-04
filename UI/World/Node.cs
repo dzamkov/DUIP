@@ -15,7 +15,7 @@ namespace DUIP.UI
     /// </summary>
     public class Node : IDisposable
     {
-        public Node(InputContext WorldInputContext, Disposable<Content> Content, Disposable<Block> Block, Point Position, Point Velocity)
+        public Node(Context WorldInputContext, Disposable<Content> Content, Disposable<Block> Block, Point Position, Point Velocity)
         {
             this._Content = Content;
             this._Block = Block;
@@ -27,7 +27,7 @@ namespace DUIP.UI
             this._Layout.Link(this._InputContext);
         }
 
-        public Node(InputContext WorldInputContext, Disposable<Content> Content, Disposable<Block> Block, Layout Layout, Point Size, Point Position, Point Velocity)
+        public Node(Context WorldInputContext, Disposable<Content> Content, Disposable<Block> Block, Layout Layout, Point Size, Point Position, Point Velocity)
         {
             this._Content = Content;
             this._Block = Block;
@@ -122,7 +122,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets the input context for the interior (contents) of the node.
         /// </summary>
-        public InputContext InternalInputContext
+        public Context InternalInputContext
         {
             get
             {
@@ -279,9 +279,9 @@ namespace DUIP.UI
         /// <summary>
         /// An input context for the internal contents of a node.
         /// </summary>
-        private class _NodeInputContext : InputContext
+        private class _NodeInputContext : Context
         {
-            public _NodeInputContext(Node Node, InputContext Parent)
+            public _NodeInputContext(Node Node, Context Parent)
             {
                 this._Node = Node;
                 this._Parent = Parent;
@@ -324,7 +324,7 @@ namespace DUIP.UI
             }
 
             private Node _Node;
-            private InputContext _Parent;
+            private Context _Parent;
             private ProbeSignalChangeHandler _ProbeSignalChange;
         }
 

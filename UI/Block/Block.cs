@@ -16,7 +16,7 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a layout for this block with the given size.
         /// </summary>
-        public Layout CreateLayout(InputContext Context, Point Size)
+        public Layout CreateLayout(Context Context, Point Size)
         {
             return this.CreateLayout(Context, new Rectangle(Size, Size), out Size);
         }
@@ -24,7 +24,7 @@ namespace DUIP.UI
         /// <summary>
         /// Creates a layout for this block with the preferred size within the given size range.
         /// </summary>
-        public abstract Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size);
+        public abstract Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size);
 
         /// <summary>
         /// Creates a block that applies a border to this block.
@@ -119,7 +119,7 @@ namespace DUIP.UI
         /// <remarks>The input context given is not restricted to the area of the layout, and may reference probes that are outside the layout.
         /// The input context will give positions relative to the layout with (0.0, 0.0) being the top-left corner with ascending
         /// positions going towards the bottom-right.</remarks>
-        public virtual RemoveHandler Link(InputContext Context)
+        public virtual RemoveHandler Link(Context Context)
         {
             return null;
         }

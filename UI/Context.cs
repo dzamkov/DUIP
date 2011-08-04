@@ -7,7 +7,7 @@ namespace DUIP.UI
     /// <summary>
     /// A persistent context that UI elements can use to receive input from the user and other events.
     /// </summary>
-    public abstract class InputContext
+    public abstract class Context
     {
         /// <summary>
         /// Gets the probes available to this context.
@@ -25,9 +25,9 @@ namespace DUIP.UI
         public abstract RemoveHandler RegisterUpdate(Action<double> Callback);
 
         /// <summary>
-        /// Creates a translated form of this input context.
+        /// Creates a translated form of this context.
         /// </summary>
-        public virtual InputContext Translate(Point Offset)
+        public virtual Context Translate(Point Offset)
         {
             return new TranslatedInputContext(Offset, this);
         }
@@ -45,9 +45,9 @@ namespace DUIP.UI
     /// <summary>
     /// An input context translated from a source input context.
     /// </summary>
-    public class TranslatedInputContext : InputContext
+    public class TranslatedInputContext : Context
     {
-        public TranslatedInputContext(Point Offset, InputContext Source)
+        public TranslatedInputContext(Point Offset, Context Source)
         {
             this._Offset = Offset;
             this._Source = Source;
@@ -67,7 +67,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets the source input context for this context.
         /// </summary>
-        public InputContext Source
+        public Context Source
         {
             get
             {
@@ -98,13 +98,13 @@ namespace DUIP.UI
             return this._Source.RegisterUpdate(Callback);    
         }
 
-        public override InputContext Translate(Point Offset)
+        public override Context Translate(Point Offset)
         {
             return new TranslatedInputContext(this._Offset + Offset, this._Source);
         }
 
         private Point _Offset;
-        private InputContext _Source;
+        private Context _Source;
     }
 
     /// <summary>
@@ -139,6 +139,11 @@ namespace DUIP.UI
         /// Registers a callback to be called when the value of a signal for this probe changes.
         /// </summary>
         public abstract RemoveHandler RegisterSignalChange(Action<ProbeSignal, bool> Callback);
+
+        /// <summary>
+        /// Registers a callback to be called when this probe produces a message.
+        /// </summary>
+        public abstract RemoveHandler RegisterMessage(Action<ProbeMessage> Callback);
 
         /// <summary>
         /// Creates a probe with the given translation from this one.
@@ -201,13 +206,18 @@ namespace DUIP.UI
             return this._Source.RegisterSignalChange(Callback);
         }
 
+        public override RemoveHandler RegisterMessage(Action<ProbeMessage> Callback)
+        {
+            return this._Source.RegisterMessage(Callback);
+        }
+
         private Probe _Source;
     }
 
     /// <summary>
     /// A probe that is translated some fixed amount from a source probe.
     /// </summary>
-    public class TranslatedProbe : DerivedProbe
+    public sealed class TranslatedProbe : DerivedProbe
     {
         public TranslatedProbe(Point Offset, Probe Source)
             : base(Source)
@@ -248,5 +258,36 @@ namespace DUIP.UI
     public enum ProbeSignal
     {
         Primary
+    }
+
+    /// <summary>
+    /// A message (discrete input event) given by a probe.
+    /// </summary>
+    public struct ProbeMessage
+    {
+        /// <summary>
+        /// The type of this message.
+        /// </summary>
+        public ProbeMessageType Type;
+
+        /// <summary>
+        /// The typed character, for applicable message types.
+        /// </summary>
+        public char Character;
+    }
+
+    /// <summary>
+    /// Identifies a possible type for a probe message.
+    /// </summary>
+    public enum ProbeMessageType
+    {
+        Type,
+        NavigateLeft,
+        NavigateUp,
+        NavigateRight,
+        NavigateDown,
+        Copy,
+        Cut,
+        Paste
     }
 }

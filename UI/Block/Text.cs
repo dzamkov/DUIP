@@ -13,14 +13,12 @@ namespace DUIP.UI
     {
         public TextBlock()
         {
-            LineStartTextItem first = new LineStartTextItem();
-            this._First = first;
-            this._Last = first;
+
         }
 
-        public TextBlock(TextStyle Style)
-            : this()
+        public TextBlock(TextSection Text, TextStyle Style)
         {
+            this._Text = Text;
             this._Style = Style;
         }
 
@@ -41,134 +39,23 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets a caret for the beginning of the text.
+        /// Gets or sets the (pre-styled) text displayed by the text block. Note that using this property to set the text will
+        /// clear the current text selection, if any exists.
         /// </summary>
-        public TextCaret Start
+        [DynamicProperty]
+        public TextSection Text
         {
             get
             {
-                return new TextCaret(this._First);
-            }
-        }
-
-        /// <summary>
-        /// Gets a caret for the end of the text.
-        /// </summary>
-        public TextCaret End
-        {
-            get
-            {
-                return new TextCaret(this._Last);
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the current selected region for this text block.
-        /// </summary>
-        public Maybe<TextSelection> Selection
-        {
-            get
-            {
-                if(this._Selection != null)
-                {
-                    return this._Selection.Selection;
-                }
-                return Maybe<TextSelection>.Nothing;
+                return this._Text;
             }
             set
             {
-                if (value.HasValue)
-                {
-                    _SelectionInfo selection;
-                    if (this._Selection == null)
-                    {
-                        this._Selection = selection = new _SelectionInfo
-                       {
-                           Selection = value.Value
-                       };
-                    }
-                    else
-                    {
-                        selection = this._Selection;
-                        selection.CaretBlinkTime = 0.0;
-                        selection.Selection = value.Value;
-                    }
-                    if (this._Linked != null)
-                    {
-                        this._Linked.UpdateSelection(selection);
-                    }
-                }
-                else
-                {
-                    if (this._Selection != null)
-                    {
-                        this._Selection = null;
-                        if (this._Linked != null)
-                        {
-                            this._Linked.UpdateSelection(null);
-                        }
-                    }
-                }
+                this._Text = value;
             }
         }
 
-        /// <summary>
-        /// Removes all items between the two carets.
-        /// </summary>
-        public void Remove(TextCaret Start, TextCaret End)
-        {
-            TextItem prev = Start._Previous;
-            TextItem next = End._Previous._Next;
-
-            // Unlink section
-            prev._Next = next;
-            if (next != null)
-            {
-                next._Previous = prev;
-            }
-            else
-            {
-                this._Last = prev;
-            }
-
-            // Fix line references
-            prev.SearchBack<LineStartTextItem>(null)._NextLine = null;
-        }
-
-        /// <summary>
-        /// Removes all items between the two carets and returns them as a text section.
-        /// </summary>
-        public TextSection Cut(TextCaret Start, TextCaret End)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Inserts the given section at the given position. The section may no longer be used after this call.
-        /// </summary>
-        public void Insert(TextCaret Position, TextSection Section)
-        {
-            TextItem prev = Position._Previous;
-            TextItem next = prev._Next;
-
-            // Link section
-            prev._Next = Section._First;
-            Section._First._Previous = prev;
-            Section._Last._Next = next;
-            if (next != null)
-            {
-                next._Previous = Section._Last;
-            }
-            else
-            {
-                this._Last = Section._Last;
-            }
-
-            // Fix line references
-            prev.SearchBack<LineStartTextItem>(null)._NextLine = null;
-        }
-
-        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size)
         {
             TextStyle style = this._Style;
             Point cellsize = style.CellSize;
@@ -178,7 +65,7 @@ namespace DUIP.UI
 
             // Calculate size
             int width, height;
-            _CalculateSize(this._First, style, out width, out height);
+            //_CalculateSize(this._First, style, out width, out height);
             width = Math.Max(width, minwidth);
             height = Math.Max(height, minheight);
 
@@ -192,31 +79,6 @@ namespace DUIP.UI
                 Height = height
             };
             return layout;
-        }
-
-        /// <summary>
-        /// Calculates the size (in cells) of text block starting with the given item and using the given style.
-        /// </summary>
-        private static void _CalculateSize(LineStartTextItem First, TextStyle Style, out int Width, out int Height)
-        {
-            Width = 0;
-            Height = 1;
-            int offset = 0;
-            TextItem cur = First;
-            while ((cur = cur.Next) != null)
-            {
-                if (cur is LineStartTextItem)
-                {
-                    Height++;
-                    Width = Math.Max(offset, Width);
-                    offset = 0;
-                }
-                else
-                {
-                    _AppendLine(Style, cur, ref offset);
-                }
-            }
-            Width = Math.Max(offset, Width);
         }
 
         /// <summary>
@@ -234,7 +96,7 @@ namespace DUIP.UI
             SpaceTextItem sti = Item as SpaceTextItem;
             if (sti != null)
             {
-                Offset += sti.Width;
+                Offset += sti.Length;
                 return;
             }
 
@@ -260,51 +122,11 @@ namespace DUIP.UI
                 }
             }
 
-            /// <summary>
-            /// Gets the caret for a selection at the given offset.
-            /// </summary>
-            public TextCaret Select(Point Offset)
+            public override RemoveHandler Link(Context Context)
             {
-                TextStyle style = this.TextBlock._Style;
-                Point cellsize = style.CellSize;
-                int y = Math.Min(this.Height - 1, Math.Max(0, (int)(Offset.Y / cellsize.Y)));
-                int offset = Math.Min(this.Width, Math.Max(0, (int)(Offset.X / cellsize.X + 0.5)));
-
-                LineStartTextItem line = this.TextBlock._First;
-                LineStartTextItem nextline;
-                while (y > 0 && (nextline = line.NextLine) != null)
-                {
-                    line = nextline;
-                    y--;
-                }
-
-                int curoffset = 0;
-                TextItem cur = line;
-                while (true)
-                {
-                    if (curoffset >= offset)
-                    {
-                        return new TextCaret(cur);
-                    }
-                    TextItem next = cur._Next;
-                    if (next == null || next is LineStartTextItem)
-                    {
-                        return new TextCaret(cur);
-                    }
-                    else
-                    {
-                        cur = next;
-                        _AppendLine(style, next, ref curoffset);
-                    }
-                }
-            }
-
-            public override RemoveHandler Link(InputContext Context)
-            {
-                // Update context information
+                // Update context and link information
                 this._Context = Context;
                 this.TextBlock._Linked = this;
-                this.UpdateSelection(this.TextBlock._Selection);
                 RemoveHandler rh = delegate
                 {
                     this._Context = null;
@@ -348,9 +170,13 @@ namespace DUIP.UI
                             sel.ReleaseProbe();
                         }
                     }
-                    if(this._RemoveUpdate != null)
+                    if (this._RemoveUpdate != null)
                     {
                         this._RemoveUpdate();
+                    }
+                    if (this._RemoveProbeMessage != null)
+                    {
+                        this._RemoveProbeMessage();
                     }
                 };
 
@@ -522,11 +348,22 @@ namespace DUIP.UI
                     this._RemoveUpdate = null;
                 }
             }
+
+            /// <summary>
+            /// Probe message handler for a layout.
+            /// </summary>
+            public void ProbeMessage(ProbeMessage Message)
+            {
+
+            }
            
             public TextBlock TextBlock;
             public int Width;
             public int Height;
-            private InputContext _Context;
+
+            private Context _Context;
+            private Action _ReleaseProbe;
+            private RemoveHandler _RemoveProbeMessage;
             private RemoveHandler _RemoveUpdate;
         }
 
@@ -536,19 +373,9 @@ namespace DUIP.UI
         private class _SelectionInfo
         {
             /// <summary>
-            /// The probe this selection is for.
-            /// </summary>
-            public Probe Probe;
-
-            /// <summary>
-            /// Releases the lock on the probe for this selection. If this is null, the probe is not locked.
-            /// </summary>
-            public Action ReleaseProbe;
-
-            /// <summary>
             /// The selected region.
             /// </summary>
-            public TextSelection Selection;
+            //public TextSelection Selection;
 
             /// <summary>
             /// The current time, in seconds, after the start of the current blink cycle.
@@ -556,8 +383,7 @@ namespace DUIP.UI
             public double CaretBlinkTime;
         }
 
-        private LineStartTextItem _First;
-        private TextItem _Last;
+        private TextSection _Text;
         private TextStyle _Style;
         private _SelectionInfo _Selection;
         private _Layout _Linked;
@@ -658,475 +484,301 @@ namespace DUIP.UI
     }
 
     /// <summary>
-    /// A position of a space between items within a text block. If the contents of the text block change, the
-    /// caret will remain in the same position relative to surronding items.
+    /// A section of text displayable by a text block.
     /// </summary>
-    public struct TextCaret
+    /// <remarks>Positions in a text section are given by an integer representing the index of the item directly after
+    /// the position. If a position is equal to the size of the text section, the position represents the end of the text section.</remarks>
+    public abstract class TextSection
     {
-        internal TextCaret(TextItem Previous)
+        public TextSection(int Size)
         {
-            this._Previous = Previous;
+            this.Size = Size;
         }
 
         /// <summary>
-        /// The item immediately before this caret.
+        /// The size of the text section.
         /// </summary>
-        public TextItem Previous
-        {
-            get
-            {
-                return this._Previous;
-            }
-        }
+        public readonly int Size;
 
         /// <summary>
-        /// The item immediately after this caret.
+        /// Inserts the given text section into this section at the given position and returns the resulting text section.
         /// </summary>
-        public TextItem Next
+        public TextSection Insert(int Position, TextSection Section)
         {
-            get
+            if (Position == 0)
+                return Section + this;
+            if (Position == this.Size)
+                return this + Section;
+
+            ConcatTextSection cts = this as ConcatTextSection;
+            if (cts != null)
             {
-                return this._Previous._Next;
-            }
-        }
-
-        /// <summary>
-        /// The caret for the previous distinct position before this one. If there is no such position, the
-        /// same caret will be returned.
-        /// </summary>
-        public TextCaret Before
-        {
-            get
-            {
-                TextItem cur = this._Previous;
-                while (true)
-                {
-                    TextItem prev = cur._Previous;
-                    if (prev == null)
-                    {
-                        return new TextCaret(cur);
-                    }
-                    if (_Visible(cur))
-                    {
-                        return new TextCaret(prev);
-                    }
-                    cur = prev;
-                }
-            }
-        }
-
-        /// <summary>
-        /// The caret for the next distinct position after this one. If there is no such position, the
-        /// same caret will be returned.
-        /// </summary>
-        public TextCaret After
-        {
-            get
-            {
-                TextItem cur = this._Previous;
-                while (true)
-                {
-                    TextItem next = cur._Next;
-                    if (next == null)
-                    {
-                        return new TextCaret(cur);
-                    }
-                    if (_Visible(next))
-                    {
-                        return new TextCaret(next);
-                    }
-                    cur = next;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Determines wether caret A is after caret B.
-        /// </summary>
-        public static bool Compare(TextCaret A, TextCaret B)
-        {
-            TextItem cp = A._Previous;
-            TextItem sp = B._Previous;
-            TextItem csp = sp;
-            LineStartTextItem cl;
-            LineStartTextItem sl;
-
-            while ((sl = csp as LineStartTextItem) == null)
-            {
-                if (csp == cp)
-                {
-                    return false;
-                }
-                csp = csp._Previous;
-            }
-
-            while ((cl = cp as LineStartTextItem) == null)
-            {
-                cp = cp._Previous;
-                if (cp == sp)
-                {
-                    return true;
-                }
-            }
-
-            while ((cl = cl.NextLine) != null)
-            {
-                if (cl == sl)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Gets if the given item has a width over 0.
-        /// </summary>
-        private static bool _Visible(TextItem Item)
-        {
-            return 
-                Item is LineStartTextItem || Item is SpaceTextItem || 
-                Item is CharacterTextItem || Item is IndentTextItem;
-        }
-
-        public static bool operator ==(TextCaret A, TextCaret B)
-        {
-            return A._Previous == B._Previous;
-        }
-
-        public static bool operator !=(TextCaret A, TextCaret B)
-        {
-            return A._Previous != B._Previous;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return this._Previous == ((TextCaret)obj)._Previous;
-        }
-
-        public override int GetHashCode()
-        {
-            return this._Previous.GetHashCode();
-        }
-
-        internal TextItem _Previous;
-    }
-
-    /// <summary>
-    /// A possible selection within a text block that can either be a single region, or a directed region of items.
-    /// </summary>
-    public struct TextSelection
-    {
-        public TextSelection(TextCaret Caret)
-        {
-            this._Primary = Caret;
-            this._Secondary = Caret;
-            this._Order = false;
-        }
-
-        public TextSelection(TextCaret Primary, TextCaret Secondary)
-        {
-            this._Primary = Primary;
-            this._Secondary = Secondary;
-            this._Order = TextCaret.Compare(Primary, Secondary);
-        }
-
-        /// <summary>
-        /// Gets the caret for the primary selection point. This is where the cursor should appear.
-        /// </summary>
-        public TextCaret Primary
-        {
-            get
-            {
-                return this._Primary;
-            }
-        }
-
-        /// <summary>
-        /// Gets the caret for the secondary selection point. This shows the extent of the selection. If this is the same as the primary
-        /// selection point, then the selection is only at one point.
-        /// </summary>
-        public TextCaret Secondary
-        {
-            get
-            {
-                return this._Secondary;
-            }
-        }
-
-        /// <summary>
-        /// Gets the start caret of the selected region.
-        /// </summary>
-        public TextCaret Start
-        {
-            get
-            {
-                return this._Order ? this._Secondary : this._Primary;
-            }
-        }
-
-        /// <summary>
-        /// Gets the end caret of the selected region.
-        /// </summary>
-        public TextCaret End
-        {
-            get
-            {
-                return this._Order ? this._Primary : this._Secondary;
-            }
-        }
-
-        /// <summary>
-        /// Gets wether the primary caret is after the secondary caret.
-        /// </summary>
-        public bool Order
-        {
-            get
-            {
-                return this._Order;
-            }
-        }
-
-        /// <summary>
-        /// Updates the order of the selection in response to a change in either of the carets.
-        /// </summary>
-        internal void _UpdateOrder()
-        {
-            this._Order = TextCaret.Compare(this._Primary, this._Secondary);
-        }
-
-        internal TextCaret _Primary;
-        internal TextCaret _Secondary;
-        internal bool _Order;
-    }
-
-    /// <summary>
-    /// A unique section of text items. Note that a text section can not be created with items that
-    /// are in use by a text block.
-    /// </summary>
-    public struct TextSection
-    {
-        public TextSection(TextItem First, TextItem Last)
-        {
-            this._First = First;
-            this._Last = Last;
-        }
-
-        public TextSection(TextItem Item)
-        {
-            this._First = Item;
-            this._Last = Item;
-        }
-
-        /// <summary>
-        /// Gets the first item in this section.
-        /// </summary>
-        public TextItem First
-        {
-            get
-            {
-                return this._First;
-            }
-        }
-
-        /// <summary>
-        /// Gets the last item in this section.
-        /// </summary>
-        public TextItem Last
-        {
-            get
-            {
-                return this._Last;
-            }
-        }
-
-        /// <summary>
-        /// Creates a text section for the given text, using spaces, indents, and line breaks where needed.
-        /// </summary>
-        public static TextSection Create(string Text)
-        {
-            if (Text.Length > 0)
-            {
-                TextItem prev = TextItem.Create(Text[0]);
-                TextItem first = prev;
-                for (int t = 1; t < Text.Length; t++)
-                {
-                    TextItem cur = TextItem.Create(Text[t]);
-                    if (cur != null)
-                    {
-                        cur._Previous = prev;
-                        prev._Next = cur;
-                        prev = cur;
-                    }
-                }
-                TextItem last = prev;
-                return new TextSection(first, last);
-            }
-            else
-            {
-                return new TextSection();
-            }
-        }
-
-        public static TextSection operator +(TextSection First, TextSection Last)
-        {
-            return new TextSection(First.First, Last.Last);
-        }
-
-        internal TextItem _First;
-        internal TextItem _Last;
-    }
-
-    /// <summary>
-    /// A unique item within a text block.
-    /// </summary>
-    public class TextItem
-    {
-        /// <summary>
-        /// Gets the item immediately before this item.
-        /// </summary>
-        public TextItem Previous
-        {
-            get
-            {
-                return this._Previous;
-            }
-        }
-
-        /// <summary>
-        /// Gets the item immediately after this item.
-        /// </summary>
-        public TextItem Next
-        {
-            get
-            {
-                return this._Next;
-            }
-        }
-
-        /// <summary>
-        /// Gets the line start item for the line this item is on.
-        /// </summary>
-        public LineStartTextItem Line
-        {
-            get
-            {
-                return this.SearchBack<LineStartTextItem>(null);
-            }
-        }
-
-        /// <summary>
-        /// Searches for an item of the given type starting with this item and going backwards. If no item is found before reaching the given stop item, null is returned.
-        /// </summary>
-        public T SearchBack<T>(TextItem Stop)
-            where T : TextItem
-        {
-            TextItem cur = this;
-            while (true)
-            {
-                if (cur == Stop)
-                {
-                    return null;
-                }
-
-                T test = cur as T;
-                if (test != null)
-                {
-                    return test;
-                }
-
-                cur = cur._Previous;
-            }
-        }
-
-        /// <summary>
-        /// Creates a text item for the given character, using spaces, indents, and line breaks where needed. Returns
-        /// null if the character should be ignored.
-        /// </summary>
-        public static TextItem Create(char Character)
-        {
-            switch (Character)
-            {
-                case ' ':
-                    return new SpaceTextItem { Width = 1 };
-                case '\r':
-                    return null;
-                case '\n':
-                    return new LineStartTextItem();
-                case '\t':
-                    return new IndentTextItem();
-                default:
-                    return new CharacterTextItem { Name = Character };
-            }
-        }
-
-        internal TextItem _Previous;
-        internal TextItem _Next;
-    }
-
-    /// <summary>
-    /// A text item that marks the start of a line.
-    /// </summary>
-    public class LineStartTextItem : TextItem
-    {
-        /// <summary>
-        /// Gets the next line start item following this one, or null if there isn't one.
-        /// </summary>
-        public LineStartTextItem NextLine
-        {
-            get
-            {
-                if (this._NextLine != null)
-                {
-                    return this._NextLine;
-                }
+                int asize = cts.A.Size;
+                if (Position <= asize)
+                    return cts.A.Insert(Position, Section) + cts.B;
                 else
+                    return cts.A + cts.B.Insert(Position, Section);
+            }
+
+            return this.Subsection(0, Position) + Section + this.Subsection(Position, this.Size);
+        }
+
+        /// <summary>
+        /// Removes the items between the given positions and returns the resulting text section.
+        /// </summary>
+        public TextSection Remove(int Start, int End)
+        {
+            return this.Subsection(0, Start) + this.Subsection(End, this.Size);
+        }
+
+        /// <summary>
+        /// Returns the text section for the items between the given positions.
+        /// </summary>
+        public TextSection Subsection(int Start, int End)
+        {
+            if (Start == 0 && End == this.Size)
+                return this;
+            if (Start == End)
+                return NullTextSection.Instance;
+
+            ConcatTextSection cts = this as ConcatTextSection;
+            if (cts != null)
+            {
+                int asize = cts.A.Size;
+                if (Start >= asize)
+                    return cts.B.Subsection(Start - asize, End - asize);
+                if (End <= asize)
+                    return cts.A.Subsection(Start, End);
+                return cts.A.Subsection(Start, asize) + cts.B.Subsection(0, End - asize);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        public static TextSection operator +(TextSection A, TextSection B)
+        {
+            if (A == NullTextSection.Instance)
+                return B;
+            if (B == NullTextSection.Instance)
+                return A;
+            return new ConcatTextSection(A, B);
+        }
+
+        public static implicit operator TextSection(string Source)
+        {
+            TextSection sect = NullTextSection.Instance;
+            for (int t = 0; t < Source.Length; t++)
+            {
+                char c = Source[t];
+                switch (c)
                 {
-                    TextItem cur = this._Next;
-                    while (cur != null)
-                    {
-                        LineStartTextItem lst = cur as LineStartTextItem;
-                        if (lst != null)
-                        {
-                            return this._NextLine = lst;
-                        }
-                        cur = cur._Next;
-                    }
-                    return null;
+                    case '\b':
+                    case '\r':
+                        break;
+                    case '\n':
+                        sect += TextItem.LineStart;
+                        break;
+                    case '\t':
+                        sect += TextItem.Indent;
+                        break;
+                    case ' ':
+                        sect += TextItem.Space(1);
+                        break;
+                    default:
+                        sect += TextItem.Character(c);
+                        break;
                 }
+            }
+            return sect;
+        }
+    }
+
+    /// <summary>
+    /// A text section containing no items.
+    /// </summary>
+    public sealed class NullTextSection : TextSection
+    {
+        private NullTextSection()
+            : base(0)
+        {
+
+        }
+
+        /// <summary>
+        /// The only instance of this class.
+        /// </summary>
+        public static readonly NullTextSection Instance = new NullTextSection();
+    }
+
+    /// <summary>
+    /// A text section created by concatenating two text sections.
+    /// </summary>
+    public sealed class ConcatTextSection : TextSection
+    {
+        public ConcatTextSection(TextSection A, TextSection B) :
+            base(A.Size + B.Size)
+        {
+            this._A = A;
+            this._B = B;
+        }
+
+        /// <summary>
+        /// Gets the first of the components of this text section.
+        /// </summary>
+        public TextSection A
+        {
+            get
+            {
+                return this._A;
             }
         }
 
-        internal LineStartTextItem _NextLine;
-    }
-
-    /// <summary>
-    /// A text item that marks an indentation.
-    /// </summary>
-    public class IndentTextItem : TextItem
-    {
-
-    }
-
-    /// <summary>
-    /// A text item that displays a single character.
-    /// </summary>
-    public class CharacterTextItem : TextItem
-    {
         /// <summary>
-        /// The name of the character to display.
+        /// Gets the second of the components of this text section.
         /// </summary>
-        public char Name;
+        public TextSection B
+        {
+            get
+            {
+                return this._B;
+            }
+        }
+
+        private TextSection _A;
+        private TextSection _B;
     }
 
     /// <summary>
-    /// A text item that displays a space with a certain width.
+    /// A text section for a single indivisible item.
     /// </summary>
-    public class SpaceTextItem : TextItem
+    public abstract class TextItem : TextSection
     {
+        public TextItem()
+            : base(1)
+        {
+
+        }
+
         /// <summary>
-        /// The width of the space to display.
+        /// Gets a line start text item.
         /// </summary>
-        public int Width;
+        public static LineStartTextItem LineStart
+        {
+            get
+            {
+                return LineStartTextItem.Instance;
+            }
+        }
+
+        /// <summary>
+        /// Gets an indent text item.
+        /// </summary>
+        public static IndentTextItem Indent
+        {
+            get
+            {
+                return IndentTextItem.Instance;
+            }
+        }
+
+        /// <summary>
+        /// Gets a space text item of a certain length.
+        /// </summary>
+        public static SpaceTextItem Space(int Length)
+        {
+            if (Length < _SpaceCacheSize)
+            {
+                SpaceTextItem item = _SpaceCache[Length];
+                if (item == null)
+                    _SpaceCache[Length] = item = new SpaceTextItem(Length);
+                return item;
+            }
+            return new SpaceTextItem(Length);
+        }
+        private const int _SpaceCacheSize = 16;
+        private static readonly SpaceTextItem[] _SpaceCache = new SpaceTextItem[_SpaceCacheSize];
+
+        /// <summary>
+        /// Gets a character text item for a character of a certain name.
+        /// </summary>
+        public static CharacterTextItem Character(char Name)
+        {
+            int ind = (int)Name - _CharacterCacheStart;
+            if (ind >= 0 && ind < _CharacterCacheSize)
+            {
+                CharacterTextItem item = _CharacterCache[ind];
+                if (item == null)
+                    _CharacterCache[ind] = item = new CharacterTextItem(Name);
+                return item;
+            }
+            return new CharacterTextItem(Name);
+        }
+        private const int _CharacterCacheStart = 33;
+        private const int _CharacterCacheSize = 93;
+        private static readonly CharacterTextItem[] _CharacterCache = new CharacterTextItem[_CharacterCacheSize];
+    }
+
+    /// <summary>
+    /// A text item that signals the start of a line.
+    /// </summary>
+    public sealed class LineStartTextItem : TextItem
+    {
+        private LineStartTextItem()
+        {
+
+        }
+
+        /// <summary>
+        /// The only instance of this class.
+        /// </summary>
+        public static readonly LineStartTextItem Instance = new LineStartTextItem();
+    }
+
+    /// <summary>
+    /// A text item that marks a variable-length indentation.
+    /// </summary>
+    public sealed class IndentTextItem : TextItem
+    {
+        private IndentTextItem()
+        {
+
+        }
+
+        /// <summary>
+        /// The only instance of this class.
+        /// </summary>
+        public static readonly IndentTextItem Instance = new IndentTextItem();
+    }
+
+    /// <summary>
+    /// A text item that signals a certain amount of space.
+    /// </summary>
+    public sealed class SpaceTextItem : TextItem
+    {
+        public SpaceTextItem(int Length)
+        {
+            this.Length = Length;
+        }
+
+        /// <summary>
+        /// The length of the space text item.
+        /// </summary>
+        public readonly int Length;
+    }
+
+    /// <summary>
+    /// A text item for a certain character.
+    /// </summary>
+    public sealed class CharacterTextItem : TextItem
+    {
+        public CharacterTextItem(char Name)
+        {
+            this.Name = Name;
+        }
+
+        /// <summary>
+        /// The name of the character for the text item.
+        /// </summary>
+        public readonly char Name;
     }
 }

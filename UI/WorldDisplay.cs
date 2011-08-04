@@ -8,7 +8,8 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
-using WPoint = System.Drawing.Point;
+using SPoint = System.Drawing.Point;
+using SKeyPressEventArgs = System.Windows.Forms.KeyPressEventArgs;
 
 using DUIP.UI.Graphics;
 using DUIP.UI.Render;
@@ -84,7 +85,7 @@ namespace DUIP.UI
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            WPoint loc = e.Location;
+            SPoint loc = e.Location;
             this._Probe.UpdatePosition(this._Project(loc));
         }
 
@@ -108,7 +109,7 @@ namespace DUIP.UI
         {
             if (e.Button == MouseButtons.Right)
             {
-                WPoint point = new WPoint(e.X, e.Y);
+                SPoint point = new SPoint(e.X, e.Y);
                 Point pos = this._Project(point);
                 this._Probe.UpdatePosition(pos);
                 ContextMenuStrip cms = this.BuildContextMenu(pos);
@@ -190,7 +191,7 @@ namespace DUIP.UI
             if (!this._DragContent.IsNull)
             {
                 this.TopLevelControl.Focus();
-                this._World.Spawn(this._DragContent, this._Project(this.PointToClient(new WPoint(e.X, e.Y))));
+                this._World.Spawn(this._DragContent, this._Project(this.PointToClient(new SPoint(e.X, e.Y))));
                 this._DragContent = null;
             }
         }
@@ -202,6 +203,53 @@ namespace DUIP.UI
                 this._DragContent.Dispose();
                 this._DragContent = null;
             }
+        }
+
+        protected override bool IsInputKey(Keys keyData)
+        {
+            return true;
+        }
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            switch (e.KeyCode)
+            {
+                case Keys.Left:
+                    this._Probe.SendMessage(new ProbeMessage { Type = ProbeMessageType.NavigateLeft });
+                    break;
+                case Keys.Up:
+                    this._Probe.SendMessage(new ProbeMessage { Type = ProbeMessageType.NavigateUp });
+                    break;
+                case Keys.Right:
+                    this._Probe.SendMessage(new ProbeMessage { Type = ProbeMessageType.NavigateRight });
+                    break;
+                case Keys.Down:
+                    this._Probe.SendMessage(new ProbeMessage { Type = ProbeMessageType.NavigateDown });
+                    break;
+                case Keys.C:
+                    if (e.Control)
+                        this._Probe.SendMessage(new ProbeMessage { Type = ProbeMessageType.Copy });
+                    break;
+                case Keys.V:
+                    if (e.Control)
+                        this._Probe.SendMessage(new ProbeMessage { Type = ProbeMessageType.Paste });
+                    break;
+                case Keys.X:
+                    if (e.Control)
+                        this._Probe.SendMessage(new ProbeMessage { Type = ProbeMessageType.Cut });
+                    break;
+                default:
+                    return;
+            }
+        }
+
+        protected override void OnKeyPress(SKeyPressEventArgs e)
+        {
+            this._Probe.SendMessage(new ProbeMessage
+            {
+                Type = ProbeMessageType.Type,
+                Character = e.KeyChar
+            });
         }
 
         /// <summary>
@@ -226,6 +274,17 @@ namespace DUIP.UI
                 if (this._SignalChange != null)
                 {
                     this._SignalChange(Signal, Value);
+                }
+            }
+
+            /// <summary>
+            /// Sends a message from this probe.
+            /// </summary>
+            public void SendMessage(ProbeMessage Message)
+            {
+                if (this._Message != null)
+                {
+                    this._Message(Message);
                 }
             }
 
@@ -278,6 +337,13 @@ namespace DUIP.UI
             }
             private Action<ProbeSignal, bool> _SignalChange;
 
+            public override RemoveHandler RegisterMessage(Action<ProbeMessage> Callback)
+            {
+                this._Message += Callback;
+                return delegate { this._Message -= Callback; };
+            }
+            private Action<ProbeMessage> _Message;
+
             private Point _Position;
             private Action _Focus;
             private bool _Locked;
@@ -287,7 +353,7 @@ namespace DUIP.UI
         /// <summary>
         /// The input context used for a world view.
         /// </summary>
-        public class InputContext : UI.InputContext
+        public class InputContext : UI.Context
         {
             public InputContext(Probe Probe)
             {
@@ -367,7 +433,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets the world position of a point in coordinates relative to the client area of this control.
         /// </summary>
-        private Point _Project(WPoint Point)
+        private Point _Project(SPoint Point)
         {
             return this._View.Project(new Point(Point.X / (double)this.Width, Point.Y / (double)this.Height));
         }

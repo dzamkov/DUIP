@@ -30,7 +30,7 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size)
         {
             Size = SizeRange.TopLeft;
             return _Layout.Instance;

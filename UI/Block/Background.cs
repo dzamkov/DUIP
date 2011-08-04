@@ -54,7 +54,7 @@ namespace DUIP.UI
             }
         }
 
-        public override Layout CreateLayout(InputContext Context, Rectangle SizeRange, out Point Size)
+        public override Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size)
         {
             return new _Layout
             {
@@ -67,7 +67,7 @@ namespace DUIP.UI
 
         private class _Layout : Layout
         {
-            public override RemoveHandler Link(InputContext Context)
+            public override RemoveHandler Link(Context Context)
             {
                 return this.Inner.Link(Context);
             }
