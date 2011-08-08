@@ -489,34 +489,19 @@ namespace DUIP.UI
         public ConcatTextSection(TextSection A, TextSection B) :
             base(A.Size + B.Size)
         {
-            this._A = A;
-            this._B = B;
+            this.A = A;
+            this.B = B;
         }
 
         /// <summary>
-        /// Gets the first of the components of this text section.
+        /// The first of the components of the text section.
         /// </summary>
-        public TextSection A
-        {
-            get
-            {
-                return this._A;
-            }
-        }
+        public readonly TextSection A;
 
         /// <summary>
-        /// Gets the second of the components of this text section.
+        /// The second of the components of the text section.
         /// </summary>
-        public TextSection B
-        {
-            get
-            {
-                return this._B;
-            }
-        }
-
-        private TextSection _A;
-        private TextSection _B;
+        public readonly TextSection B;
     }
 
     /// <summary>
@@ -658,7 +643,82 @@ namespace DUIP.UI
     /// </summary>
     public abstract class StyledTextSection
     {
+        /// <summary>
+        /// Gets a text section that contains the unstyled items of this styled text section.
+        /// </summary>
+        public TextSection Source
+        {
+            get
+            {
+                UniformStyledTextSection usts = this as UniformStyledTextSection;
+                if (usts != null)
+                {
+                    return usts.Source;
+                }
 
+                ConcatStyledTextSection csts = this as ConcatStyledTextSection;
+                if (csts != null)
+                {
+                    return csts.A.Source + csts.B.Source;
+                }
+
+                throw new NotImplementedException();
+            }
+        }
+
+        /// <summary>
+        /// Gets the amount of items in this styled text section.
+        /// </summary>
+        public int Size
+        {
+            get
+            {
+                UniformStyledTextSection usts = this as UniformStyledTextSection;
+                if (usts != null)
+                {
+                    return usts.Source.Size;
+                }
+
+                ConcatStyledTextSection csts = this as ConcatStyledTextSection;
+                if (csts != null)
+                {
+                    return csts.Size;
+                }
+
+                throw new NotImplementedException();
+            }
+        }
+
+        /// <summary>
+        /// Returns the styled text section for the items between the given positions.
+        /// </summary>
+        public StyledTextSection Subsection(int Start, int End)
+        {
+            UniformStyledTextSection usts = this as UniformStyledTextSection;
+            if (usts != null)
+            {
+                return new UniformStyledTextSection(usts.Source.Subsection(Start, End), usts.NormalStyle, usts.SelectedStyle);
+            }
+
+            ConcatStyledTextSection csts = this as ConcatStyledTextSection;
+            if (csts != null)
+            {
+                int asize = csts.A.Size;
+                if (Start >= asize)
+                    return csts.B.Subsection(Start - asize, End - asize);
+                if (End <= asize)
+                    return csts.A.Subsection(Start, End);
+                return csts.A.Subsection(Start, asize) + csts.B.Subsection(0, End - asize);
+
+            }
+
+            throw new NotImplementedException();
+        }
+
+        public static ConcatStyledTextSection operator +(StyledTextSection A, StyledTextSection B)
+        {
+            return new ConcatStyledTextSection(A, B);
+        }
     }
 
     /// <summary>
@@ -676,7 +736,7 @@ namespace DUIP.UI
         /// <summary>
         /// The source of the items for this styled text section.
         /// </summary>
-        public readonly TextSection Source;
+        public readonly new TextSection Source;
 
         /// <summary>
         /// The style for the text section when not selected.
@@ -687,5 +747,33 @@ namespace DUIP.UI
         /// The style for the text section when selected.
         /// </summary>
         public readonly TextStyle SelectedStyle;
+    }
+
+    /// <summary>
+    /// A styled text section made by concating two styled text sections.
+    /// </summary>
+    public sealed class ConcatStyledTextSection : StyledTextSection
+    {
+        public ConcatStyledTextSection(StyledTextSection A, StyledTextSection B)
+        {
+            this.Size = A.Size + B.Size;
+            this.A = A;
+            this.B = B;
+        }
+
+        /// <summary>
+        /// The total amount of items in this text section.
+        /// </summary>
+        public readonly new int Size;
+
+        /// <summary>
+        /// The first of the components of this styled text section.
+        /// </summary>
+        public readonly StyledTextSection A;
+
+        /// <summary>
+        /// The second of the components of this styled text section.
+        /// </summary>
+        public readonly StyledTextSection B;
     }
 }
