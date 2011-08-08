@@ -27,10 +27,12 @@ namespace DUIP.UI
                 this._Layers.Add(new Layer
                 {
                     Figure = new CacheHintFigure("ocean" + t.ToString(), 
-                        new CellularFigure(
-                            Color.Transparent, Color.RGB(0.5, 0.7, 0.9),
-                            1.0, 40.0, CellularFigure.GridDistribution(Random, 12, error, 1.0)
-                        ).Rotate(rot).Scale(scale)),
+                        new ProjectedFigure(
+                            View.Rotation(rot) * View.Scale(scale),
+                            new CellularFigure(
+                                Color.Transparent, Color.RGB(0.5, 0.7, 0.9),
+                                1.0, 40.0, CellularFigure.GridDistribution(Random, 12, error, 1.0)
+                        ))),
                     MinZoom = zoom - 4.0,
                     MaxZoom = zoom + 8.0
                 });
@@ -60,7 +62,7 @@ namespace DUIP.UI
                 if (pg > 0.0 && pg < 1.0)
                 {
                     double op = pg * (1.0 - pg) * 4.0;
-                    fig += l.Figure.Modulate(Color.RGBA(1.0, 1.0, 1.0, op));
+                    fig += new ModulatedFigure(Color.RGBA(1.0, 1.0, 1.0, op), l.Figure);
                 }
             }
             fig += Foreground;

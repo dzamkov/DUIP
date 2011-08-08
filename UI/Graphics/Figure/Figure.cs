@@ -11,43 +11,53 @@ namespace DUIP.UI.Graphics
     public abstract class Figure
     {
         /// <summary>
-        /// Creates a translated form of this figure.
+        /// Creates a translated form of a figure.
         /// </summary>
-        public TranslatedFigure Translate(Point Offset)
+        public static TranslatedFigure Translate(Figure Figure, Point Offset)
         {
-            return new TranslatedFigure(Offset, this);
+            if (Figure == null)
+                return null;
+            return new TranslatedFigure(Offset, Figure);
         }
 
         /// <summary>
-        /// Creates a scaled form of this figure.
+        /// Creates a scaled form of a figure.
         /// </summary>
-        public ScaledFigure Scale(double Factor)
+        public static ScaledFigure Scale(Figure Figure, double Factor)
         {
-            return new ScaledFigure(Factor, this);
+            if (Figure == null)
+                return null;
+            return new ScaledFigure(Factor, Figure);
         }
 
         /// <summary>
-        /// Creates a rotated form of this figure.
+        /// Creates a rotated form of a figure.
         /// </summary>
-        public RotatedFigure Rotate(double Angle)
+        public static RotatedFigure Rotate(Figure Figure, double Angle)
         {
-            return new RotatedFigure(Angle, this);
+            if (Figure == null)
+                return null;
+            return new RotatedFigure(Angle, Figure);
         }
 
         /// <summary>
-        /// Creates a modulated form of this figure.
+        /// Creates a modulated form of a figure.
         /// </summary>
-        public ModulatedFigure Modulate(Color Modulation)
+        public static ModulatedFigure Modulate(Figure Figure, Color Modulation)
         {
-            return new ModulatedFigure(Modulation, this);
+            if (Figure == null)
+                return null;
+            return new ModulatedFigure(Modulation, Figure);
         }
 
         /// <summary>
-        /// Creates a projected form of this figure.
+        /// Creates a projected form of a figure.
         /// </summary>
-        public ProjectedFigure Project(View Projection)
+        public static ProjectedFigure Project(Figure Figure, View Projection)
         {
-            return new ProjectedFigure(Projection, this);
+            if (Figure == null)
+                return null;
+            return new ProjectedFigure(Projection, Figure);
         }
 
         public static Figure operator +(Figure Under, Figure Over)

@@ -11,76 +11,38 @@ namespace DUIP.UI
     /// </summary>
     public class FlowBlock : Block
     {
-        public FlowBlock()
+        public FlowBlock(List<FlowItem> Items, FlowFit Fit, FlowBlockStyle Style)
         {
-
-        }
-
-        public FlowBlock(FlowStyle Style, FlowFit Fit, List<FlowItem> Items)
-        {
-            this._Style = Style;
-            this._Fit = Fit;
-            this._Items = Items;
+            this.Style = Style;
+            this.Fit = Fit;
+            this.Items = Items;
         }
 
         /// <summary>
-        /// Gets or sets the style of the flow for the block.
+        /// The style of the flow block.
         /// </summary>
-        [StaticProperty]
-        public FlowStyle Style
-        {
-            get
-            {
-                return this._Style;
-            }
-            set
-            {
-                this._Style = value;
-            }
-        }
+        public readonly FlowBlockStyle Style;
 
         /// <summary>
-        /// Gets or sets the method used to determine the size of the block.
+        /// The method used to determine the size of the block.
         /// </summary>
-        [StaticProperty]
-        public FlowFit Fit
-        {
-            get
-            {
-                return this._Fit;
-            }
-            set
-            {
-                this._Fit = value;
-            }
-        }
+        public readonly FlowFit Fit;
 
         /// <summary>
-        /// Gets or sets the items in the flow block.
+        /// The (immutable list of) items in the flow block.
         /// </summary>
-        [StaticProperty]
-        public List<FlowItem> Items
-        {
-            get
-            {
-                return this._Items;
-            }
-            set
-            {
-                this._Items = value;
-            }
-        }
+        public readonly List<FlowItem> Items;
 
         public override Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size)
         {
-            FlowStyle style = this.Style;
+            FlowBlockStyle style = this.Style;
             Axis minoraxis = style.MinorAxis;
             SizeRange.TopLeft = SizeRange.TopLeft.Shift(minoraxis);
             SizeRange.BottomRight = SizeRange.BottomRight.Shift(minoraxis);
 
             // Determine minor size
             double minor = 0.0;
-            if (this._Fit == CompactFlowFit.Instance)
+            if (this.Fit == CompactFlowFit.Instance)
             {
                 minor = SizeRange.Right;
             }
@@ -126,7 +88,7 @@ namespace DUIP.UI
             
             // Build layout lines
             double major;
-            List<_Layout.Line> layoutlines = _BuildLayout(lines, this._Items, style, minor, SizeRange.Top, out major);
+            List<_Layout.Line> layoutlines = _BuildLayout(lines, this.Items, style, minor, SizeRange.Top, out major);
 
             // Create a space layout if the major size exceeds the size range
             if (major > SizeRange.Bottom + Layout.ErrorThreshold)
@@ -150,7 +112,7 @@ namespace DUIP.UI
             {
                 get
                 {
-                    FlowStyle style = this.Block.Style;
+                    FlowBlockStyle style = this.Block.Style;
                     Axis minoraxis = style.MinorAxis;
                     Alignment linealign = style.LineAlignment;
 
@@ -173,7 +135,7 @@ namespace DUIP.UI
 
                                 Point size = font.GetSize(name).Shift(minoraxis);
                                 Point off = new Point(minoff, majoff + Align.AxisOffset(linealign, majsize, size.Y)).Shift(minoraxis);
-                                components.Add(font.GetGlyph(name).Translate(off));
+                                components.Add(Figure.Translate(font.GetGlyph(name), off));
                             }
                         }
                     }
@@ -259,7 +221,7 @@ namespace DUIP.UI
         /// <param name="Start">The item to start the lines on.</param>
         /// <param name="Prefered">The prefered size of a line.</param>
         /// <param name="Max">The maximum size of a line.</param>
-        private static IEnumerable<_PlannedLine> _GetPossibleLines(List<FlowItem> Items, int Start, double Prefered, double Max, FlowStyle Style)
+        private static IEnumerable<_PlannedLine> _GetPossibleLines(List<FlowItem> Items, int Start, double Prefered, double Max, FlowBlockStyle Style)
         {
             int cur = Start;
             int size = 0;
@@ -356,7 +318,7 @@ namespace DUIP.UI
         /// </summary>
         /// <param name="Prefered">The prefered size of a line.</param>
         /// <param name="Max">The maximum size of a line.</param>
-        private static List<_PlannedLine> _GetLinesGreedy(List<FlowItem> Items, double Prefered, double Max, FlowStyle Style)
+        private static List<_PlannedLine> _GetLinesGreedy(List<FlowItem> Items, double Prefered, double Max, FlowBlockStyle Style)
         {
             int cur = 0;
             List<_PlannedLine> lines = new List<_PlannedLine>();
@@ -386,7 +348,7 @@ namespace DUIP.UI
         /// Builds the layout lines for a list of planned lines.
         /// </summary>
         private static List<_Layout.Line> _BuildLayout(
-            List<_PlannedLine> Lines, List<FlowItem> Items, FlowStyle Style, 
+            List<_PlannedLine> Lines, List<FlowItem> Items, FlowBlockStyle Style, 
             double MinorSize, double MinMajorSize, out double MajorSize)
         {
             List<_Layout.Line> lines = new List<_Layout.Line>(Lines.Count);
@@ -426,7 +388,7 @@ namespace DUIP.UI
         /// Builds a layout line for a given subset of a list of items. The major offset of the line will not be set.
         /// </summary>
         /// <param name="Length">The known minimum length of the line.</param>
-        private static _Layout.Line _BuildLayoutLine(int Start, int Size, double Length, bool Cut, List<FlowItem> Items, FlowStyle Style, double MinorSize)
+        private static _Layout.Line _BuildLayoutLine(int Start, int Size, double Length, bool Cut, List<FlowItem> Items, FlowBlockStyle Style, double MinorSize)
         {
             Axis minoraxis = Style.MinorAxis;
             double majorsize = Style.LineSize;
@@ -530,14 +492,14 @@ namespace DUIP.UI
         /// </summary>
         private _Metrics _CreateMetrics()
         {
-            FlowStyle style = this._Style;
+            FlowBlockStyle style = this.Style;
             Axis minoraxis = style.MinorAxis;
             double linesize = style.LineSize;
 
             Point avg = Point.Zero;
             Point max = Point.Zero;
             int breaks = 0;
-            foreach (FlowItem item in this._Items)
+            foreach (FlowItem item in this.Items)
             {
                 CharacterFlowItem cfi = item as CharacterFlowItem;
                 if (cfi != null)
@@ -575,7 +537,7 @@ namespace DUIP.UI
                 }
             }
 
-            double icount = 1.0 / this._Items.Count;
+            double icount = 1.0 / this.Items.Count;
             return new _Metrics
             {
                 AverageSize = avg * icount,
@@ -602,10 +564,10 @@ namespace DUIP.UI
         /// <param name="Major">The predicted major size of the layout.</param>
         private double _PickMinor(double Min, double Max, out double Major)
         {
-            FlowStyle style = this._Style;
-            FlowFit fit = this._Fit;
+            FlowBlockStyle style = this.Style;
+            FlowFit fit = this.Fit;
             _Metrics metrics = this._GetMetrics();
-            int itemcount = this._Items.Count;
+            int itemcount = this.Items.Count;
 
             Point avg = metrics.AverageSize;
             Point max = metrics.MaximumSize;
@@ -643,9 +605,6 @@ namespace DUIP.UI
         }
 
         private _Metrics _MetricsCache;
-        private FlowFit _Fit;
-        private FlowStyle _Style;
-        private List<FlowItem> _Items;
     }
 
     /// <summary>
@@ -681,11 +640,7 @@ namespace DUIP.UI
         /// </summary>
         public static SpaceFlowItem Space(double Length, bool Breaking)
         {
-            return new SpaceFlowItem
-            {
-                Length = Length,
-                Breaking = Breaking
-            };
+            return new SpaceFlowItem(Length, Breaking);
         }
 
         /// <summary>
@@ -693,11 +648,7 @@ namespace DUIP.UI
         /// </summary>
         public static CharacterFlowItem Character(char Name, Font Font)
         {
-            return new CharacterFlowItem
-            {
-                Name = Name,
-                Font = Font
-            };
+            return new CharacterFlowItem(Name, Font);
         }
 
         /// <summary>
@@ -734,7 +685,7 @@ namespace DUIP.UI
     /// <summary>
     /// An invisible flow item that allows the flow to be broken into seperate lines where it occurs.
     /// </summary>
-    public class BreakFlowItem : FlowItem
+    public sealed class BreakFlowItem : FlowItem
     {
         private BreakFlowItem()
         {
@@ -751,7 +702,7 @@ namespace DUIP.UI
     /// A flow item that forces the current line to end. If the flow is justified, the line this item is on
     /// will be ragged.
     /// </summary>
-    public class CutFlowItem : FlowItem
+    public sealed class CutFlowItem : FlowItem
     {
         private CutFlowItem()
         {
@@ -767,34 +718,46 @@ namespace DUIP.UI
     /// <summary>
     /// A flow item that creates some spacing along the minor axis of a line.
     /// </summary>
-    public class SpaceFlowItem : FlowItem
+    public sealed class SpaceFlowItem : FlowItem
     {
+        public SpaceFlowItem(double Length, bool Breaking)
+        {
+            this.Length = Length;
+            this.Breaking = Breaking;
+        }
+
         /// <summary>
         /// Gets the length of the space. The space may be stretched in a justified flow.
         /// </summary>
-        public double Length;
+        public readonly double Length;
 
         /// <summary>
         /// Determines wether the space can act as a break between lines. If a space does cause a line break, the space will
         /// not be visible.
         /// </summary>
-        public bool Breaking;
+        public readonly bool Breaking;
     }
 
     /// <summary>
     /// A flow item that displays a glyph of a certain font.
     /// </summary>
-    public class CharacterFlowItem : FlowItem
+    public sealed class CharacterFlowItem : FlowItem
     {
+        public CharacterFlowItem(char Name, Font Font)
+        {
+            this.Name = Name;
+            this.Font = Font;
+        }
+
         /// <summary>
         /// The name of the glyph to display.
         /// </summary>
-        public char Name;
+        public readonly char Name;
 
         /// <summary>
         /// The font to use to display the glyph.
         /// </summary>
-        public Font Font;
+        public readonly Font Font;
     }
 
     /// <summary>
@@ -888,37 +851,53 @@ namespace DUIP.UI
     /// </summary>
     /// <remarks>The minor direction is the direction items within a line follow. The major direction
     /// is the direction lines follow.</remarks>
-    public class FlowStyle
+    public class FlowBlockStyle
     {
+        public FlowBlockStyle(
+            FlowJustification Justification,
+            FlowDirection Direction,
+            FlowWrap WrapMode,
+            Alignment LineAlignment,
+            double LineSize,
+            double LineSpacing)
+        {
+            this.Justification = Justification;
+            this.Direction = Direction;
+            this.WrapMode = WrapMode;
+            this.LineAlignment = LineAlignment;
+            this.LineSize = LineSize;
+            this.LineSpacing = LineSpacing;
+        }
+
         /// <summary>
         /// The justification mode for items.
         /// </summary>
-        public FlowJustification Justification;
+        public readonly FlowJustification Justification;
 
         /// <summary>
         /// The direction of the flow.
         /// </summary>
-        public FlowDirection Direction;
+        public readonly FlowDirection Direction;
 
         /// <summary>
         /// The wrap mode for the flow.
         /// </summary>
-        public FlowWrap WrapMode;
+        public readonly FlowWrap WrapMode;
 
         /// <summary>
         /// The alignment of items within lines on the major axis.
         /// </summary>
-        public Alignment LineAlignment;
+        public readonly Alignment LineAlignment;
 
         /// <summary>
         /// The minimum size, on the major axis, of a line.
         /// </summary>
-        public double LineSize;
+        public readonly double LineSize;
 
         /// <summary>
         /// The amount of space, in the major direction, between lines.
         /// </summary>
-        public double LineSpacing;
+        public readonly double LineSpacing;
 
         /// <summary>
         /// Gets the minor axis for this flow style.

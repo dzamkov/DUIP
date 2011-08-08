@@ -15,7 +15,7 @@ namespace DUIP.UI
     /// </summary>
     public class Node : IDisposable
     {
-        public Node(Context WorldInputContext, Disposable<Content> Content, Disposable<Block> Block, Point Position, Point Velocity)
+        public Node(Context WorldInputContext, Disposable<Content> Content, Block Block, Point Position, Point Velocity)
         {
             this._Content = Content;
             this._Block = Block;
@@ -27,7 +27,7 @@ namespace DUIP.UI
             this._Layout.Link(this._InputContext);
         }
 
-        public Node(Context WorldInputContext, Disposable<Content> Content, Disposable<Block> Block, Layout Layout, Point Size, Point Position, Point Velocity)
+        public Node(Context WorldInputContext, Disposable<Content> Content, Block Block, Layout Layout, Point Size, Point Position, Point Velocity)
         {
             this._Content = Content;
             this._Block = Block;
@@ -251,7 +251,7 @@ namespace DUIP.UI
         {
             get
             {
-                return this._Layout.Figure.Translate(this._Position);
+                return Figure.Translate(this._Layout.Figure, this._Position);
             }
         }
 

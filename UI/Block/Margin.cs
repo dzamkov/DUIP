@@ -9,54 +9,27 @@ namespace DUIP.UI
     /// <summary>
     /// A block that applies a margin to an inner block.
     /// </summary>
-    public class MarginBlock : Block, IDisposable
+    public class MarginBlock : Block
     {
-        public MarginBlock()
+        public MarginBlock(Compass<double> Margin, Block Inner)
         {
-
-        }
-
-        public MarginBlock(Compass<double> Margin, Disposable<Block> Inner)
-        {
-            this._Margin = Margin;
-            this._Inner = Inner;
+            this.Margin = Margin;
+            this.Inner = Inner;
         }
 
         /// <summary>
-        /// Gets or sets the size of the margin applied by this block.
+        /// The size of the margin applied by this block.
         /// </summary>
-        [StaticProperty]
-        public Compass<double> Margin
-        {
-            get
-            {
-                return this._Margin;
-            }
-            set
-            {
-                this._Margin = value;
-            }
-        }
+        public readonly Compass<double> Margin;
 
         /// <summary>
-        /// Gets or sets the inner block for this margin block.
+        /// The inner block for this margin block.
         /// </summary>
-        [StaticProperty]
-        public Block Inner
-        {
-            get
-            {
-                return this._Inner;
-            }
-            set
-            {
-                this._Inner = value;
-            }
-        }
+        public readonly Block Inner;
 
         public override Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size)
         {
-            Compass<double> margin = this._Margin;
+            Compass<double> margin = this.Margin;
             Point sizepadding = new Point(margin.Left + margin.Right, margin.Up + margin.Down);
             Layout inner = this.Inner.CreateLayout(null, SizeRange.Translate(-sizepadding), out Size);
             Size += sizepadding;
@@ -78,7 +51,7 @@ namespace DUIP.UI
             {
                 get
                 {
-                    return this.Inner.Figure.Translate(this.Offset);
+                    return Figure.Translate(this.Inner.Figure, this.Offset);
                 }
             }
 
@@ -90,13 +63,5 @@ namespace DUIP.UI
             public Point Offset;
             public Layout Inner;
         }
-
-        public void Dispose()
-        {
-            this._Inner.Dispose();
-        }
-
-        private Compass<double> _Margin;
-        private Disposable<Block> _Inner;
     }
 }

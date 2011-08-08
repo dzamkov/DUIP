@@ -9,23 +9,17 @@ namespace DUIP.UI
     /// <summary>
     /// A block that displays a background below an inner block.
     /// </summary>
-    public class BackgroundBlock : Block, IDisposable
+    public class BackgroundBlock : Block
     {
-        public BackgroundBlock()
-        {
-
-        }
-
-        public BackgroundBlock(Color Color, Disposable<Block> Inner)
+        public BackgroundBlock(Color Color, Block Inner)
         {
             this._Color = Color;
-            this._Inner = Inner;
+            this.Inner = Inner;
         }
 
         /// <summary>
         /// Gets or sets the color of the background applied by this block.
         /// </summary>
-        [DynamicProperty]
         public Color Color
         {
             get
@@ -39,20 +33,9 @@ namespace DUIP.UI
         }
 
         /// <summary>
-        /// Gets or sets the inner block for this background block. This block is displayed above the background.
+        /// The inner block for this background block. This block is displayed above the background.
         /// </summary>
-        [StaticProperty]
-        public Block Inner
-        {
-            get
-            {
-                return this._Inner;
-            }
-            set
-            {
-                this._Inner = value;
-            }
-        }
+        public readonly Block Inner;
 
         public override Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size)
         {
@@ -63,7 +46,6 @@ namespace DUIP.UI
                 Size = Size
             };
         }
-
 
         private class _Layout : Layout
         {
@@ -94,12 +76,6 @@ namespace DUIP.UI
             public Point Size;
         }
 
-        public void Dispose()
-        {
-            this._Inner.Dispose();
-        }
-
         private Color _Color;
-        private Disposable<Block> _Inner;
     }
 }

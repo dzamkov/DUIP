@@ -11,64 +11,72 @@ namespace DUIP.UI
     /// </summary>
     public class TextBlock : Block
     {
-        public TextBlock()
+        public TextBlock(TextSection Text, TextBlockStyle Style)
         {
-
-        }
-
-        public TextBlock(TextSection Text, TextStyle Style)
-        {
+            this.Style = Style;
             this._Text = Text;
-            this._Style = Style;
+            this.Update(ref this._Text);
         }
+       
+        /// <summary>
+        /// The style used by the text block.
+        /// </summary>
+        public readonly TextBlockStyle Style;
 
         /// <summary>
-        /// Gets or sets the style of the text block.
+        /// Gets the stored text for the text block.
         /// </summary>
-        [StaticProperty]
-        public TextStyle Style
-        {
-            get
-            {
-                return this._Style;
-            }
-            set
-            {
-                this._Style = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the (pre-styled) text displayed by the text block. Note that using this property to set the text will
-        /// clear the current text selection, if any exists.
-        /// </summary>
-        [DynamicProperty]
         public TextSection Text
         {
             get
             {
                 return this._Text;
             }
-            set
+        }
+
+        /// <summary>
+        /// Gets the displayed text for the text block. The displayed text must have the same items as the stored text, but may have different styling
+        /// information.
+        /// </summary>
+        public virtual TextSection DisplayedText
+        {
+            get
             {
-                this._Text = value;
+                return this._Text;
             }
+        }
+
+        /// <summary>
+        /// Indicates wether the contents of this text block may be edited by the user.
+        /// </summary>
+        protected readonly bool Editable = true;
+
+        /// <summary>
+        /// Called when the text of text block is changed. This method may modify the styling and representation (but not the contents) of the stored text
+        /// before returning.
+        /// </summary>
+        protected virtual void Update(ref TextSection Text)
+        {
+
         }
 
         public override Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size)
         {
-            TextStyle style = this._Style;
+            TextBlockStyle style = this.Style;
             Point cellsize = style.CellSize;
 
             int minwidth = (int)(SizeRange.Left / cellsize.X);
             int minheight = (int)(SizeRange.Top / cellsize.Y);
 
-            // Calculate size
-            int width, height;
-            //_CalculateSize(this._First, style, out width, out height);
-            width = Math.Max(width, minwidth);
-            height = Math.Max(height, minheight);
+            // Calculate width, height and line indices
+            List<int> lineindices = new List<int>();
+            int offset = 0;
+            int width = minwidth;
+            lineindices.Add(0); // Initial line, not explicitly indicated, but still deserves an index
+            _Measure(style, this._Text, 0, lineindices, ref offset, ref width);
+            int height = Math.Max(lineindices.Count, minheight);
 
+            // Calculate actual size
             Size = new Point(width * cellsize.X, height * cellsize.Y);
             Size.X = Math.Min(Size.X, SizeRange.Right);
             Size.Y = Math.Min(Size.Y, SizeRange.Bottom);
@@ -76,7 +84,8 @@ namespace DUIP.UI
             {
                 TextBlock = this,
                 Width = width,
-                Height = height
+                Height = height,
+                LineIndices = lineindices
             };
             return layout;
         }
@@ -85,7 +94,7 @@ namespace DUIP.UI
         /// Determines the width of an item when placed at the given offset from the left edge of a text block and adds it to
         /// the offset.
         /// </summary>
-        private static void _AppendLine(TextStyle Style, TextItem Item, ref int Offset)
+        private static void _AppendLine(TextBlockStyle Style, TextItem Item, ref int Offset)
         {
             if (Item is IndentTextItem)
             {
@@ -107,6 +116,39 @@ namespace DUIP.UI
             }
         }
 
+        /// <summary>
+        /// Performs initial measurements on a text section to be used in a layout.
+        /// </summary>
+        /// <param name="LineIndices">A list to which the indices of line start items should be appened.</param>
+        /// <param name="Index">The index of the first item in the text section.</param>
+        /// <param name="Offset">The offset of the start of text section from the beginning of the current line. This will be changed to the
+        /// offset of the end of the text section from the beginning of the latest line.</param>
+        /// <param name="Width">The lower bound on the line width needed to contain the text section.</param>
+        private static void _Measure(TextBlockStyle Style, TextSection Section, int Index, List<int> LineIndices, ref int Offset, ref int Width)
+        {
+            TextItem ti = Section as TextItem;
+            if (ti != null)
+            {
+                if (ti == LineStartTextItem.Instance)
+                {
+                    Offset = 0;
+                    LineIndices.Add(Index);
+                    return;
+                }
+
+                _AppendLine(Style, ti, ref Offset);
+                Width = Math.Max(Width, Offset);
+                return;
+            }
+
+            ConcatTextSection cts = Section as ConcatTextSection;
+            if (cts != null)
+            {
+                _Measure(Style, cts.A, Index, LineIndices, ref Offset, ref Width);
+                _Measure(Style, cts.B, Index + cts.A.Size, LineIndices, ref Offset, ref Width);
+            }
+        }
+
         private class _Layout : Layout
         {
             /// <summary>
@@ -116,7 +158,7 @@ namespace DUIP.UI
             {
                 get
                 {
-                    TextStyle style = this.TextBlock._Style;
+                    TextBlockStyle style = this.TextBlock.Style;
                     Point cellsize = style.CellSize;
                     return new Point(cellsize.X * this.Width, cellsize.Y * this.Height);
                 }
@@ -139,36 +181,16 @@ namespace DUIP.UI
                     if (Signal == ProbeSignal.Primary && Value)
                     {
                         _SelectionInfo sel = this.TextBlock._Selection;
-                        if (sel == null || sel.ReleaseProbe == null)
-                        {
-                            Point pos = Probe.Position;
-                            if (new Rectangle(Point.Origin, this.Size).Occupies(pos))
-                            {
-                                Handled = true;
-
-                                TextCaret caret = this.Select(pos);
-                                this.UpdateSelection(this.TextBlock._Selection = new _SelectionInfo
-                                {
-                                    Probe = Probe,
-                                    ReleaseProbe = Probe.Lock(),
-                                    Selection = new TextSelection(caret),
-                                    CaretBlinkTime = 0.0
-                                });
-                            }
-                        }
+                        throw new NotImplementedException();
                     }
                 });
 
-                // Remove selection and update events with remove handler
+                // Clean up context with remove handler
                 rh += delegate
                 {
-                    _SelectionInfo sel = this.TextBlock._Selection;
-                    if (sel != null)
+                    if (this._ReleaseProbe != null)
                     {
-                        if (sel.ReleaseProbe != null)
-                        {
-                            sel.ReleaseProbe();
-                        }
+                        this._ReleaseProbe();
                     }
                     if (this._RemoveUpdate != null)
                     {
@@ -183,129 +205,13 @@ namespace DUIP.UI
                 return rh;
             }
 
-            /// <summary>
-            /// Informs the layout that the selection for it has been changed. This should only be called when the layout
-            /// is linked.
-            /// </summary>
-            public void UpdateSelection(_SelectionInfo Selection)
-            {
-                if (this._RemoveUpdate == null && Selection != null)
-                {
-                    this._RemoveUpdate = this._Context.RegisterUpdate(this.Update);
-                }
-                else
-                {
-                    if (this._RemoveUpdate != null && Selection == null)
-                    {
-                        this._RemoveUpdate();
-                        this._RemoveUpdate = null;
-                    }
-                }
-            }
 
             public override Figure Figure
             {
                 get
                 {
-                    TextStyle style = this.TextBlock._Style;
-                    Point cellsize = style.CellSize;
-                    _SelectionInfo sel = this.TextBlock._Selection;
-                    Figure fig = null;
-
-                    // Back colors
-                    TextItem cur = this.TextBlock._First;
-                    int offset = 0;
-                    double y = 0.0;
-
-                    TextBackStyle backstyle = style.DefaultBackStyle;
-                    SolidFigure colmask = new SolidFigure(backstyle.BackColor);
-                    int colstartoffset = 0;
-                    while ((cur = cur.Next) != null)
-                    {
-                        if (cur is LineStartTextItem)
-                        {
-                            fig += _BackColorStripFigure(colmask, cellsize, y, colstartoffset, offset);
-                            colstartoffset = 0;
-                            offset = 0;
-                            y += cellsize.Y;
-                            continue;
-                        }
-                        _AppendLine(style, cur, ref offset);
-                    }
-                    fig += _BackColorStripFigure(colmask, cellsize, y, colstartoffset, offset);
-
-                    // Draw characters and foreground objects
-                    TextItem prev = this.TextBlock._First;
-                    offset = 0;
-                    y = 0.0;
-                    TextFontStyle fontstyle = style.DefaultFontStyle;
-                    Figure caret = null;
-                    while (true)
-                    {
-                        if (sel != null && sel.Selection._Primary._Previous == prev)
-                        {
-                            double blink = sel.CaretBlinkTime % style.CaretBlinkRate;
-                            sel.CaretBlinkTime = blink;
-                            if (blink < style.CaretBlinkRate * 0.5)
-                            {
-                                Border caretstyle = style.CaretStyle;
-                                double x = cellsize.X * offset;
-                                caret = new ShapeFigure(
-                                    new PathShape(caretstyle.Weight, new SegmentPath(new Point(x, y), new Point(x, y + cellsize.Y))),
-                                    new SolidFigure(caretstyle.Color));
-                            }
-                        }
-
-                        if ((prev = cur = prev.Next) == null)
-                        {
-                            break;
-                        }
-
-                        if (cur is LineStartTextItem)
-                        {
-                            offset = 0;
-                            y += cellsize.Y;
-                            continue;
-                        }
-
-                        CharacterTextItem ci = cur as CharacterTextItem;
-                        if (ci != null)
-                        {
-                            char name = ci.Name;
-                            Font font = fontstyle.Font;
-                            Point size = font.GetSize(ci.Name);
-                            Point off = new Point(cellsize.X * offset, y);
-                            off.X += Align.AxisOffset(style.HorizontalAlignment, cellsize.X, size.X);
-                            off.Y += Align.AxisOffset(style.VerticalAlignment, cellsize.Y, size.Y);
-                            fig += font.GetGlyph(name).Translate(off);
-                            offset++;
-                            continue;
-                        }
-
-                        _AppendLine(style, cur, ref offset);
-                    }
-
-                    fig += caret;
-                    return fig;
+                    return null;
                 }
-            }
-
-            /// <summary>
-            /// Gets a figure for a stip containing a back color for a single line.
-            /// </summary>
-            private static Figure _BackColorStripFigure(SolidFigure Mask, Point CellSize, 
-                double Y, int StartOffset, int EndOffset)
-            {
-                if (EndOffset > StartOffset && Mask.Color.A > 0.0)
-                {
-                    return new ShapeFigure(
-                        new RectangleShape(
-                            new Rectangle(
-                                CellSize.X * StartOffset, Y,
-                                CellSize.X * EndOffset, Y + CellSize.Y)),
-                        Mask);
-                }
-                return null;
             }
 
             /// <summary>
@@ -315,38 +221,6 @@ namespace DUIP.UI
             public void Update(double Time)
             {
                 _SelectionInfo sel = this.TextBlock._Selection;
-                if (sel != null)
-                {
-                    // Handle dragging
-                    if (sel.ReleaseProbe != null)
-                    {
-                        Probe probe = sel.Probe;
-                        if (probe[ProbeSignal.Primary])
-                        {
-                            Point pos = probe.Position;
-                            TextCaret nsel = this.Select(pos);
-                            if (sel.Selection._Primary != nsel)
-                            {
-                                sel.Selection._Primary = nsel;
-                                sel.Selection._UpdateOrder();
-                                sel.CaretBlinkTime = 0.0;
-                            }
-                        }
-                        else
-                        {
-                            sel.ReleaseProbe();
-                            sel.ReleaseProbe = null;
-                        }
-                    }
-
-                    // Handle caret blinking
-                    sel.CaretBlinkTime += Time;
-                }
-                else
-                {
-                    this._RemoveUpdate();
-                    this._RemoveUpdate = null;
-                }
             }
 
             /// <summary>
@@ -360,6 +234,7 @@ namespace DUIP.UI
             public TextBlock TextBlock;
             public int Width;
             public int Height;
+            public List<int> LineIndices;
 
             private Context _Context;
             private Action _ReleaseProbe;
@@ -384,7 +259,6 @@ namespace DUIP.UI
         }
 
         private TextSection _Text;
-        private TextStyle _Style;
         private _SelectionInfo _Selection;
         private _Layout _Linked;
     }
@@ -392,47 +266,54 @@ namespace DUIP.UI
     /// <summary>
     /// Contains styling information for a text block.
     /// </summary>
-    public class TextStyle
+    public class TextBlockStyle
     {
-        /// <summary>
-        /// The horizontal alignment of items within their cells.
-        /// </summary>
-        public Alignment HorizontalAlignment;
+        public TextBlockStyle(
+            Point CellSize,
+            Alignment HorizontalAlignment,
+            Alignment VerticalAlignment,
+            int IndentSize,
+            double CaretBlinkRate,
+            Border CaretStyle)
+        {
+            this.CellSize = CellSize;
+            this.HorizontalAlignment = HorizontalAlignment;
+            this.VerticalAlignment = VerticalAlignment;
+            this.IndentSize = IndentSize;
+            this.CaretBlinkRate = CaretBlinkRate;
+            this.CaretStyle = CaretStyle;
+        }
 
-        /// <summary>
-        /// The vertical alignment of items within their cells.
-        /// </summary>
-        public Alignment VerticalAlignment;
-
-        /// <summary>
-        /// The default font style for items in the text block.
-        /// </summary>
-        public TextFontStyle DefaultFontStyle;
-
-        /// <summary>
-        /// The default background style for items in the text block.
-        /// </summary>
-        public TextBackStyle DefaultBackStyle;
 
         /// <summary>
         /// The size of a cell in the text block.
         /// </summary>
-        public Point CellSize;
+        public readonly Point CellSize;
+
+        /// <summary>
+        /// The horizontal alignment of items within their cells.
+        /// </summary>
+        public readonly Alignment HorizontalAlignment;
+
+        /// <summary>
+        /// The vertical alignment of items within their cells.
+        /// </summary>
+        public readonly Alignment VerticalAlignment;
 
         /// <summary>
         /// The size of an indent span.
         /// </summary>
-        public int IndentSize;
+        public readonly int IndentSize;
 
         /// <summary>
         /// The amount of time, in seconds, between blinks for a selection caret.
         /// </summary>
-        public double CaretBlinkRate;
+        public readonly double CaretBlinkRate;
 
         /// <summary>
         /// The style for a selection caret.
         /// </summary>
-        public Border CaretStyle;
+        public readonly Border CaretStyle;
 
         /// <summary>
         /// Updates the given offset from the left edge of a text pad with an indentation.
@@ -452,39 +333,29 @@ namespace DUIP.UI
     }
 
     /// <summary>
-    /// Contains styling information for the font used for a section of text in a text block.
+    /// Contains styling information for a section of text in a text block.
     /// </summary>
-    public class TextFontStyle
+    public class TextStyle
     {
-        /// <summary>
-        /// The default font for text.
-        /// </summary>
-        public Font Font;
+        public TextStyle(Font Font, Color Back)
+        {
+            this.Font = Font;
+            this.Back = Back;
+        }
 
         /// <summary>
-        /// The font for selected text.
+        /// The font for text.
         /// </summary>
-        public Font SelectedFont;
+        public readonly Font Font;
+
+        /// <summary>
+        /// The back color for the text.
+        /// </summary>
+        public readonly Color Back;
     }
 
     /// <summary>
-    /// Contains styling information for the back color of a section of items in a text block.
-    /// </summary>
-    public class TextBackStyle
-    {
-        /// <summary>
-        /// The default back color of items.
-        /// </summary>
-        public Color BackColor;
-
-        /// <summary>
-        /// The back color for selected items.
-        /// </summary>
-        public Color SelectedBackColor;
-    }
-
-    /// <summary>
-    /// A section of text displayable by a text block.
+    /// A section of text displayable by a text block, excluding styling information.
     /// </summary>
     /// <remarks>Positions in a text section are given by an integer representing the index of the item directly after
     /// the position. If a position is equal to the size of the text section, the position represents the end of the text section.</remarks>
@@ -780,5 +651,41 @@ namespace DUIP.UI
         /// The name of the character for the text item.
         /// </summary>
         public readonly char Name;
+    }
+
+    /// <summary>
+    /// A section of text displayable by a text block with styling information included.
+    /// </summary>
+    public abstract class StyledTextSection
+    {
+
+    }
+
+    /// <summary>
+    /// A styled text section with a single uniform style.
+    /// </summary>
+    public sealed class UniformStyledTextSection : StyledTextSection
+    {
+        public UniformStyledTextSection(TextSection Source, TextStyle NormalStyle, TextStyle SelectedStyle)
+        {
+            this.Source = Source;
+            this.NormalStyle = NormalStyle;
+            this.SelectedStyle = SelectedStyle;
+        }
+
+        /// <summary>
+        /// The source of the items for this styled text section.
+        /// </summary>
+        public readonly TextSection Source;
+
+        /// <summary>
+        /// The style for the text section when not selected.
+        /// </summary>
+        public readonly TextStyle NormalStyle;
+
+        /// <summary>
+        /// The style for the text section when selected.
+        /// </summary>
+        public readonly TextStyle SelectedStyle;
     }
 }

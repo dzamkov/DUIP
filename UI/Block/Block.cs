@@ -148,22 +148,4 @@ namespace DUIP.UI
         /// </summary>
         public const double ErrorThreshold = 0.000001;
     }
-
-    /// <summary>
-    /// Marks a property of a block as static. This indicates that the property will not change (and may not be modified) once the block is in use.
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class StaticProperty : Attribute
-    {
-
-    }
-
-    /// <summary>
-    /// Marks a property of a block as dynamic. This indicates that the property may changed even when the block is in use.
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class DynamicProperty : Attribute
-    {
-
-    }
 }

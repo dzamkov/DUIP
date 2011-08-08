@@ -46,6 +46,11 @@ namespace DUIP
             return new Disposable<T>(Object);
         }
 
+        public static T operator ~(Disposable<T> Object)
+        {
+            return Object.Object;
+        }
+
         /// <summary>
         /// The object to be used.
         /// </summary>

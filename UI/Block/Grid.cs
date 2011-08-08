@@ -11,64 +11,52 @@ namespace DUIP.UI
     /// </summary>
     public class GridBlock : Block
     {
-        public GridBlock(int Columns, int Rows)
+        public GridBlock(Block[,] Cells, Border Seperator)
         {
-            this._Cells = new Block[Columns, Rows];
+            this.Cells = Cells;
+            this.Seperator = Seperator;
         }
 
         /// <summary>
         /// Gets the amount of columns in this grid.
         /// </summary>
-        [StaticProperty]
         public int Columns
         {
             get
             {
-                return this._Cells.GetLength(0);
+                return this.Cells.GetLength(0);
             }
         }
 
         /// <summary>
         /// Gets the amount of rows in this grid.
         /// </summary>
-        [StaticProperty]
         public int Rows
         {
             get
             {
-                return this._Cells.GetLength(1);
+                return this.Cells.GetLength(1);
             }
         }
 
         /// <summary>
-        /// Gets or sets the border that acts as the seperator between cells.
+        /// The (immutable) contents of the cells for this grid block.
         /// </summary>
-        [StaticProperty]
-        public Border Seperator
-        {
-            get
-            {
-                return this._Seperator;
-            }
-            set
-            {
-                this._Seperator = value;
-            }
-        }
+        public readonly Block[,] Cells;
 
         /// <summary>
-        /// Gets or sets a cell in this grid.
+        /// The border to use as the seperator between cells.
         /// </summary>
-        [StaticProperty]
+        public readonly Border Seperator;
+
+        /// <summary>
+        /// Gets a cell in this grid.
+        /// </summary>
         public Block this[int Column, int Row]
         {
             get
             {
-                return this._Cells[Column, Row];
-            }
-            set
-            {
-                this._Cells[Column, Row] = value;
+                return this.Cells[Column, Row];
             }
         }
 
@@ -77,7 +65,7 @@ namespace DUIP.UI
             int cols = this.Columns;
             int rows = this.Rows;
 
-            double sep = this._Seperator.Weight;
+            double sep = this.Seperator.Weight;
             Rectangle contentsizerange = SizeRange.Translate(-new Point(sep * (cols - 1), sep * (rows - 1)));
 
             // Create preliminary cell layouts to estimate sizes needed
@@ -90,7 +78,7 @@ namespace DUIP.UI
                 for (int r = 0; r < rows; r++)
                 {
                     Point size;
-                    cells[c, r] = this._Cells[c, r].CreateLayout(null, new Rectangle(new Point(widths[c], heights[r]), maxcellsize), out size);
+                    cells[c, r] = this.Cells[c, r].CreateLayout(null, new Rectangle(new Point(widths[c], heights[r]), maxcellsize), out size);
                     widths[c] = Math.Max(widths[c], size.X);
                     heights[r] = Math.Max(heights[r], size.Y);
                 }
@@ -105,7 +93,7 @@ namespace DUIP.UI
                 for (int r = 0; r < rows; r++)
                 {
                     double height = heights[r];
-                    cells[c, r] = this._Cells[c, r].CreateLayout(null, new Point(width, height));
+                    cells[c, r] = this.Cells[c, r].CreateLayout(null, new Point(width, height));
                 }
             }
 
@@ -204,7 +192,7 @@ namespace DUIP.UI
                         for (int r = 0; r < this.RowOffsets.Length; r++)
                         {
                             double roff = this.RowOffsets[r];
-                            cellfigures.Add(this.Cells[c, r].Figure.Translate(new Point(coff, roff)));
+                            cellfigures.Add(Figure.Translate(this.Cells[c, r].Figure, new Point(coff, roff)));
                         }
                     }
                     Figure fig = new CompoundFigure(cellfigures);
@@ -256,8 +244,5 @@ namespace DUIP.UI
             public Layout[,] Cells;
             public Point Size;
         }
-
-        private Block[,] _Cells;
-        private Border _Seperator;
     }
 }

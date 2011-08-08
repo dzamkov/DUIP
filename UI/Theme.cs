@@ -24,14 +24,7 @@ namespace DUIP.UI
         /// <summary>
         /// Gets the general-purpose flowstyle to use where no more specialized flow style is suitable.
         /// </summary>
-        public FlowStyle FlowStyle = new FlowStyle
-        {
-            Direction = FlowDirection.RightDown,
-            Justification = FlowJustification.Justify,
-            LineAlignment = Alignment.Center,
-            LineSpacing = 0.00,
-            LineSize = 0.01
-        };
+        public FlowBlockStyle FlowStyle = new FlowBlockStyle(FlowJustification.Justify, FlowDirection.RightDown, FlowWrap.Greedy, Alignment.Center, 0.01, 0.0);
 
         /// <summary>
         /// A general purpose font.
@@ -43,12 +36,7 @@ namespace DUIP.UI
         /// </summary>
         public Block TextBlock(string Text)
         {
-            return new FlowBlock
-            {
-                Fit = FlowFit.AspectRatio(2.0),
-                Style = this.FlowStyle,
-                Items = FlowItem.CreateText(Text, this.GeneralFont, 0.01, true)
-            }.WithMargin(0.04);
+            return new FlowBlock(FlowItem.CreateText(Text, this.GeneralFont, 0.01, true), FlowFit.AspectRatio(2.0), this.FlowStyle).WithMargin(0.04);
         }
 
         /// <summary>
@@ -72,15 +60,15 @@ namespace DUIP.UI
         /// </summary>
         public Block PropertyBlock(List<KeyValuePair<string, Block>> Properties)
         {
-            GridBlock gb = new GridBlock(2, Properties.Count);
-            gb.Seperator = new Border(0.02, Color.RGB(0.2, 0.2, 0.2));
+            Block[,] cells = new Block[2, Properties.Count];
             for (int t = 0; t < Properties.Count; t++)
             {
                 var prop = Properties[t];
-                gb[0, t] = this.TextBlock(prop.Key);
-                gb[1, t] = prop.Value;
+                cells[0, t] = this.TextBlock(prop.Key);
+                cells[1, t] = prop.Value;
             }
-            return gb;
+
+            return new GridBlock(cells, new Border(0.02, Color.RGB(0.2, 0.2, 0.2)));
         }
     }
 }
