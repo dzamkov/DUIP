@@ -33,26 +33,18 @@ namespace DUIP
     {
         public StaticTask(T Result)
         {
-            this._Result = Result;
+            this.Result = Result;
         }
 
         /// <summary>
-        /// Gets the result of this task.
+        /// The result of this task.
         /// </summary>
-        public T Result
-        {
-            get
-            {
-                return this._Result;
-            }
-        }
+        public readonly T Result;
 
         public override T Execute()
         {
-            return this._Result;
+            return this.Result;
         }
-
-        private T _Result;
     }
 
     /// <summary>
@@ -62,25 +54,17 @@ namespace DUIP
     {
         public DelegateTask(Func<T> Delegate)
         {
-            this._Delegate = Delegate;
+            this.Delegate = Delegate;
         }
 
         /// <summary>
-        /// Gets the delegate for this task.
+        /// The delegate for this task.
         /// </summary>
-        public Func<T> Delegate
-        {
-            get
-            {
-                return this._Delegate;
-            }
-        }
+        public readonly Func<T> Delegate;
 
         public override T Execute()
         {
-            return this._Delegate();
+            return this.Delegate();
         }
-
-        private Func<T> _Delegate;
     }
 }

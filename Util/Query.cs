@@ -35,23 +35,17 @@ namespace DUIP
     {
         public StaticQuery(T Value)
         {
-            this._Value = Value;
+            this.Value = Value;
         }
 
         /// <summary>
-        /// Gets the value of this query.
+        /// The value of this query.
         /// </summary>
-        public T Value
-        {
-            get
-            {
-                return this._Value;
-            }
-        }
+        public readonly T Value;
 
         public override RemoveHandler Register(Action<T> Listener)
         {
-            Listener(this._Value);
+            Listener(this.Value);
             return null;
         }
 
@@ -59,11 +53,9 @@ namespace DUIP
         {
             get
             {
-                return this._Value;
+                return this.Value;
             }
         }
-
-        private T _Value;
     }
 
     /// <summary>

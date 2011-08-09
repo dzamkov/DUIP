@@ -69,53 +69,38 @@ namespace DUIP
     {
         public CallExpression(Expression Function, Expression Argument)
         {
-            this._Function = Function;
-            this._Argument = Argument;
+            this.Function = Function;
+            this.Argument = Argument;
         }
 
         /// <summary>
-        /// Gets the expression that defines the function for this call.
+        /// The expression that defines the function for this call.
         /// </summary>
-        public Expression Function
-        {
-            get
-            {
-                return this._Function;
-            }
-        }
+        public readonly Expression Function;
 
         /// <summary>
-        /// Gets the expression that defines the argument for this call.
+        /// The expression that defines the argument for this call.
         /// </summary>
-        public Expression Argument
-        {
-            get
-            {
-                return this._Argument;
-            }
-        }
+        public readonly Expression Argument;
 
         public override Expression Type
         {
             get 
             {
-                return new ResultTypeExpression(this._Function.Type, this._Argument);
+                return new ResultTypeExpression(this.Function.Type, this.Argument);
             }
         }
 
         public override Expression Fill(Expression[] Terms)
         {
-            Expression nfunc = this._Function.Fill(Terms);
-            Expression narg = this._Argument.Fill(Terms);
-            if (this._Function != nfunc || this._Argument != narg)
+            Expression nfunc = this.Function.Fill(Terms);
+            Expression narg = this.Argument.Fill(Terms);
+            if (this.Function != nfunc || this.Argument != narg)
             {
                 return new CallExpression(nfunc, narg);
             }
             return this;
         }
-
-        private Expression _Function;
-        private Expression _Argument;
     }
 
     /// <summary>
@@ -126,31 +111,19 @@ namespace DUIP
     {
         public ResultTypeExpression(Expression FunctionType, Expression Argument)
         {
-            this._FunctionType = FunctionType;
-            this._Argument = Argument;
+            this.FunctionType = FunctionType;
+            this.Argument = Argument;
         }
 
         /// <summary>
-        /// Gets the type of the function for the function call.
+        /// The type of the function for the function call.
         /// </summary>
-        public Expression FunctionType
-        {
-            get
-            {
-                return this._FunctionType;
-            }
-        }
+        public readonly Expression FunctionType;
 
         /// <summary>
-        /// Gets the argument for the function call.
+        /// The argument for the function call.
         /// </summary>
-        public Expression Argument
-        {
-            get
-            {
-                return this._Argument;
-            }
-        }
+        public readonly Expression Argument;
 
         public override Expression Type
         {
@@ -162,17 +135,14 @@ namespace DUIP
 
         public override Expression Fill(Expression[] Terms)
         {
-            Expression nfunctype = this._FunctionType.Fill(Terms);
-            Expression narg = this._Argument.Fill(Terms);
-            if (this._FunctionType != nfunctype || this._Argument != narg)
+            Expression nfunctype = this.FunctionType.Fill(Terms);
+            Expression narg = this.Argument.Fill(Terms);
+            if (this.FunctionType != nfunctype || this.Argument != narg)
             {
                 return new ResultTypeExpression(nfunctype, narg);
             }
             return this;
         }
-
-        private Expression _FunctionType;
-        private Expression _Argument;
     }
 
     /// <summary>
@@ -183,51 +153,36 @@ namespace DUIP
     {
         public LambdaExpression(Symbol Argument, Expression Inner)
         {
-            this._Argument = Argument;
-            this._Inner = Inner;
+            this.Argument = Argument;
+            this.Inner = Inner;
         }
 
         /// <summary>
-        /// Gets the argument for the lambda expression.
+        /// The argument for the lambda expression.
         /// </summary>
-        public Symbol Argument
-        {
-            get
-            {
-                return this._Argument;
-            }
-        }
+        public readonly Symbol Argument;
 
         /// <summary>
-        /// Gets the inner expression for the lambda expression.
+        /// The inner expression for the lambda expression.
         /// </summary>
-        public Expression Inner
-        {
-            get
-            {
-                return this._Inner;
-            }
-        }
+        public readonly Expression Inner;
 
         public override Expression Type
         {
             get
             {
-                return Function.Type(this._Argument, this._Inner.Type);
+                return Function.Type(this.Argument, this.Inner.Type);
             }
         }
 
         public override Expression Fill(Expression[] Terms)
         {
-            Expression ninner = this._Inner.Fill(Terms);
-            if (this._Inner != ninner)
+            Expression ninner = this.Inner.Fill(Terms);
+            if (this.Inner != ninner)
             {
-                return new LambdaExpression(this._Argument, ninner);
+                return new LambdaExpression(this.Argument, ninner);
             }
             return this;
         }
-
-        private Symbol _Argument;
-        private Expression _Inner;
     }
 }

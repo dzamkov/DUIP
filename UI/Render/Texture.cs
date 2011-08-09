@@ -22,24 +22,18 @@ namespace DUIP.UI.Render
     {
         public Texture(uint ID)
         {
-            this._ID = ID;
+            this.ID = ID;
         }
 
         public Texture(int ID)
         {
-            this._ID = (uint)ID;
+            this.ID = (uint)ID;
         }
 
         /// <summary>
-        /// Gets the ID for this texture.
+        /// The ID for this texture.
         /// </summary>
-        public uint ID
-        {
-            get
-            {
-                return this._ID;
-            }
-        }
+        public readonly uint ID;
 
         /// <summary>
         /// Gets if this is the null texture.
@@ -48,7 +42,7 @@ namespace DUIP.UI.Render
         {
             get
             {
-                return this._ID == 0;
+                return this.ID == 0;
             }
         }
 
@@ -68,7 +62,7 @@ namespace DUIP.UI.Render
         /// </summary>
         public void Bind()
         {
-            GL.BindTexture(TextureTarget.Texture2D, (int)this._ID);
+            GL.BindTexture(TextureTarget.Texture2D, (int)this.ID);
         }
 
         /// <summary>
@@ -239,9 +233,7 @@ namespace DUIP.UI.Render
 
         public void Dispose()
         {
-            GL.DeleteTexture((int)this._ID);
+            GL.DeleteTexture((int)this.ID);
         }
-
-        private uint _ID;
     }
 }

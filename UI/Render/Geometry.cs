@@ -100,51 +100,33 @@ namespace DUIP.UI.Render
     {
         public BufferGeometry(Point[] Positions, Color[] Colors, Point[] UVs)
         {
-            this._Positions = Positions;
-            this._Colors = Colors;
-            this._UVs = UVs;
+            this.Positions = Positions;
+            this.Colors = Colors;
+            this.UVs = UVs;
         }
 
         /// <summary>
-        /// Gets the array for the positions of the vertices in this geometry.
+        /// The array for the positions of the vertices in this geometry.
         /// </summary>
-        public Point[] Positions
-        {
-            get
-            {
-                return this._Positions;
-            }
-        }
+        public readonly Point[] Positions;
 
         /// <summary>
-        /// Gets the array for the colors of the vertices in this geometry, or null if color information is not
+        /// The array for the colors of the vertices in this geometry, or null if color information is not
         /// included.
         /// </summary>
-        public Color[] Colors
-        {
-            get
-            {
-                return this._Colors;
-            }
-        }
+        public readonly Color[] Colors;
 
         /// <summary>
-        /// Gets the array for the uv coordinates of the vertices in this geometry, or null if uv information is not
+        /// The array for the uv coordinates of the vertices in this geometry, or null if uv information is not
         /// included.
         /// </summary>
-        public Point[] UVs
-        {
-            get
-            {
-                return this._UVs;
-            }
-        }
+        public readonly Point[] UVs;
 
         public override int Size
         {
             get
             {
-                return this._Positions.Length;
+                return this.Positions.Length;
             }
         }
 
@@ -153,28 +135,24 @@ namespace DUIP.UI.Render
             get
             {
                 VertexFormatFlags flags = VertexFormatFlags.None;
-                if (this._Colors != null) flags |= VertexFormatFlags.Color;
-                if (this._UVs != null) flags |= VertexFormatFlags.UV;
+                if (this.Colors != null) flags |= VertexFormatFlags.Color;
+                if (this.UVs != null) flags |= VertexFormatFlags.UV;
                 return flags;
             }
         }
 
         public override void Send(int Index)
         {
-            if (this._Colors != null)
+            if (this.Colors != null)
             {
-                GL.Color4(this._Colors[Index]);
+                GL.Color4(this.Colors[Index]);
             }
-            if (this._UVs != null)
+            if (this.UVs != null)
             {
-                GL.TexCoord2((Vector2d)this._UVs[Index]);
+                GL.TexCoord2((Vector2d)this.UVs[Index]);
             }
-            GL.Vertex2((Vector2d)this._Positions[Index]);
+            GL.Vertex2((Vector2d)this.Positions[Index]);
         }
-
-        private Point[] _Positions;
-        private Color[] _Colors;
-        private Point[] _UVs;
     }
 
     /// <summary>
@@ -185,25 +163,19 @@ namespace DUIP.UI.Render
         public BufferIndexedGeometry(Geometry Source, int[] Indices)
         {
             this._Source = Source;
-            this._Indices = Indices;
+            this.Indices = Indices;
         }
 
         /// <summary>
-        /// Gets the indices for this geometry.
+        /// The indices for this geometry.
         /// </summary>
-        public int[] Indices
-        {
-            get
-            {
-                return this._Indices;
-            }
-        }
+        public readonly int[] Indices;
 
         public override int Size
         {
             get
             {
-                return this._Indices.Length;
+                return this.Indices.Length;
             }
         }
 
@@ -217,11 +189,10 @@ namespace DUIP.UI.Render
 
         public override int GetSourceIndex(int Index)
         {
-            return this._Indices[Index];
+            return this.Indices[Index];
         }
 
         private Geometry _Source;
-        private int[] _Indices;
     }
 
     /// <summary>
@@ -231,25 +202,19 @@ namespace DUIP.UI.Render
     {
         public MeshGeometry(MeshFigure Mesh)
         {
-            this._Mesh = Mesh;
+            this.Mesh = Mesh;
         }
 
         /// <summary>
         /// Gets the mesh this geometry is for.
         /// </summary>
-        public MeshFigure Mesh
-        {
-            get
-            {
-                return this._Mesh;
-            }
-        }
+        public readonly MeshFigure Mesh;
 
         public override int Size
         {
             get
             {
-                return this._Mesh.Triangles.Length * 3;
+                return this.Mesh.Triangles.Length * 3;
             }
         }
 
@@ -265,7 +230,7 @@ namespace DUIP.UI.Render
         {
             get
             {
-                return new MeshVertexGeometry(this._Mesh);
+                return new MeshVertexGeometry(this.Mesh);
             }
         }
 
@@ -276,15 +241,13 @@ namespace DUIP.UI.Render
             switch (cmpind)
             {
                 case 0:
-                    return this._Mesh.Triangles[triind].A;
+                    return this.Mesh.Triangles[triind].A;
                 case 1:
-                    return this._Mesh.Triangles[triind].B;
+                    return this.Mesh.Triangles[triind].B;
                 default:
-                    return this._Mesh.Triangles[triind].C;
+                    return this.Mesh.Triangles[triind].C;
             }
         }
-
-        private MeshFigure _Mesh;
     }
 
     /// <summary>
@@ -294,25 +257,19 @@ namespace DUIP.UI.Render
     {
         public MeshVertexGeometry(MeshFigure Mesh)
         {
-            this._Mesh = Mesh;
+            this.Mesh = Mesh;
         }
 
         /// <summary>
-        /// Gets the mesh this geometry is for.
+        /// The mesh this geometry is for.
         /// </summary>
-        public MeshFigure Mesh
-        {
-            get
-            {
-                return this._Mesh;
-            }
-        }
+        public readonly MeshFigure Mesh;
 
         public override int Size
         {
             get
             {
-                return this._Mesh.Vertices.Length;
+                return this.Mesh.Vertices.Length;
             }
         }
 
@@ -326,11 +283,9 @@ namespace DUIP.UI.Render
 
         public override void Send(int Index)
         {
-            MeshVertex vert = this._Mesh.Vertices[Index];
+            MeshVertex vert = this.Mesh.Vertices[Index];
             GL.Color4(vert.Color);
             GL.Vertex2((Vector2d)vert.Position);
         }
-
-        private MeshFigure _Mesh;
     }
 }

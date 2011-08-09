@@ -11,12 +11,14 @@ namespace DUIP.UI.Graphics
     public class CellularFigure : SampledFigure
     {
         public CellularFigure(Color Cell, Color Edge, double Exponent, double Multiplier, IEnumerable<Point> CellCenters)
+            : base(Rectangle.Unbound, true)
         {
+            this.Cell = Cell;
+            this.Edge = Edge;
+            this.Exponent = Exponent;
+            this.Multiplier = Multiplier;
+
             this._Centers = new List<Point>();
-            this._Cell = Cell;
-            this._Edge = Edge;
-            this._Exponent = Exponent;
-            this._Multiplier = Multiplier;
             foreach (Point cen in CellCenters)
             {
                 this._Centers.Add(cen);
@@ -63,50 +65,26 @@ namespace DUIP.UI.Graphics
         }
 
         /// <summary>
-        /// Gets the color used to draw the interior of cells.
+        /// The color used to draw the interior of cells.
         /// </summary>
-        public Color Cell
-        {
-            get
-            {
-                return this._Cell;
-            }
-        }
+        public readonly Color Cell;
 
         /// <summary>
-        /// Gets the color used to draw the edges between cells.
+        /// The color used to draw the edges between cells.
         /// </summary>
-        public Color Edge
-        {
-            get
-            {
-                return this._Edge;
-            }
-        }
+        public readonly Color Edge;
 
         /// <summary>
-        /// Gets the exponent factor used to determine the smoothness falloff from edges
+        /// The exponent factor used to determine the smoothness falloff from edges
         /// to cells. 
         /// </summary>
-        public double Exponent
-        {
-            get
-            {
-                return this._Exponent;
-            }
-        }
+        public readonly double Exponent;
 
         /// <summary>
-        /// Gets the multiplier factor used to determine the contrast between edges and
+        /// The multiplier factor used to determine the contrast between edges and
         /// interiors of cells.
         /// </summary>
-        public double Multiplier
-        {
-            get
-            {
-                return this._Multiplier;
-            }
-        }
+        public readonly double Multiplier;
 
         public override Color  GetColor(Point Point)
         {
@@ -130,24 +108,12 @@ namespace DUIP.UI.Graphics
                 mdis = Math.Min(dis, mdis);
             }
 
-            mdis *= this._Multiplier;
-            mdis = Math.Pow(mdis, this._Exponent);
+            mdis *= this.Multiplier;
+            mdis = Math.Pow(mdis, this.Exponent);
             mdis = Math.Min(mdis, 1.0);
-            return Color.Mix(this._Cell, this._Edge, mdis);
+            return Color.Mix(this.Cell, this.Edge, mdis);
         }
 
-        public override bool Tiled
-        {
-            get
-            {
-                return true;    
-            }
-        }
-
-        private double _Exponent;
-        private double _Multiplier;
-        private Color _Cell;
-        private Color _Edge;
         private List<Point> _Centers;
     }
 }

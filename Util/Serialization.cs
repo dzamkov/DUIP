@@ -44,19 +44,13 @@ namespace DUIP
     {
         public ConstantSerialization(T Value)
         {
-            this._Value = Value;
+            this.Value = Value;
         }
 
         /// <summary>
-        /// Gets the constant value that may be serialized.
+        /// The constant value that may be serialized.
         /// </summary>
-        public T Value
-        {
-            get
-            {
-                return this._Value;
-            }
-        }
+        public readonly T Value;
 
         public void Write(T Object, OutStream Stream)
         {
@@ -65,7 +59,7 @@ namespace DUIP
 
         public T Read(InStream Stream)
         {
-            return this._Value;
+            return this.Value;
         }
 
         public Maybe<long> Size
@@ -75,8 +69,6 @@ namespace DUIP
                 return 0;
             }
         }
-
-        private T _Value;
     }
 
     /// <summary>

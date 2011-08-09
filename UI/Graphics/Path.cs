@@ -19,21 +19,13 @@ namespace DUIP.UI.Graphics
     {
         public RectanglePath(Rectangle Rectangle)
         {
-            this._Rectangle = Rectangle;
+            this.Rectangle = Rectangle;
         }
 
         /// <summary>
-        /// Gets the rectangle whose perimeter defines this path.
+        /// The rectangle whose perimeter defines this path.
         /// </summary>
-        public Rectangle Rectangle
-        {
-            get
-            {
-                return this._Rectangle;
-            }
-        }
-
-        private Rectangle _Rectangle;
+        public readonly Rectangle Rectangle;
     }
 
     /// <summary>
@@ -43,33 +35,18 @@ namespace DUIP.UI.Graphics
     {
         public SegmentPath(Point A, Point B)
         {
-            this._A = A;
-            this._B = B;
+            this.A = A;
+            this.B = B;
         }
 
         /// <summary>
         /// Gets the first endpoint for this segment.
         /// </summary>
-        public Point A
-        {
-            get
-            {
-                return this._A;
-            }
-        }
+        public readonly Point A;
 
         /// <summary>
         /// Gets the second endpoint for this segment.
         /// </summary>
-        public Point B
-        {
-            get
-            {
-                return this._B;
-            }
-        }
-
-        private Point _A;
-        private Point _B;
+        public readonly Point B;
     }
 }

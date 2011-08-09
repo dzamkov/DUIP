@@ -47,7 +47,7 @@ namespace DUIP
     {
         public NativeRandom(System.Random Source)
         {
-            this._Source = Source;
+            this.Source = Source;
         }
 
         public NativeRandom(int Seed)
@@ -65,31 +65,23 @@ namespace DUIP
         /// <summary>
         /// Gets the source for this RNG.
         /// </summary>
-        public System.Random Source
-        {
-            get
-            {
-                return this._Source;
-            }
-        }
+        public readonly System.Random Source;
 
         public override int Integer()
         {
             byte[] buf = new byte[4];
-            this._Source.NextBytes(buf);
+            this.Source.NextBytes(buf);
             return BitConverter.ToInt32(buf, 0);
         }
 
         public override double Sample()
         {
-            return this._Source.NextDouble();
+            return this.Source.NextDouble();
         }
 
         public static implicit operator System.Random(NativeRandom Random)
         {
             return Random.Source;
         }
-
-        private System.Random _Source;
     }
 }

@@ -29,30 +29,24 @@ namespace DUIP.UI.Render
     {
         public FileSystemRenderCache(Path Path)
         {
-            this._Path = Path;
-            this._Path.MakeDirectory();
+            this.Path = Path;
+            this.Path.MakeDirectory();
         }
 
         /// <summary>
-        /// Gets the path for the directory to store cached items to.
+        /// The path for the directory to store cached items to.
         /// </summary>
-        public Path Path
-        {
-            get
-            {
-                return this._Path;
-            }
-        }
+        public readonly Path Path;
 
         public Disposable<OutStream> Update(string Name)
         {
-            Path path = this._Path[Name];
+            Path path = this.Path[Name];
             return (FileOutStream)path.OpenWrite();
         }
 
         public Disposable<InStream> Read(string Name)
         {
-            Path path = this._Path[Name];
+            Path path = this.Path[Name];
             if (path.FileExists)
             {
                 return (FileInStream)path.OpenRead();
@@ -62,7 +56,5 @@ namespace DUIP.UI.Render
                 return null;
             }
         }
-
-        private Path _Path;
     }
 }

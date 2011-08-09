@@ -11,20 +11,12 @@ namespace DUIP.UI.Graphics
     {
         public SolidFigure(Color Color)
         {
-            this._Color = Color;
+            this.Color = Color;
         }
 
         /// <summary>
-        /// Gets the color of this figure.
+        /// The color of this figure.
         /// </summary>
-        public Color Color
-        {
-            get
-            {
-                return this._Color;
-            }
-        }
-
-        private Color _Color;
+        public readonly Color Color;
     }
 }

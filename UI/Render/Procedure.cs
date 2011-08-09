@@ -45,40 +45,25 @@ namespace DUIP.UI.Render
     {
         public CompositeProcedure(Procedure First, Procedure Second)
         {
-            this._First = First;
-            this._Second = Second;
+            this.First = First;
+            this.Second = Second;
         }
 
         /// <summary>
-        /// Gets the first component of the composite procedure.
+        /// The first component of the composite procedure.
         /// </summary>
-        public Procedure First
-        {
-            get
-            {
-                return this._First;
-            }
-        }
+        public readonly Procedure First;
 
         /// <summary>
-        /// Gets the second component of the composite procedure.
+        /// The second component of the composite procedure.
         /// </summary>
-        public Procedure Second
-        {
-            get
-            {
-                return this._Second;
-            }
-        }
+        public readonly Procedure Second;
 
         public override void Execute(Context Context)
         {
-            this._First.Execute(Context);
-            this._Second.Execute(Context);
+            this.First.Execute(Context);
+            this.Second.Execute(Context);
         }
-
-        private Procedure _First;
-        private Procedure _Second;
     }
 
     /// <summary>
@@ -89,29 +74,21 @@ namespace DUIP.UI.Render
     {
         public CompoundProcedure(Procedure[] Components)
         {
-            this._Components = Components;
+            this.Components = Components;
         }
 
         /// <summary>
-        /// Gets the components of this procedure.
+        /// The components of this procedure.
         /// </summary>
-        public Procedure[] Components
-        {
-            get
-            {
-                return this._Components;
-            }
-        }
+        public readonly Procedure[] Components;
 
         public override void Execute(Context Context)
         {
-            for (int t = 0; t < this._Components.Length; t++)
+            for (int t = 0; t < this.Components.Length; t++)
             {
-                this._Components[t].Execute(Context);
+                this.Components[t].Execute(Context);
             }
         }
-
-        private Procedure[] _Components;
     }
 
     /// <summary>
@@ -121,39 +98,24 @@ namespace DUIP.UI.Render
     {
         public DisjunctiveProcedure(Procedure A, Procedure B)
         {
-            this._A = A;
-            this._B = B;
+            this.A = A;
+            this.B = B;
         }
 
         /// <summary>
-        /// Gets the first component of the disjunctive procedure.
+        /// The first component of the disjunctive procedure.
         /// </summary>
-        public Procedure A
-        {
-            get
-            {
-                return this._A;
-            }
-        }
+        public readonly Procedure A;
 
         /// <summary>
-        /// Gets the second component of the disjunctive procedure.
+        /// The second component of the disjunctive procedure.
         /// </summary>
-        public Procedure B
-        {
-            get
-            {
-                return this._B;
-            }
-        }
+        public readonly Procedure B;
 
         public override void Execute(Context Context)
         {
-            this._A.Execute(Context);
+            this.A.Execute(Context);
         }
-
-        private Procedure _A;
-        private Procedure _B;
     }
 
     /// <summary>
@@ -163,47 +125,32 @@ namespace DUIP.UI.Render
     {
         public ProjectionProcedure(View Projection, Procedure Inner)
         {
-            this._Inner = Inner;
-            this._Projection = Projection;
+            this.Inner = Inner;
+            this.Projection = Projection;
         }
 
         /// <summary>
-        /// Gets the inner procedure for this procedure.
+        /// The inner procedure for this procedure.
         /// </summary>
-        public Procedure Inner
-        {
-            get
-            {
-                return this._Inner;
-            }
-        }
+        public readonly Procedure Inner;
 
         /// <summary>
-        /// Gets the projection this procedure applies.
+        /// The projection this procedure applies.
         /// </summary>
-        public View Projection
-        {
-            get
-            {
-                return this._Projection;
-            }
-        }
+        public readonly View Projection;
 
         public override void Execute(Context Context)
         {
             View iview = Context.InverseView;
-            View inneriview = View.Compose(this._Projection, iview);
+            View inneriview = View.Compose(this.Projection, iview);
 
             Renderer.UpdateProjection(Context.InvertY, inneriview);
             Context.InverseView = inneriview;
-            this._Inner.Execute(Context);
+            this.Inner.Execute(Context);
 
             Context.InverseView = iview;
             Renderer.UpdateProjection(Context.InvertY, iview);
         }
-
-        private Procedure _Inner;
-        private View _Projection;
     }
 
     /// <summary>
@@ -213,42 +160,27 @@ namespace DUIP.UI.Render
     {
         public ModulateProcedure(Color Modulation, Procedure Inner)
         {
-            this._Modulation = Modulation;
-            this._Inner = Inner;
+            this.Modulation = Modulation;
+            this.Inner = Inner;
         }
 
         /// <summary>
-        /// Gets the inner procedure for this procedure.
+        /// The inner procedure for this procedure.
         /// </summary>
-        public Procedure Inner
-        {
-            get
-            {
-                return this._Inner;
-            }
-        }
+        public readonly Procedure Inner;
 
         /// <summary>
-        /// Gets the color of the modulation to apply.
+        /// The color of the modulation to apply.
         /// </summary>
-        public Color Modulation
-        {
-            get
-            {
-                return this._Modulation;
-            }
-        }
+        public readonly Color Modulation;
 
         public override void Execute(Context Context)
         {
             Color omod = Context.Modulation;
-            Context.Modulation = omod * this._Modulation;
-            this._Inner.Execute(Context);
+            Context.Modulation = omod * this.Modulation;
+            this.Inner.Execute(Context);
             Context.Modulation = omod;
-        }
-
-        private Procedure _Inner;
-        private Color _Modulation;
+        } 
     }
 
     /// <summary>
@@ -258,41 +190,26 @@ namespace DUIP.UI.Render
     {
         public RenderGeometryProcedure(BeginMode Mode, Geometry Geometry)
         {
-            this._Mode = Mode;
-            this._Geometry = Geometry;
+            this.Mode = Mode;
+            this.Geometry = Geometry;
         }
 
         /// <summary>
-        /// Gets the mode used to render the geometry.
+        /// The mode used to render the geometry.
         /// </summary>
-        public BeginMode Mode
-        {
-            get
-            {
-                return this.Mode;
-            }
-        }
+        public readonly BeginMode Mode;
 
         /// <summary>
-        /// Gets the geometry to be rendered.
+        /// The geometry to be rendered.
         /// </summary>
-        public Geometry Geometry
-        {
-            get
-            {
-                return this.Geometry;
-            }
-        }
+        public readonly Geometry Geometry;
 
         public override void Execute(Context Context)
         {
-            GL.Begin(this._Mode);
-            this._Geometry.Send();
+            GL.Begin(this.Mode);
+            this.Geometry.Send();
             GL.End();
         }
-
-        private BeginMode _Mode;
-        private Geometry _Geometry;
     }
 
     /// <summary>
@@ -334,7 +251,7 @@ namespace DUIP.UI.Render
     {
         public SetColorProcedure(Color Color)
         {
-            this._Color = Color;
+            this.Color = Color;
         }
 
         /// <summary>
@@ -343,22 +260,14 @@ namespace DUIP.UI.Render
         public static readonly SetColorProcedure White = new SetColorProcedure(Color.White);
 
         /// <summary>
-        /// Gets the color set by this procedure.
+        /// The color set by this procedure.
         /// </summary>
-        public Color Color
-        {
-            get
-            {
-                return this._Color;
-            }
-        }
+        public readonly Color Color;
 
         public override void Execute(Context Context)
         {
-            GL.Color4(this._Color * Context.Modulation);
+            GL.Color4(this.Color * Context.Modulation);
         }
-
-        private Color _Color;
     }
 
     /// <summary>
@@ -368,7 +277,7 @@ namespace DUIP.UI.Render
     {
         public BindTextureProcedure(Texture Texture)
         {
-            this._Texture = Texture;
+            this.Texture = Texture;
         }
 
         /// <summary>
@@ -379,19 +288,11 @@ namespace DUIP.UI.Render
         /// <summary>
         /// Gets the texture to be bound.
         /// </summary>
-        public Texture Texture
-        {
-            get
-            {
-                return this._Texture;
-            }
-        }
+        public readonly Texture Texture;
 
         public override void Execute(Context Context)
         {
-            this._Texture.Bind();
+            this.Texture.Bind();
         }
-
-        private Texture _Texture;
     }
 }

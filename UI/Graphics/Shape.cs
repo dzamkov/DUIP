@@ -19,21 +19,13 @@ namespace DUIP.UI.Graphics
     {
         public RectangleShape(Rectangle Rectangle)
         {
-            this._Rectangle = Rectangle;
+            this.Rectangle = Rectangle;
         }
 
         /// <summary>
-        /// Gets the rectangle that defines this shape.
+        /// The rectangle that defines this shape.
         /// </summary>
-        public Rectangle Rectangle
-        {
-            get
-            {
-                return this._Rectangle;
-            }
-        }
-
-        private Rectangle _Rectangle;
+        public readonly Rectangle Rectangle;
     }
 
     /// <summary>
@@ -43,33 +35,18 @@ namespace DUIP.UI.Graphics
     {
         public PathShape(double Thickness, Path Path)
         {
-            this._Thickness = Thickness;
-            this._Path = Path;
+            this.Thickness = Thickness;
+            this.Path = Path;
         }
 
         /// <summary>
-        /// Gets the thickness of the path shape.
+        /// The thickness of the path shape.
         /// </summary>
-        public double Thickness
-        {
-            get
-            {
-                return this._Thickness;
-            }
-        }
+        public readonly double Thickness;
 
         /// <summary>
-        /// Gets the path that defines this shape.
+        /// The path that defines this shape.
         /// </summary>
-        public Path Path
-        {
-            get
-            {
-                return this._Path;
-            }
-        }
-
-        private double _Thickness;
-        private Path _Path;
+        public readonly Path Path;
     }
 }

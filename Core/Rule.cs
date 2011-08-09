@@ -11,19 +11,13 @@ namespace DUIP
     {
         public Rule(Pattern Pattern)
         {
-            this._Pattern = Pattern;
+            this.Pattern = Pattern;
         }
 
         /// <summary>
-        /// Gets the pattern of expressions to which this rule may be applied.
+        /// The pattern of expressions to which this rule may be applied.
         /// </summary>
-        public Pattern Pattern
-        {
-            get
-            {
-                return this._Pattern;
-            }
-        }
+        public readonly Pattern Pattern;
 
         /// <summary>
         /// Gets the result of a substitution, or null, if the rule may not be applied to the instance.
@@ -32,8 +26,6 @@ namespace DUIP
         /// <param name="Terms">The values for the terms of the pattern. Terms that are null have not been 
         /// defined in the pattern and may represent any value.</param>
         public abstract Task<Expression> GetResult(Scope Scope, Expression[] Terms);
-
-        private Pattern _Pattern;
     }
 
     /// <summary>
@@ -44,7 +36,7 @@ namespace DUIP
         public SimpleRule(Pattern Pattern, Expression Result)
             : base(Pattern)
         {
-            this._Result = Result;
+            this.Result = Result;
         }
 
         public SimpleRule(int Terms, Expression Template, Expression Condition, Expression Result)
@@ -54,16 +46,10 @@ namespace DUIP
         }
 
         /// <summary>
-        /// Gets the expression that defines the result of this rule. Terms used in this expression will be replaced with their corresponding values
+        /// The expression that defines the result of this rule. Terms used in this expression will be replaced with their corresponding values
         /// from the pattern.
         /// </summary>
-        public Expression Result
-        {
-            get
-            {
-                return this._Result;
-            }
-        }
+        public readonly Expression Result;
 
         /// <summary>
         /// Gets the inverse of this rule. This is a rule made by swapping the template and result for the rule.
@@ -74,17 +60,15 @@ namespace DUIP
             {
                 Pattern pattern = this.Pattern;
                 return new SimpleRule(
-                    new Pattern(pattern.Terms, this._Result, pattern.Condition),
+                    new Pattern(pattern.Terms, this.Result, pattern.Condition),
                     pattern.Template);
             }
         }
 
         public override Task<Expression> GetResult(Scope Scope, Expression[] Terms)
         {
-            return this._Result.Fill(Terms);
+            return this.Result.Fill(Terms);
         }
-
-        private Expression _Result;
     }
 
 }

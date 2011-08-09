@@ -86,34 +86,19 @@ namespace DUIP.UI.Graphics
     {
         public TranslatedFigure(Point Offset, Figure Source)
         {
-            this._Source = Source;
-            this._Offset = Offset;
+            this.Source = Source;
+            this.Offset = Offset;
         }
 
         /// <summary>
-        /// Gets the source figure that is translated.
+        /// The source figure that is translated.
         /// </summary>
-        public Figure Source
-        {
-            get
-            {
-                return this._Source;
-            }
-        }
+        public readonly Figure Source;
 
         /// <summary>
-        /// Gets the translation applied to the source figure.
+        /// The translation applied to the source figure.
         /// </summary>
-        public Point Offset
-        {
-            get
-            {
-                return this._Offset;
-            }
-        }
-
-        private Figure _Source;
-        private Point _Offset;
+        public readonly Point Offset;
     }
 
     /// <summary>
@@ -123,34 +108,19 @@ namespace DUIP.UI.Graphics
     {
         public ScaledFigure(double Factor, Figure Source)
         {
-            this._Factor = Factor;
-            this._Source = Source;
+            this.Factor = Factor;
+            this.Source = Source;
         }
 
         /// <summary>
-        /// Gets the source figure that is scaled.
+        /// The source figure that is scaled.
         /// </summary>
-        public Figure Source
-        {
-            get
-            {
-                return this._Source;
-            }
-        }
+        public readonly Figure Source;
 
         /// <summary>
-        /// Gets the amount the source figure is scaled by.
+        /// The amount the source figure is scaled by.
         /// </summary>
-        public double Factor
-        {
-            get
-            {
-                return this._Factor;
-            }
-        }
-
-        private Figure _Source;
-        private double _Factor;
+        public readonly double Factor;
     }
 
     /// <summary>
@@ -160,34 +130,19 @@ namespace DUIP.UI.Graphics
     {
         public RotatedFigure(double Angle, Figure Source)
         {
-            this._Angle = Angle;
-            this._Source = Source;
+            this.Angle = Angle;
+            this.Source = Source;
         }
 
         /// <summary>
-        /// Gets the source figure that is rotated.
+        /// The source figure that is rotated.
         /// </summary>
-        public Figure Source
-        {
-            get
-            {
-                return this._Source;
-            }
-        }
+        public readonly Figure Source;
 
         /// <summary>
-        /// Gets the angle, in radians, that the source figure is rotated by (going counter-clockwise).
+        /// The angle, in radians, that the source figure is rotated by (going counter-clockwise).
         /// </summary>
-        public double Angle
-        {
-            get
-            {
-                return this._Angle;
-            }
-        }
-
-        private Figure _Source;
-        private double _Angle;
+        public readonly double Angle;
     }
 
     /// <summary>
@@ -197,35 +152,20 @@ namespace DUIP.UI.Graphics
     {
         public ProjectedFigure(View Projection, Figure Source)
         {
-            this._Source = Source;
-            this._Projection = Projection;
+            this.Source = Source;
+            this.Projection = Projection;
         }
 
         /// <summary>
-        /// Gets the source figure that is projected.
+        /// The source figure that is projected.
         /// </summary>
-        public Figure Source
-        {
-            get
-            {
-                return this._Source;
-            }
-        }
+        public readonly Figure Source;
 
         /// <summary>
-        /// Gets the projection applied to the source figure. The final position of any feature on the source
+        /// The projection applied to the source figure. The final position of any feature on the source
         /// figure is given by projecting (from view space to world space) the initial position using this view.
         /// </summary>
-        public View Projection
-        {
-            get
-            {
-                return this._Projection;
-            }
-        }
-
-        private Figure _Source;
-        private View _Projection;
+        public readonly View Projection;
     }
 
     /// <summary>
@@ -235,34 +175,19 @@ namespace DUIP.UI.Graphics
     {
         public ModulatedFigure(Color Modulation, Figure Source)
         {
-            this._Modulation = Modulation;
-            this._Source = Source;
+            this.Modulation = Modulation;
+            this.Source = Source;
         }
 
         /// <summary>
-        /// Gets the source figure that is modulated.
+        /// The source figure that is modulated.
         /// </summary>
-        public Figure Source
-        {
-            get
-            {
-                return this._Source;
-            }
-        }
+        public readonly Figure Source;
 
         /// <summary>
-        /// Gets the color that defines the modulation to apply.
+        /// The color that defines the modulation to apply.
         /// </summary>
-        public Color Modulation
-        {
-            get
-            {
-                return this._Modulation;
-            }
-        }
-
-        private Figure _Source;
-        private Color _Modulation;
+        public readonly Color Modulation;
     }
 
     /// <summary>
@@ -273,34 +198,19 @@ namespace DUIP.UI.Graphics
     {
         public SuperimposedFigure(Figure Under, Figure Over)
         {
-            this._Under = Under;
-            this._Over = Over;
+            this.Under = Under;
+            this.Over = Over;
         }
 
         /// <summary>
-        /// Gets the lower figure.
+        /// The lower figure.
         /// </summary>
-        public Figure Under
-        {
-            get
-            {
-                return this._Under;
-            }
-        }
+        public readonly Figure Under;
 
         /// <summary>
-        /// Gets the higher figure.
+        /// The higher figure.
         /// </summary>
-        public Figure Over
-        {
-            get
-            {
-                return this._Over;
-            }
-        }
-
-        private Figure _Under;
-        private Figure _Over;
+        public readonly Figure Over;
     }
 
     /// <summary>
@@ -310,20 +220,12 @@ namespace DUIP.UI.Graphics
     {
         public CompoundFigure(IEnumerable<Figure> Components)
         {
-            this._Components = Components;
+            this.Components = Components;
         }
 
         /// <summary>
-        /// Gets the components of this compound figure.
+        /// The components of this compound figure.
         /// </summary>
-        public IEnumerable<Figure> Components
-        {
-            get
-            {
-                return this._Components;
-            }
-        }
-
-        private IEnumerable<Figure> _Components;
+        public readonly IEnumerable<Figure> Components;
     }
 }

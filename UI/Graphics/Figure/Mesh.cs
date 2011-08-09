@@ -12,8 +12,8 @@ namespace DUIP.UI.Graphics
     {
         public MeshFigure(MeshVertex[] Vertices, MeshTriangle[] Triangles)
         {
-            this._Vertices = Vertices;
-            this._Triangles = Triangles;
+            this.Vertices = Vertices;
+            this.Triangles = Triangles;
         }
 
         /// <summary>
@@ -27,29 +27,14 @@ namespace DUIP.UI.Graphics
         }
 
         /// <summary>
-        /// Gets the vertices for this mesh.
+        /// The vertices for this mesh.
         /// </summary>
-        public MeshVertex[] Vertices
-        {
-            get
-            {
-                return this._Vertices;
-            }
-        }
+        public readonly MeshVertex[] Vertices;
 
         /// <summary>
-        /// Gets the triangles for this mesh.
+        /// The triangles for this mesh.
         /// </summary>
-        public MeshTriangle[] Triangles
-        {
-            get
-            {
-                return this._Triangles;
-            }
-        }
-
-        private MeshVertex[] _Vertices;
-        private MeshTriangle[] _Triangles;
+        public readonly MeshTriangle[] Triangles;
     }
 
     /// <summary>

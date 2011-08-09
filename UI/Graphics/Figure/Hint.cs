@@ -12,21 +12,13 @@ namespace DUIP.UI.Graphics
     {
         public HintFigure(Figure Source)
         {
-            this._Source = Source;
+            this.Source = Source;
         }
 
         /// <summary>
-        /// Gets the source figure the hint is applied to.
+        /// The source figure the hint is applied to.
         /// </summary>
-        public Figure Source
-        {
-            get
-            {
-                return this._Source;
-            }
-        }
-
-        private Figure _Source;
+        public readonly Figure Source;
     }
 
     /// <summary>
@@ -38,21 +30,13 @@ namespace DUIP.UI.Graphics
         public PersistenceHintFigure(int NumberRenders, Figure Source)
             : base(Source)
         {
-            this._NumberRenders = NumberRenders;
+            this.NumberRenders = NumberRenders;
         }
 
         /// <summary>
-        /// Gets an estimate of the number of times this figure will be rendered before being discarded.
+        /// An estimate of the number of times this figure will be rendered before being discarded.
         /// </summary>
-        public int NumberRenders
-        {
-            get
-            {
-                return this._NumberRenders;
-            }
-        }
-
-        private int _NumberRenders;
+        public readonly int NumberRenders;
     }
 
     /// <summary>
@@ -64,20 +48,12 @@ namespace DUIP.UI.Graphics
         public CacheHintFigure(string Name, Figure Source)
             : base(Source)
         {
-            this._Name = Name;
+            this.Name = Name;
         }
 
         /// <summary>
-        /// Gets the name used to identify the source figure.
+        /// The name used to identify the source figure.
         /// </summary>
-        public string Name
-        {
-            get
-            {
-                return this._Name;
-            }
-        }
-
-        private string _Name;
+        public readonly string Name;
     }
 }

@@ -11,33 +11,18 @@ namespace DUIP.UI.Graphics
     {
         public ShapeFigure(Shape Shape, Figure Source)
         {
-            this._Shape = Shape;
-            this._Source = Source;
+            this.Shape = Shape;
+            this.Source = Source;
         }
 
         /// <summary>
-        /// Gets the shape of this figure.
+        /// The shape of this figure.
         /// </summary>
-        public Shape Shape
-        {
-            get
-            {
-                return this._Shape;
-            }
-        }
+        public readonly Shape Shape;
 
         /// <summary>
-        /// Gets the source figure that is confined to a shape.
+        /// The source figure that is confined to a shape.
         /// </summary>
-        public Figure Source
-        {
-            get
-            {
-                return this._Source;
-            }
-        }
-
-        private Shape _Shape;
-        private Figure _Source;
+        public readonly Figure Source;
     }
 }

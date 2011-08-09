@@ -24,21 +24,20 @@ namespace DUIP.UI.Render
         public BitmapTypeface(string Name, bool Bold, bool Italic)
             : base(Name, Bold, Italic)
         {
-            this._GlyphMap = new Dictionary<char, Glyph>();
-            this._FontFamily = GetFamily(Name);
+            this.GlyphMap = new Dictionary<char, Glyph>();
+            this.FontFamily = GetFamily(Name);
             this._CreateSheet(ASCIICharacters);
         }
 
         /// <summary>
-        /// Gets the glyph map (which gives the location of glyphs for characters in a bitmap) for the typeface.
+        /// The glyph map (which gives the location of glyphs for characters in a bitmap) for the typeface.
         /// </summary>
-        public Dictionary<char, Glyph> GlyphMap
-        {
-            get
-            {
-                return this._GlyphMap;
-            }
-        }
+        public readonly Dictionary<char, Glyph> GlyphMap;
+
+        /// <summary>
+        /// The font family for this typeface.
+        /// </summary>
+        public readonly FontFamily FontFamily;
 
         /// <summary>
         /// Gets all ASCII characters.
@@ -141,7 +140,7 @@ namespace DUIP.UI.Render
             using (Bitmap bm = new Bitmap(size, size, _BitmapFormat))
             {
                 float fontsize = this._FontSize;
-                using (SFont font = new SFont(this._FontFamily, fontsize, this._FontStyle, GraphicsUnit.Pixel))
+                using (SFont font = new SFont(this.FontFamily, fontsize, this._FontStyle, GraphicsUnit.Pixel))
                 {
                     // Create sheet to be referenced by glyphs
                     Sheet sheet = new Sheet();
@@ -151,7 +150,7 @@ namespace DUIP.UI.Render
                     {
                         g.Clear(SColor.Black);
                         IEnumerable<SourceGlyph> srcglyphs = CreateSourceGlyphs(g, font, this._FontFormat, SColor.Black, Brushes.White, this._GlyphPadding, Characters);
-                        FitSourceGlyphs(bm, g, srcglyphs, sheet, 1.0 / size, 1.0 / fontsize, this._GlyphMap);
+                        FitSourceGlyphs(bm, g, srcglyphs, sheet, 1.0 / size, 1.0 / fontsize, this.GlyphMap);
 
                         // Don't forget to dispose source glyphs
                         foreach (SourceGlyph gly in srcglyphs)
@@ -172,7 +171,7 @@ namespace DUIP.UI.Render
 
         public override Point GetSize(char Char)
         {
-            Glyph gly = this._GlyphMap[Char];
+            Glyph gly = this.GlyphMap[Char];
             return gly.LayoutSize;
         }
 
@@ -181,7 +180,7 @@ namespace DUIP.UI.Render
         /// </summary>
         public Glyph GetGlyph(char Char)
         {
-            return this._GlyphMap[Char];
+            return this.GlyphMap[Char];
         }
 
         /// <summary>
@@ -633,7 +632,6 @@ namespace DUIP.UI.Render
             }
         }
 
-        private FontFamily _FontFamily;
-        private Dictionary<char, Glyph> _GlyphMap;
+        
     }
 }

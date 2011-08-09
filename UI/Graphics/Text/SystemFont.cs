@@ -12,9 +12,9 @@ namespace DUIP.UI.Graphics
     {
         public SystemTypeface(string Name, bool Bold, bool Italic)
         {
-            this._Name = Name;
-            this._Bold = Bold;
-            this._Italic = Italic;
+            this.Name = Name;
+            this.Bold = Bold;
+            this.Italic = Italic;
         }
 
         /// <summary>
@@ -23,38 +23,19 @@ namespace DUIP.UI.Graphics
         public static SystemTypefaceConstructor Create;
 
         /// <summary>
-        /// Gets the name of this typeface.
+        /// The name of this typeface.
         /// </summary>
-        public string Name
-        {
-            get
-            {
-                return this._Name;
-            }
-        }
+        public readonly string Name;
 
         /// <summary>
-        /// Gets if this typeface is bolded.
+        /// Indicates wether this typeface is bolded.
         /// </summary>
-        public bool Bold
-        {
-            get
-            {
-                return this._Bold;
-            }
-        }
+        public readonly bool Bold;
 
         /// <summary>
-        /// Gets if this typeface is italicized.
+        /// Indicates wether this typeface is italicized.
         /// </summary>
-        public bool Italic
-        {
-            get
-            {
-                return this._Italic;
-            }
-        }
-
+        public readonly bool Italic;
         /// <summary>
         /// Gets a font using this typeface.
         /// </summary>
@@ -67,10 +48,6 @@ namespace DUIP.UI.Graphics
         /// Gets the size of a character in this typeface when using a unit font size.
         /// </summary>
         public abstract Point GetSize(char Char);
-
-        private string _Name;
-        private bool _Bold;
-        private bool _Italic;
     }
 
     /// <summary>
@@ -87,9 +64,9 @@ namespace DUIP.UI.Graphics
     {
         public SystemFont(SystemTypeface Typeface, double Size, Color Color)
         {
-            this._Typeface = Typeface;
-            this._Size = Size;
-            this._Color = Color;
+            this.Typeface = Typeface;
+            this.Size = Size;
+            this.Color = Color;
         }
 
         public SystemFont(string Name, bool Bold, bool Italic, double Size, Color Color)
@@ -105,38 +82,20 @@ namespace DUIP.UI.Graphics
         }
 
         /// <summary>
-        /// Gets the typeface for this font.
+        /// The typeface for this font.
         /// </summary>
-        public SystemTypeface Typeface
-        {
-            get
-            {
-                return this._Typeface;
-            }
-        }
+        public readonly SystemTypeface Typeface;
 
         /// <summary>
-        /// Gets the size of this font. This should be around the height of a
+        /// The size of this font. This should be around the height of a
         /// glyph for a capital character.
         /// </summary>
-        public double Size
-        {
-            get
-            {
-                return this._Size;
-            }
-        }
+        public readonly double Size;
 
         /// <summary>
-        /// Gets the color of this font.
+        /// The color of this font.
         /// </summary>
-        public Color Color
-        {
-            get
-            {
-                return this._Color;
-            }
-        }
+        public readonly Color Color;
 
         public override Figure GetGlyph(char Char)
         {
@@ -145,12 +104,8 @@ namespace DUIP.UI.Graphics
 
         public override Point GetSize(char Char)
         {
-            return this._Typeface.GetSize(Char) * this._Size;
+            return this.Typeface.GetSize(Char) * this.Size;
         }
-
-        private SystemTypeface _Typeface;
-        private double _Size;
-        private Color _Color;
     }
 
     /// <summary>
@@ -160,33 +115,18 @@ namespace DUIP.UI.Graphics
     {
         public SystemFontGlyph(SystemFont Font, char Character)
         {
-            this._Font = Font;
-            this._Character = Character;
+            this.Font = Font;
+            this.Character = Character;
         }
 
         /// <summary>
-        /// Gets the font for this glyph.
+        /// The font for this glyph.
         /// </summary>
-        public SystemFont Font
-        {
-            get
-            {
-                return this._Font;
-            }
-        }
+        public readonly SystemFont Font;
 
         /// <summary>
-        /// Gets the character this glyph is for.
+        /// The character this glyph is for.
         /// </summary>
-        public char Character
-        {
-            get
-            {
-                return this._Character;
-            }
-        }
-
-        private SystemFont _Font;
-        private char _Character;
+        public readonly char Character;
     }
 }
