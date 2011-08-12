@@ -41,17 +41,8 @@
   </Target>
   -->
   <ItemGroup>
-    <Compile Include="Core\Bool.cs" />
     <Compile Include="Core\Data.cs" />
-    <Compile Include="Core\Expression.cs" />
     <Compile Include="Core\File.cs" />
-    <Compile Include="Core\Function.cs" />
-    <Compile Include="Core\Literal.cs" />
-    <Compile Include="Core\Pattern.cs" />
-    <Compile Include="Core\Rule.cs" />
-    <Compile Include="Core\Scope.cs" />
-    <Compile Include="Core\Symbol.cs" />
-    <Compile Include="Core\Type.cs" />
     <Compile Include="Memory\Allocator\Buddy.cs" />
     <Compile Include="Memory\Allocator\Directory.cs" />
     <Compile Include="Memory\Path.cs" />

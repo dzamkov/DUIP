@@ -64,13 +64,6 @@ namespace DUIP
             Path data = work["Data"];
             DirectoryAllocator alloc = new DirectoryAllocator(data);
 
-            // Test core
-            Scope scope = new Scope();
-            Type.Define(scope);
-            Function.Define(scope);
-            Bool.Define(scope);
-
-
             Application.EnableVisualStyles();
             MainForm mf = new MainForm();
             mf.Icon = Icon;
