@@ -11,11 +11,10 @@ namespace DUIP.UI
     /// </summary>
     public class TextBlock : Block
     {
-        public TextBlock(TextSection Text, TextBlockStyle Style)
+        public TextBlock(StyledTextSection Text, TextBlockStyle Style)
         {
             this.Style = Style;
             this._Text = Text;
-            this.Update(ref this._Text);
         }
        
         /// <summary>
@@ -24,21 +23,20 @@ namespace DUIP.UI
         public readonly TextBlockStyle Style;
 
         /// <summary>
-        /// Gets the stored text for the text block.
+        /// Gets the source (unstyled) text for the text block.
         /// </summary>
-        public TextSection Text
+        public virtual TextSection Text
         {
             get
             {
-                return this._Text;
+                return this._Text.Source;
             }
         }
 
         /// <summary>
-        /// Gets the displayed text for the text block. The displayed text must have the same items as the stored text, but may have different styling
-        /// information.
+        /// Gets the text displayed by this block.
         /// </summary>
-        public virtual TextSection DisplayedText
+        public virtual StyledTextSection DisplayText
         {
             get
             {
@@ -51,14 +49,6 @@ namespace DUIP.UI
         /// </summary>
         protected readonly bool Editable = true;
 
-        /// <summary>
-        /// Called when the text of text block is changed. This method may modify the styling and representation (but not the contents) of the stored text
-        /// before returning.
-        /// </summary>
-        protected virtual void Update(ref TextSection Text)
-        {
-
-        }
 
         public override Layout CreateLayout(Context Context, Rectangle SizeRange, out Point Size)
         {
@@ -73,7 +63,7 @@ namespace DUIP.UI
             int offset = 0;
             int width = minwidth;
             lineindices.Add(0); // Initial line, not explicitly indicated, but still deserves an index
-            _Measure(style, this._Text, 0, lineindices, ref offset, ref width);
+            _Measure(style, this.Text, 0, lineindices, ref offset, ref width);
             int height = Math.Max(lineindices.Count, minheight);
 
             // Calculate actual size
@@ -205,13 +195,49 @@ namespace DUIP.UI
                 return rh;
             }
 
-
             public override Figure Figure
             {
                 get
                 {
-                    return null;
+                    TextBlock block = this.TextBlock;
+                    int line = 0;
+                    int offset = 0;
+                    return _GetFigure(block.Style, block.DisplayText, ref line, ref offset);
                 }
+            }
+
+            /// <summary>
+            /// Gets a figure to display the given styled text section (using the unselected style).
+            /// </summary>
+            /// <param name="Line">The index of the line where the text section begins.</param>
+            /// <param name="Offset">The offset (in cells) of the beginning of the text section from the start of the line.</param>
+            private static Figure _GetFigure(TextBlockStyle BlockStyle, StyledTextSection TextSection, ref int Line, ref int Offset)
+            {
+                UniformStyledTextSection usts = TextSection as UniformStyledTextSection;
+                if (usts != null)
+                {
+                    return _GetFigure(BlockStyle, usts.NormalStyle, usts.Source, ref Line, ref Offset);
+                }
+
+                ConcatStyledTextSection csts = TextSection as ConcatStyledTextSection;
+                if (csts != null)
+                {
+                    return
+                        _GetFigure(BlockStyle, csts.A, ref Line, ref Offset) +
+                        _GetFigure(BlockStyle, csts.B, ref Line, ref Offset);
+                }
+
+                throw new NotImplementedException();
+            }
+
+            /// <summary>
+            /// Gets a figure to display the given text section with the given style.
+            /// </summary>
+            /// <param name="Line">The index of the line where the text section begins.</param>
+            /// <param name="Offset">The offset (in cells) of the beginning of the text section from the start of the line.</param>
+            private static Figure _GetFigure(TextBlockStyle BlockStyle, TextStyle Style, TextSection TextSection, ref int Line, ref int Offset)
+            {
+                throw new NotImplementedException();
             }
 
             /// <summary>
@@ -258,7 +284,7 @@ namespace DUIP.UI
             public double CaretBlinkTime;
         }
 
-        private TextSection _Text;
+        private StyledTextSection _Text;
         private _SelectionInfo _Selection;
         private _Layout _Linked;
     }
@@ -424,6 +450,14 @@ namespace DUIP.UI
             }
 
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Creates a uniformly-styled form of this text section.
+        /// </summary>
+        public StyledTextSection Style(TextStyle Normal, TextStyle Selected)
+        {
+            return new UniformStyledTextSection(this, Normal, Selected);
         }
 
         public static TextSection operator +(TextSection A, TextSection B)
